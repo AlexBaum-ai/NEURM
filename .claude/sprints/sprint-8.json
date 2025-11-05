@@ -58,7 +58,7 @@
         "Anonymous users see generic 'Create profile to see match score'"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "components": "MatchBadge, MatchExplanation, MatchBreakdown",
         "chart": "Recharts for factor breakdown visualization",
