@@ -187,6 +187,12 @@ enum ApplicationStatus {
   withdrawn
 }
 
+enum ModelStrategy {
+  commercial_api
+  open_source
+  hybrid
+}
+
 enum NotificationType {
   mention
   reply
@@ -253,6 +259,7 @@ model User {
   workExperiences     WorkExperience[]
   educations          Education[]
   portfolioProjects   PortfolioProject[]
+  jobPreferences      JobPreferences?
 
   // Content creation
   articles            Article[]            @relation("ArticleAuthor")
@@ -301,6 +308,7 @@ model User {
   analyticsEvents         AnalyticsEvent[]
   articleViews            ArticleView[]
   modelFollows            ModelFollow[]          @relation("UserModelFollows")
+  companyFollows          CompanyFollow[]        @relation("UserCompanyFollows")
   uploadedMedia           MediaFile[]            @relation("MediaUploader")
   reports                 Report[]               @relation("UserReports")
   resolvedReports         Report[]               @relation("UserResolutions")
@@ -498,6 +506,31 @@ model PortfolioProject {
   @@index([userId])
   @@index([userId, isFeatured])
   @@map("portfolio_projects")
+}
+
+model JobPreferences {
+  id                   String   @id @default(uuid())
+  userId               String   @unique @map("user_id")
+  rolesInterested      String[] @map("roles_interested")
+  jobTypes             String[] @map("job_types")
+  workLocations        String[] @map("work_locations")
+  preferredLocations   String[] @map("preferred_locations")
+  openToRelocation     Boolean  @default(false) @map("open_to_relocation")
+  salaryExpectationMin Decimal? @map("salary_expectation_min") @db.Decimal(12, 2)
+  salaryExpectationMax Decimal? @map("salary_expectation_max") @db.Decimal(12, 2)
+  salaryCurrency       String?  @map("salary_currency") @db.VarChar(10)
+  desiredStartDate     DateTime? @map("desired_start_date") @db.Date
+  availability         String?  @db.VarChar(100)
+  companyPreferences   Json?    @map("company_preferences")
+  visibleToRecruiters  Boolean  @default(true) @map("visible_to_recruiters")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([visibleToRecruiters])
+  @@map("job_preferences")
 }
 
 // ============================================================================
@@ -1341,61 +1374,98 @@ model Report {
 // ============================================================================
 
 model Company {
-  id              String   @id @default(uuid())
-  name            String   @db.VarChar(200)
-  slug            String   @unique @db.VarChar(200)
-  website         String?  @db.VarChar(255)
-  description     String?  @db.Text
-  logoUrl         String?  @map("logo_url") @db.VarChar(500)
-  industry        String?  @db.VarChar(100)
-  companySize     String?  @map("company_size") @db.VarChar(50)
-  location        String?  @db.VarChar(100)
-  foundedYear     Int?     @map("founded_year")
-  linkedinUrl     String?  @map("linkedin_url") @db.VarChar(255)
-  twitterUrl      String?  @map("twitter_url") @db.VarChar(255)
-  ownerUserId     String   @unique @map("owner_user_id")
-  verifiedCompany Boolean  @default(false) @map("verified_company")
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id               String   @id @default(uuid())
+  name             String   @db.VarChar(200)
+  slug             String   @unique @db.VarChar(200)
+  website          String?  @db.VarChar(255)
+  description      String?  @db.Text
+  logoUrl          String?  @map("logo_url") @db.VarChar(500)
+  headerImageUrl   String?  @map("header_image_url") @db.VarChar(500)
+  industry         String?  @db.VarChar(100)
+  companySize      String?  @map("company_size") @db.VarChar(50)
+  location         String?  @db.VarChar(100)
+  locations        String[] @default([])
+  foundedYear      Int?     @map("founded_year")
+  mission          String?  @db.Text
+  benefits         String[] @default([])
+  cultureDescription String? @map("culture_description") @db.Text
+  techStack        Json?    @map("tech_stack")
+  linkedinUrl      String?  @map("linkedin_url") @db.VarChar(255)
+  twitterUrl       String?  @map("twitter_url") @db.VarChar(255)
+  githubUrl        String?  @map("github_url") @db.VarChar(255)
+  ownerUserId      String   @unique @map("owner_user_id")
+  verifiedCompany  Boolean  @default(false) @map("verified_company")
+  viewCount        Int      @default(0) @map("view_count")
+  followerCount    Int      @default(0) @map("follower_count")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  owner User  @relation("CompanyOwner", fields: [ownerUserId], references: [id])
-  jobs  Job[]
+  owner    User             @relation("CompanyOwner", fields: [ownerUserId], references: [id])
+  jobs     Job[]
+  follows  CompanyFollow[]
 
   @@index([slug])
   @@index([ownerUserId])
+  @@index([verifiedCompany])
   @@map("companies")
 }
 
+model CompanyFollow {
+  companyId String   @map("company_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation("UserCompanyFollows", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([companyId, userId])
+  @@index([companyId])
+  @@index([userId])
+  @@map("company_follows")
+}
+
 model Job {
-  id               String          @id @default(uuid())
-  title            String          @db.VarChar(200)
-  slug             String          @unique @db.VarChar(255)
-  companyId        String          @map("company_id")
-  description      String          @db.Text
-  requirements     String          @db.Text
-  responsibilities String?         @db.Text
-  benefits         String?         @db.Text
-  jobType          JobType         @map("job_type")
-  workLocation     WorkLocation    @map("work_location")
-  experienceLevel  ExperienceLevel @map("experience_level")
-  location         String          @db.VarChar(200)
-  salaryMin        Decimal?        @map("salary_min") @db.Decimal(12, 2)
-  salaryMax        Decimal?        @map("salary_max") @db.Decimal(12, 2)
-  salaryCurrency   String?         @map("salary_currency") @db.VarChar(10)
-  applyUrl         String?         @map("apply_url") @db.VarChar(500)
-  status           JobStatus       @default(draft)
-  publishedAt      DateTime?       @map("published_at") @db.Timestamptz(3)
-  expiresAt        DateTime?       @map("expires_at") @db.Timestamptz(3)
-  viewCount        Int             @default(0) @map("view_count")
-  applicationCount Int             @default(0) @map("application_count")
-  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id                   String          @id @default(uuid())
+  title                String          @db.VarChar(200)
+  slug                 String          @unique @db.VarChar(255)
+  companyId            String          @map("company_id")
+  description          String          @db.Text
+  requirements         String          @db.Text
+  responsibilities     String?         @db.Text
+  benefits             String?         @db.Text
+  jobType              JobType         @map("job_type")
+  workLocation         WorkLocation    @map("work_location")
+  experienceLevel      ExperienceLevel @map("experience_level")
+  location             String          @db.VarChar(200)
+  salaryMin            Decimal?        @map("salary_min") @db.Decimal(12, 2)
+  salaryMax            Decimal?        @map("salary_max") @db.Decimal(12, 2)
+  salaryCurrency       String?         @map("salary_currency") @db.VarChar(10)
+  salaryIsPublic       Boolean         @default(true) @map("salary_is_public")
+  positionsAvailable   Int             @default(1) @map("positions_available")
+  applyUrl             String?         @map("apply_url") @db.VarChar(500)
+  hasVisaSponsorship   Boolean         @default(false) @map("has_visa_sponsorship")
+  primaryLlms          String[]        @map("primary_llms")
+  frameworks           String[]        @default([])
+  vectorDatabases      String[]        @default([]) @map("vector_databases")
+  infrastructure       String[]        @default([])
+  programmingLanguages String[]        @default([]) @map("programming_languages")
+  useCaseType          String?         @map("use_case_type") @db.VarChar(100)
+  modelStrategy        ModelStrategy?  @map("model_strategy")
+  screeningQuestions   Json?           @map("screening_questions")
+  status               JobStatus       @default(draft)
+  publishedAt          DateTime?       @map("published_at") @db.Timestamptz(3)
+  expiresAt            DateTime?       @map("expires_at") @db.Timestamptz(3)
+  viewCount            Int             @default(0) @map("view_count")
+  applicationCount     Int             @default(0) @map("application_count")
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   company Company @relation(fields: [companyId], references: [id])
 
   applications JobApplication[]
   models       JobModel[]
   matches      JobMatch[]
+  skills       JobSkill[]
 
   @@index([slug])
   @@index([companyId])
@@ -1403,6 +1473,8 @@ model Job {
   @@index([publishedAt(sort: Desc)])
   @@index([workLocation])
   @@index([jobType])
+  @@index([experienceLevel])
+  @@index([hasVisaSponsorship])
   @@map("jobs")
 }
 
@@ -1456,6 +1528,23 @@ model JobMatch {
   @@index([userId, matchScore(sort: Desc)])
   @@index([dismissed])
   @@map("job_matches")
+}
+
+model JobSkill {
+  id            String   @id @default(uuid())
+  jobId         String   @map("job_id")
+  skillName     String   @map("skill_name") @db.VarChar(100)
+  skillType     String   @map("skill_type") @db.VarChar(50)
+  requiredLevel Int      @map("required_level")
+  isRequired    Boolean  @default(true) @map("is_required")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, skillName])
+  @@index([jobId])
+  @@index([skillType])
+  @@map("job_skills")
 }
 
 // ============================================================================
