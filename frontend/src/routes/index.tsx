@@ -38,6 +38,14 @@ const ModerationQueue = lazy(() => import('@/features/forum/pages/ModerationQueu
 // Lazy load messaging pages
 const MessagesPage = lazy(() => import('@/features/messages/pages/MessagesPage'));
 
+// Lazy load jobs pages
+const JobListingsPage = lazy(() => import('@/features/jobs/pages/JobListingsPage').then(m => ({ default: m.JobListingsPage })));
+const JobDetailPage = lazy(() => import('@/features/jobs/pages/JobDetailPage').then(m => ({ default: m.JobDetailPage })));
+
+// Lazy load company pages
+const CompanyProfilePage = lazy(() => import('@/features/companies/pages/CompanyProfilePage'));
+const CompanySettingsPage = lazy(() => import('@/features/companies/pages/CompanySettingsPage'));
+
 // Loading fallback
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -289,7 +297,43 @@ const router = createBrowserRouter([
       },
       {
         path: 'jobs',
-        element: <ComingSoonPage title="Jobs" />,
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <JobListingsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'jobs/:slug',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <JobDetailPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'jobs/new',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <JobPostingForm />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'companies/:slug',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <CompanyProfilePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'companies/:slug/settings',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <CompanySettingsPage />
+          </Suspense>
+        ),
       },
       {
         path: 'guide',
