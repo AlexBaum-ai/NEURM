@@ -259,6 +259,7 @@ model User {
   educations          Education[]
   portfolioProjects   PortfolioProject[]
   jobPreferences      JobPreferences?
+  profileViewsGiven   ProfileView[]        @relation("ProfileViewedBy")
 
   // Content creation
   articles            Article[]            @relation("ArticleAuthor")
@@ -310,9 +311,15 @@ model User {
   articleViews            ArticleView[]
   modelFollows            ModelFollow[]          @relation("UserModelFollows")
   companyFollows          CompanyFollow[]        @relation("UserCompanyFollows")
+  applicationNotes        ApplicationNote[]      @relation("ApplicationNotes")
+  applicationRatings      ApplicationRating[]    @relation("ApplicationRatings")
+  applicationSharesBy     ApplicationShare[]     @relation("ApplicationSharesBy")
+  applicationSharesWith   ApplicationShare[]     @relation("ApplicationSharesWith")
   uploadedMedia           MediaFile[]            @relation("MediaUploader")
   reports                 Report[]               @relation("UserReports")
   resolvedReports         Report[]               @relation("UserResolutions")
+  bulkMessageRecipients   BulkMessageRecipient[] @relation("BulkMessageRecipients")
+  companyBlocks           CompanyBlock[]         @relation("CandidateCompanyBlocks")
 
   @@index([email])
   @@index([username])
@@ -395,7 +402,8 @@ model Profile {
   createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profileViewsReceived ProfileView[]
 
   @@index([availabilityStatus])
   @@map("profiles")
@@ -532,6 +540,44 @@ model JobPreferences {
   @@index([userId])
   @@index([visibleToRecruiters])
   @@map("job_preferences")
+}
+
+model ProfileView {
+  id         String   @id @default(uuid())
+  profileId  String   @map("profile_id")
+  viewerId   String   @map("viewer_id")
+  viewerType String   @default("recruiter") @map("viewer_type") @db.VarChar(50)
+  companyId  String?  @map("company_id")
+  viewedAt   DateTime @default(now()) @map("viewed_at") @db.Timestamptz(3)
+
+  profile Profile @relation(fields: [profileId], references: [userId], onDelete: Cascade)
+  viewer  User    @relation("ProfileViewedBy", fields: [viewerId], references: [id], onDelete: Cascade)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([profileId])
+  @@index([viewerId])
+  @@index([companyId])
+  @@index([viewedAt])
+  @@map("profile_views")
+}
+
+model SavedSearch {
+  id                   String   @id @default(uuid())
+  userId               String   @map("user_id")
+  name                 String   @db.VarChar(100)
+  searchType           String   @default("candidates") @map("search_type") @db.VarChar(50)
+  filters              Json
+  notificationEnabled  Boolean  @default(false) @map("notification_enabled")
+  notificationFrequency String  @default("daily") @map("notification_frequency") @db.VarChar(20)
+  lastNotifiedAt       DateTime? @map("last_notified_at") @db.Timestamptz(3)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation("UserSavedSearches", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([searchType])
+  @@map("saved_searches")
 }
 
 // ============================================================================
@@ -1401,9 +1447,13 @@ model Company {
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  owner    User             @relation("CompanyOwner", fields: [ownerUserId], references: [id])
-  jobs     Job[]
-  follows  CompanyFollow[]
+  owner            User              @relation("CompanyOwner", fields: [ownerUserId], references: [id])
+  jobs             Job[]
+  follows          CompanyFollow[]
+  messageTemplates MessageTemplate[] @relation("CompanyMessageTemplates")
+  bulkMessages     BulkMessage[]     @relation("CompanyBulkMessages")
+  blockedBy        CompanyBlock[]    @relation("CompanyBlocks")
+  profileViews     ProfileView[]
 
   @@index([slug])
   @@index([ownerUserId])
@@ -1468,6 +1518,7 @@ model Job {
   matches      JobMatch[]
   skills       JobSkill[]
   savedBy      SavedJob[]       @relation("JobSaves")
+  analytics    JobAnalytics[]
 
   @@index([slug])
   @@index([companyId])
@@ -1510,6 +1561,9 @@ model JobApplication {
   job           Job                          @relation(fields: [jobId], references: [id], onDelete: Cascade)
   user          User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
   statusHistory ApplicationStatusHistory[]
+  notes         ApplicationNote[]
+  ratings       ApplicationRating[]
+  shares        ApplicationShare[]
 
   @@unique([jobId, userId])
   @@index([userId])
@@ -1585,6 +1639,31 @@ model SavedJob {
   @@index([jobId])
   @@index([savedAt(sort: Desc)])
   @@map("saved_jobs")
+}
+
+model JobAnalytics {
+  id                     String   @id @default(uuid())
+  jobId                  String   @map("job_id")
+  date                   DateTime @db.Date
+  totalViews             Int      @default(0) @map("total_views")
+  totalApplications      Int      @default(0) @map("total_applications")
+  conversionRate         Decimal  @default(0) @map("conversion_rate") @db.Decimal(5, 2)
+  avgMatchScore          Decimal? @map("avg_match_score") @db.Decimal(5, 2)
+  applicantQualityScore  Decimal? @map("applicant_quality_score") @db.Decimal(5, 2)
+  timeToHireDays         Int?     @map("time_to_hire_days")
+  topTrafficSources      Json     @default("[]") @map("top_traffic_sources")
+  funnelData             Json     @default("{}") @map("funnel_data")
+  demographicsData       Json     @default("{}") @map("demographics_data")
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, date])
+  @@index([jobId])
+  @@index([date(sort: Desc)])
+  @@index([jobId, date(sort: Desc)])
+  @@map("job_analytics")
 }
 
 model JobAlert {
@@ -1705,9 +1784,10 @@ model ConversationMessage {
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  conversation Conversation          @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender       User                  @relation("ConversationMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  attachments  MessageAttachment[]
+  conversation           Conversation           @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender                 User                   @relation("ConversationMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  attachments            MessageAttachment[]
+  bulkMessageRecipients  BulkMessageRecipient[] @relation("BulkMessageConversationMessages")
 
   @@index([conversationId])
   @@index([senderId])
@@ -1798,6 +1878,97 @@ model GlossaryTerm {
   @@index([term])
   @@index([category])
   @@map("glossary_terms")
+}
+
+// ============================================================================
+// BULK MESSAGING DOMAIN (Recruiter Messaging)
+// ============================================================================
+
+model MessageTemplate {
+  id          String   @id @default(uuid())
+  companyId   String   @map("company_id")
+  name        String   @db.VarChar(100)
+  subject     String?  @db.VarChar(255)
+  body        String   @db.Text
+  isDefault   Boolean  @default(false) @map("is_default")
+  usageCount  Int      @default(0) @map("usage_count")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company      Company       @relation("CompanyMessageTemplates", fields: [companyId], references: [id], onDelete: Cascade)
+  bulkMessages BulkMessage[]
+
+  @@index([companyId])
+  @@index([usageCount(sort: Desc)])
+  @@map("message_templates")
+}
+
+model BulkMessage {
+  id             String    @id @default(uuid())
+  companyId      String    @map("company_id")
+  templateId     String?   @map("template_id")
+  subject        String?   @db.VarChar(255)
+  sentAt         DateTime  @default(now()) @map("sent_at") @db.Timestamptz(3)
+  recipientCount Int       @default(0) @map("recipient_count")
+  deliveredCount Int       @default(0) @map("delivered_count")
+  readCount      Int       @default(0) @map("read_count")
+  repliedCount   Int       @default(0) @map("replied_count")
+  failedCount    Int       @default(0) @map("failed_count")
+  status         String    @default("sent") @db.VarChar(20)
+  recipientIds   String[]  @default([]) @map("recipient_ids")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company    Company                 @relation("CompanyBulkMessages", fields: [companyId], references: [id], onDelete: Cascade)
+  template   MessageTemplate?        @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  recipients BulkMessageRecipient[]
+
+  @@index([companyId])
+  @@index([sentAt(sort: Desc)])
+  @@index([status])
+  @@map("bulk_messages")
+}
+
+model BulkMessageRecipient {
+  id                     String    @id @default(uuid())
+  bulkMessageId          String    @map("bulk_message_id")
+  recipientId            String    @map("recipient_id")
+  conversationMessageId  String?   @map("conversation_message_id")
+  personalizedContent    String?   @db.Text @map("personalized_content")
+  status                 String    @default("sent") @db.VarChar(20)
+  deliveredAt            DateTime? @map("delivered_at") @db.Timestamptz(3)
+  readAt                 DateTime? @map("read_at") @db.Timestamptz(3)
+  repliedAt              DateTime? @map("replied_at") @db.Timestamptz(3)
+  failedReason           String?   @db.Text @map("failed_reason")
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  bulkMessage         BulkMessage          @relation(fields: [bulkMessageId], references: [id], onDelete: Cascade)
+  recipient           User                 @relation("BulkMessageRecipients", fields: [recipientId], references: [id], onDelete: Cascade)
+  conversationMessage ConversationMessage? @relation("BulkMessageConversationMessages", fields: [conversationMessageId], references: [id], onDelete: SetNull)
+
+  @@unique([bulkMessageId, recipientId])
+  @@index([bulkMessageId])
+  @@index([recipientId])
+  @@index([status])
+  @@index([readAt])
+  @@map("bulk_message_recipients")
+}
+
+model CompanyBlock {
+  id          String   @id @default(uuid())
+  candidateId String   @map("candidate_id")
+  companyId   String   @map("company_id")
+  reason      String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  candidate User    @relation("CandidateCompanyBlocks", fields: [candidateId], references: [id], onDelete: Cascade)
+  company   Company @relation("CompanyBlocks", fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, companyId])
+  @@index([candidateId])
+  @@index([companyId])
+  @@map("company_blocks")
 }
 
 // ============================================================================
@@ -1904,4 +2075,62 @@ model MediaUsage {
   @@index([mediaId])
   @@index([entityType, entityId])
   @@map("media_usage")
+}
+
+// ============================================================================
+// ATS (Applicant Tracking System) MODELS
+// ============================================================================
+
+model ApplicationNote {
+  id            String   @id @default(uuid())
+  applicationId String   @map("application_id")
+  userId        String   @map("user_id")
+  note          String   @db.Text
+  isInternal    Boolean  @default(true) @map("is_internal")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  application JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  user        User           @relation("ApplicationNotes", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@map("application_notes")
+}
+
+model ApplicationRating {
+  id            String   @id @default(uuid())
+  applicationId String   @map("application_id")
+  userId        String   @map("user_id")
+  rating        Int
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  application JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  user        User           @relation("ApplicationRatings", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, userId])
+  @@index([applicationId])
+  @@index([userId])
+  @@map("application_ratings")
+}
+
+model ApplicationShare {
+  id            String   @id @default(uuid())
+  applicationId String   @map("application_id")
+  sharedBy      String   @map("shared_by")
+  sharedWith    String   @map("shared_with")
+  message       String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  application JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  sharer      User           @relation("ApplicationSharesBy", fields: [sharedBy], references: [id], onDelete: Cascade)
+  recipient   User           @relation("ApplicationSharesWith", fields: [sharedWith], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, sharedWith])
+  @@index([applicationId])
+  @@index([sharedBy])
+  @@index([sharedWith])
+  @@map("application_shares")
 }

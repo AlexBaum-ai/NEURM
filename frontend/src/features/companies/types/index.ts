@@ -114,3 +114,67 @@ export interface CompanyJobsResponse {
   jobs: CompanyJob[];
   count: number;
 }
+
+// Bulk Messaging Types
+export interface MessageTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTemplateRequest {
+  name: string;
+  subject: string;
+  body: string;
+}
+
+export interface UpdateTemplateRequest {
+  name?: string;
+  subject?: string;
+  body?: string;
+}
+
+export interface Recipient {
+  id: string;
+  name: string;
+  username: string;
+  skills: string[];
+  experience: string;
+  location: string;
+}
+
+export interface BulkMessageRequest {
+  templateId?: string;
+  subject: string;
+  body: string;
+  recipientIds: string[];
+}
+
+export interface BulkMessageResponse {
+  success: boolean;
+  messagesSent: number;
+  failedRecipients: string[];
+}
+
+export interface BulkMessageHistory {
+  id: string;
+  subject: string;
+  body: string;
+  recipientCount: number;
+  sentAt: string;
+  templateName?: string;
+}
+
+export interface BulkMessagesHistoryResponse {
+  messages: BulkMessageHistory[];
+  total: number;
+}
+
+export interface RateLimitStatus {
+  remaining: number;
+  limit: number;
+  resetsAt: string;
+}

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import companyController from './company.controller';
+import companyAnalyticsController from './companyAnalytics.controller';
 import { authenticate, optionalAuth } from '@/middleware/auth.middleware';
 import { validate } from '@/middleware/validation.middleware';
 import {
@@ -10,6 +11,12 @@ import {
   createCompanySchema,
   listCompaniesSchema,
 } from './company.validation';
+import {
+  getAnalyticsQuerySchema,
+  exportAnalyticsQuerySchema,
+  companyIdParamSchema,
+  jobAnalyticsParamSchema,
+} from './companyAnalytics.validation';
 
 const router = Router();
 
@@ -93,6 +100,54 @@ router.delete(
   authenticate,
   validate(followCompanySchema),
   companyController.unfollowCompany
+);
+
+/**
+ * @route   GET /api/v1/companies/:companyId/analytics
+ * @desc    Get company-wide analytics
+ * @access  Private (company owner only)
+ */
+router.get(
+  '/:companyId/analytics',
+  authenticate,
+  validate({ params: companyIdParamSchema, query: getAnalyticsQuerySchema }),
+  companyAnalyticsController.getCompanyAnalytics
+);
+
+/**
+ * @route   GET /api/v1/companies/:companyId/analytics/jobs/:jobId
+ * @desc    Get job-specific analytics
+ * @access  Private (company owner only)
+ */
+router.get(
+  '/:companyId/analytics/jobs/:jobId',
+  authenticate,
+  validate({ params: jobAnalyticsParamSchema, query: getAnalyticsQuerySchema }),
+  companyAnalyticsController.getJobAnalytics
+);
+
+/**
+ * @route   GET /api/v1/companies/:companyId/analytics/export/csv
+ * @desc    Export company analytics to CSV
+ * @access  Private (company owner only)
+ */
+router.get(
+  '/:companyId/analytics/export/csv',
+  authenticate,
+  validate({ params: companyIdParamSchema, query: exportAnalyticsQuerySchema }),
+  companyAnalyticsController.exportAnalyticsCSV
+);
+
+/**
+ * @route   GET /api/v1/companies/:companyId/analytics/export/pdf
+ * @desc    Export company analytics to PDF
+ * @access  Private (company owner only)
+ */
+router.get(
+  '/:companyId/analytics/export/pdf',
+  authenticate,
+  validate({ params: companyIdParamSchema, query: exportAnalyticsQuerySchema }),
+  companyAnalyticsController.exportAnalyticsPDF
 );
 
 export default router;

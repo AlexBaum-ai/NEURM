@@ -11,6 +11,13 @@ import type {
   CompanyJobsResponse,
   ListCompaniesParams,
   ListCompaniesResponse,
+  MessageTemplate,
+  CreateTemplateRequest,
+  UpdateTemplateRequest,
+  BulkMessageRequest,
+  BulkMessageResponse,
+  BulkMessagesHistoryResponse,
+  RateLimitStatus,
 } from '../types';
 
 /**
@@ -129,4 +136,90 @@ export const uploadCompanyHeader = async (id: string, file: File): Promise<strin
   );
 
   return response.data.data.url;
+};
+
+/**
+ * Bulk Messaging API Functions
+ */
+
+/**
+ * Send bulk messages to multiple candidates
+ */
+export const sendBulkMessages = async (
+  data: BulkMessageRequest
+): Promise<BulkMessageResponse> => {
+  const response = await api.post<{ success: boolean; data: BulkMessageResponse }>(
+    '/companies/messages/bulk',
+    data
+  );
+  return response.data.data;
+};
+
+/**
+ * Get all message templates
+ */
+export const getMessageTemplates = async (): Promise<MessageTemplate[]> => {
+  const response = await api.get<{
+    success: boolean;
+    data: { templates: MessageTemplate[] };
+  }>('/companies/messages/templates');
+  return response.data.data.templates;
+};
+
+/**
+ * Create a new message template
+ */
+export const createMessageTemplate = async (
+  data: CreateTemplateRequest
+): Promise<MessageTemplate> => {
+  const response = await api.post<{ success: boolean; data: { template: MessageTemplate } }>(
+    '/companies/messages/templates',
+    data
+  );
+  return response.data.data.template;
+};
+
+/**
+ * Update a message template
+ */
+export const updateMessageTemplate = async (
+  id: string,
+  data: UpdateTemplateRequest
+): Promise<MessageTemplate> => {
+  const response = await api.put<{ success: boolean; data: { template: MessageTemplate } }>(
+    `/companies/messages/templates/${id}`,
+    data
+  );
+  return response.data.data.template;
+};
+
+/**
+ * Delete a message template
+ */
+export const deleteMessageTemplate = async (id: string): Promise<void> => {
+  await api.delete(`/companies/messages/templates/${id}`);
+};
+
+/**
+ * Get bulk message history
+ */
+export const getBulkMessageHistory = async (
+  page = 1,
+  limit = 20
+): Promise<BulkMessagesHistoryResponse> => {
+  const response = await api.get<{ success: boolean; data: BulkMessagesHistoryResponse }>(
+    '/companies/messages/bulk',
+    { params: { page, limit } }
+  );
+  return response.data.data;
+};
+
+/**
+ * Get rate limit status
+ */
+export const getRateLimitStatus = async (): Promise<RateLimitStatus> => {
+  const response = await api.get<{ success: boolean; data: RateLimitStatus }>(
+    '/companies/messages/rate-limit'
+  );
+  return response.data.data;
 };
