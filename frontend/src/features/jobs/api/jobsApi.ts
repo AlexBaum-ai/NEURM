@@ -8,6 +8,12 @@ import type {
   JobListItem,
   JobMatch,
   JobMatchResponse,
+  ApplicationsResponse,
+  Application,
+  ApplicationFilterType,
+  JobAlert,
+  CreateAlertRequest,
+  UpdateAlertRequest,
 } from '../types';
 
 export const jobsApi = {
@@ -167,5 +173,101 @@ export const jobsApi = {
   getJobMatch: async (slug: string): Promise<JobMatch> => {
     const response = await apiClient.get<JobMatchResponse>(`/jobs/${slug}/match`);
     return response.data;
+  },
+
+  /**
+   * Get user's applications with optional filter
+   */
+  getApplications: async (filter?: ApplicationFilterType): Promise<ApplicationsResponse> => {
+    const queryParams = new URLSearchParams();
+    if (filter && filter !== 'all') {
+      queryParams.append('filter', filter);
+    }
+
+    const queryString = queryParams.toString();
+    const response = await apiClient.get<{ success: boolean; data: ApplicationsResponse }>(
+      `/applications${queryString ? '?' + queryString : ''}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Get single application by ID with full details
+   */
+  getApplicationById: async (id: string): Promise<Application> => {
+    const response = await apiClient.get<{ success: boolean; data: Application }>(
+      `/applications/${id}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Withdraw an application
+   */
+  withdrawApplication: async (id: string): Promise<{ success: boolean; message: string }> => {
+    return apiClient.put<{ success: boolean; message: string }>(
+      `/applications/${id}/withdraw`,
+      {}
+    );
+  },
+
+  /**
+   * Export applications as CSV
+   */
+  exportApplications: async (): Promise<Blob> => {
+    const response = await apiClient.get<Blob>('/applications/export', {
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  /**
+   * Get all job alerts for the current user
+   */
+  getJobAlerts: async (): Promise<JobAlert[]> => {
+    const response = await apiClient.get<{
+      success: boolean;
+      data: { alerts: JobAlert[] };
+    }>('/jobs/alerts');
+    return response.data.alerts;
+  },
+
+  /**
+   * Create a new job alert
+   */
+  createJobAlert: async (data: CreateAlertRequest): Promise<JobAlert> => {
+    const response = await apiClient.post<{
+      success: boolean;
+      data: { alert: JobAlert };
+    }>('/jobs/alerts', data);
+    return response.data.alert;
+  },
+
+  /**
+   * Update an existing job alert
+   */
+  updateJobAlert: async (id: string, data: UpdateAlertRequest): Promise<JobAlert> => {
+    const response = await apiClient.patch<{
+      success: boolean;
+      data: { alert: JobAlert };
+    }>(`/jobs/alerts/${id}`, data);
+    return response.data.alert;
+  },
+
+  /**
+   * Delete a job alert
+   */
+  deleteJobAlert: async (id: string): Promise<void> => {
+    return apiClient.delete<void>(`/jobs/alerts/${id}`);
+  },
+
+  /**
+   * Test a job alert (sends sample email)
+   */
+  testJobAlert: async (id: string): Promise<{ success: boolean; message: string }> => {
+    return apiClient.post<{ success: boolean; message: string }>(
+      `/jobs/alerts/${id}/test`,
+      {}
+    );
   },
 };

@@ -45,6 +45,7 @@ export interface JobListItem {
   applicationCount: number;
   viewCount: number;
   publishedAt: string;
+  applicationDeadline?: string | null;
   isSaved?: boolean;
 }
 
@@ -121,4 +122,122 @@ export interface JobMatch {
 export interface JobMatchResponse {
   success: boolean;
   data: JobMatch;
+}
+
+// Application-related types
+export type ApplicationStatus =
+  | 'submitted'
+  | 'under_review'
+  | 'interview_scheduled'
+  | 'interview_completed'
+  | 'offer_extended'
+  | 'offer_accepted'
+  | 'offer_declined'
+  | 'rejected'
+  | 'withdrawn';
+
+export type ApplicationFilterType =
+  | 'all'
+  | 'active'
+  | 'interviews'
+  | 'offers'
+  | 'rejected'
+  | 'withdrawn';
+
+export interface ApplicationStatusHistoryItem {
+  status: ApplicationStatus;
+  timestamp: string;
+  note?: string;
+}
+
+export interface ApplicationMessage {
+  id: string;
+  from: 'applicant' | 'recruiter';
+  message: string;
+  timestamp: string;
+  isRead: boolean;
+}
+
+export interface Application {
+  id: string;
+  jobId: string;
+  job: {
+    id: string;
+    title: string;
+    slug: string;
+    company: Company;
+    location: string;
+    locationType: LocationType;
+    employmentType: EmploymentType;
+    salaryMin: number | null;
+    salaryMax: number | null;
+    salaryCurrency: string;
+  };
+  status: ApplicationStatus;
+  coverLetter: string;
+  resumeUrl?: string;
+  screeningAnswers?: Array<{ question: string; answer: string }>;
+  appliedAt: string;
+  updatedAt: string;
+  statusHistory: ApplicationStatusHistoryItem[];
+  messages?: ApplicationMessage[];
+}
+
+export interface ApplicationStats {
+  totalApplied: number;
+  inProgress: number;
+  interviews: number;
+  offers: number;
+  rejected: number;
+  withdrawn: number;
+}
+
+export interface ApplicationsResponse {
+  applications: Application[];
+  stats: ApplicationStats;
+  total: number;
+}
+
+// Job Alert types
+export interface JobAlert {
+  id: string;
+  userId: string;
+  keywords: string[];
+  location: string | null;
+  remote: boolean;
+  jobTypes: EmploymentType[];
+  experienceLevels: ExperienceLevel[];
+  models: string[];
+  salaryMin: number | null;
+  salaryMax: number | null;
+  isActive: boolean;
+  emailFrequency: 'instant' | 'daily' | 'weekly';
+  lastSent: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAlertRequest {
+  keywords?: string[];
+  location?: string;
+  remote?: boolean;
+  jobTypes?: EmploymentType[];
+  experienceLevels?: ExperienceLevel[];
+  models?: string[];
+  salaryMin?: number;
+  salaryMax?: number;
+  emailFrequency?: 'instant' | 'daily' | 'weekly';
+}
+
+export interface UpdateAlertRequest extends CreateAlertRequest {
+  isActive?: boolean;
+}
+
+export interface SavedJob {
+  id: string;
+  userId: string;
+  jobId: string;
+  notes: string | null;
+  savedAt: string;
+  job: JobListItem;
 }

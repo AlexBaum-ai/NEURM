@@ -46,6 +46,8 @@ const MessagesPage = lazy(() => import('@/features/messages/pages/MessagesPage')
 // Lazy load jobs pages
 const JobListingsPage = lazy(() => import('@/features/jobs/pages/JobListingsPage').then(m => ({ default: m.JobListingsPage })));
 const JobDetailPage = lazy(() => import('@/features/jobs/pages/JobDetailPage').then(m => ({ default: m.JobDetailPage })));
+const SavedJobsPage = lazy(() => import('@/features/jobs/pages/SavedJobsPage').then(m => ({ default: m.SavedJobsPage })));
+const JobAlertsPage = lazy(() => import('@/features/jobs/pages/JobAlertsPage').then(m => ({ default: m.JobAlertsPage })));
 
 // Lazy load company pages
 const CompanyProfilePage = lazy(() => import('@/features/companies/pages/CompanyProfilePage'));
@@ -357,10 +359,18 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: 'jobs/:slug',
+        path: 'jobs/saved',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <JobDetailPage />
+            <SavedJobsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'jobs/alerts',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <JobAlertsPage />
           </Suspense>
         ),
       },
@@ -369,6 +379,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <JobPostingForm />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'jobs/:slug',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <JobDetailPage />
           </Suspense>
         ),
       },
