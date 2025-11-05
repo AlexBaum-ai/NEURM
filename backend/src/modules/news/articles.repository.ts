@@ -850,7 +850,7 @@ export class ArticleRepository {
   }
 
   /**
-   * Find related articles based on tags
+   * Find related articles based on tags (legacy method - kept for backwards compatibility)
    */
   async findRelated(
     articleId: string,
@@ -919,6 +919,308 @@ export class ArticleRepository {
         extra: { articleId, limit },
       });
       // Return empty array instead of throwing
+      return [];
+    }
+  }
+
+  /**
+   * Find related articles using hybrid scoring algorithm
+   * Algorithm: Category match (40%) + Tag overlap (30%) + Content similarity (30%)
+   * Returns min 3, max 6 related articles ordered by relevance score
+   */
+  async findRelatedAdvanced(
+    articleId: string,
+    minResults: number = 3,
+    maxResults: number = 6
+  ): Promise<Array<Article & { relevanceScore?: number }>> {
+    try {
+      // Get source article with all relations
+      const sourceArticle = await prisma.article.findUnique({
+        where: { id: articleId },
+        include: {
+          tags: {
+            select: { tagId: true },
+          },
+        },
+      });
+
+      if (!sourceArticle) {
+        logger.warn(`Source article not found: ${articleId}`);
+        return [];
+      }
+
+      const tagIds = sourceArticle.tags.map((t) => t.tagId);
+
+      // Build hybrid scoring query using PostgreSQL similarity functions
+      // Note: This uses pg_trgm extension for text similarity
+      const sqlQuery = `
+        WITH candidate_articles AS (
+          SELECT
+            a.id,
+            a.title,
+            a.slug,
+            a.summary,
+            a.content,
+            a.featured_image_url,
+            a.category_id,
+            a.difficulty_level,
+            a.reading_time_minutes,
+            a.view_count,
+            a.bookmark_count,
+            a.published_at,
+            a.created_at,
+
+            -- Category match score (40%)
+            CASE
+              WHEN a.category_id = $2 THEN 0.40
+              ELSE 0.0
+            END as category_score,
+
+            -- Tag overlap score (30%)
+            CASE
+              WHEN $3::text[] IS NOT NULL AND array_length($3::text[], 1) > 0 THEN
+                (
+                  SELECT COUNT(DISTINCT at.tag_id)::float
+                  FROM article_tags at
+                  WHERE at.article_id = a.id
+                    AND at.tag_id = ANY($3::text[])
+                ) / NULLIF(array_length($3::text[], 1), 0) * 0.30
+              ELSE 0.0
+            END as tag_score,
+
+            -- Content similarity score (30%) using trigram similarity
+            (
+              similarity(
+                COALESCE(a.title, '') || ' ' || COALESCE(a.summary, ''),
+                $4 || ' ' || $5
+              ) * 0.30
+            ) as content_score
+
+          FROM articles a
+          WHERE a.id != $1
+            AND a.status = 'published'
+            AND a.published_at <= NOW()
+        ),
+        scored_articles AS (
+          SELECT
+            *,
+            (category_score + tag_score + content_score) as relevance_score
+          FROM candidate_articles
+        )
+        SELECT *
+        FROM scored_articles
+        WHERE relevance_score > 0
+        ORDER BY relevance_score DESC, view_count DESC
+        LIMIT $6;
+      `;
+
+      const params = [
+        articleId,
+        sourceArticle.categoryId,
+        tagIds.length > 0 ? tagIds : null,
+        sourceArticle.title,
+        sourceArticle.summary,
+        maxResults,
+      ];
+
+      // Execute scoring query
+      const scoredResults = await prisma.$queryRawUnsafe<Array<{
+        id: string;
+        relevance_score: number;
+        [key: string]: unknown;
+      }>>(sqlQuery, ...params);
+
+      // If we have enough results, return them
+      if (scoredResults.length >= minResults) {
+        // Get full article data with relations
+        const articleIds = scoredResults.map((r) => r.id);
+        const articles = await prisma.article.findMany({
+          where: {
+            id: { in: articleIds },
+          },
+          include: {
+            category: true,
+            author: {
+              select: {
+                id: true,
+                username: true,
+                profile: {
+                  select: {
+                    displayName: true,
+                    avatarUrl: true,
+                  },
+                },
+              },
+            },
+            tags: {
+              include: {
+                tag: true,
+              },
+            },
+            models: {
+              include: {
+                model: {
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    logoUrl: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        // Maintain score order and attach relevance scores
+        const articleMap = new Map(articles.map((a) => [a.id, a]));
+        const sortedArticles = scoredResults.map((result) => {
+          const article = articleMap.get(result.id);
+          if (article) {
+            return {
+              ...article,
+              relevanceScore: parseFloat(result.relevance_score),
+            };
+          }
+          return null;
+        }).filter((a): a is Article & { relevanceScore: number } => a !== null);
+
+        return sortedArticles;
+      }
+
+      // Fallback: Not enough related articles, fill with popular articles from same category
+      logger.info(`Insufficient related articles for ${articleId}, using fallback`);
+
+      const fallbackArticles = await prisma.article.findMany({
+        where: {
+          id: { not: articleId },
+          categoryId: sourceArticle.categoryId,
+          status: ArticleStatus.published,
+          publishedAt: { lte: new Date() },
+        },
+        include: {
+          category: true,
+          author: {
+            select: {
+              id: true,
+              username: true,
+              profile: {
+                select: {
+                  displayName: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          },
+          tags: {
+            include: {
+              tag: true,
+            },
+          },
+          models: {
+            include: {
+              model: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                  logoUrl: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: [
+          { viewCount: 'desc' },
+          { bookmarkCount: 'desc' },
+        ],
+        take: minResults,
+      });
+
+      // Merge scored results with fallback
+      const combinedResults = [
+        ...scoredResults.map((r) => {
+          const article = fallbackArticles.find((a) => a.id === r.id);
+          return article ? { ...article, relevanceScore: parseFloat(r.relevance_score) } : null;
+        }).filter((a): a is Article & { relevanceScore: number } => a !== null),
+        ...fallbackArticles
+          .filter((a) => !scoredResults.some((r) => r.id === a.id))
+          .slice(0, minResults - scoredResults.length),
+      ];
+
+      return combinedResults.slice(0, maxResults);
+    } catch (error) {
+      logger.error(`Failed to find related articles (advanced) for ${articleId}:`, error);
+      Sentry.captureException(error, {
+        tags: { repository: 'ArticleRepository', method: 'findRelatedAdvanced' },
+        extra: { articleId, minResults, maxResults },
+      });
+      // Return empty array instead of throwing
+      return [];
+    }
+  }
+
+  /**
+   * Get popular articles from a specific category (used as fallback)
+   */
+  async getPopularByCategoryId(
+    categoryId: string,
+    excludeId: string,
+    limit: number = 6
+  ): Promise<Article[]> {
+    try {
+      return await prisma.article.findMany({
+        where: {
+          id: { not: excludeId },
+          categoryId,
+          status: ArticleStatus.published,
+          publishedAt: { lte: new Date() },
+        },
+        include: {
+          category: true,
+          author: {
+            select: {
+              id: true,
+              username: true,
+              profile: {
+                select: {
+                  displayName: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          },
+          tags: {
+            include: {
+              tag: true,
+            },
+          },
+          models: {
+            include: {
+              model: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                  logoUrl: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: [
+          { viewCount: 'desc' },
+          { bookmarkCount: 'desc' },
+          { publishedAt: 'desc' },
+        ],
+        take: limit,
+      });
+    } catch (error) {
+      logger.error(`Failed to get popular articles for category ${categoryId}:`, error);
+      Sentry.captureException(error, {
+        tags: { repository: 'ArticleRepository', method: 'getPopularByCategoryId' },
+        extra: { categoryId, excludeId, limit },
+      });
       return [];
     }
   }

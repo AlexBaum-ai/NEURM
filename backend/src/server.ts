@@ -6,8 +6,11 @@ import env from '@/config/env';
 import logger from '@/utils/logger';
 import redisClient from '@/config/redisClient';
 import { setupSessionCleanupScheduler } from '@/jobs/schedulers/sessionCleanup.scheduler';
+import { setupArticleScheduler } from '@/jobs/schedulers/articleScheduler.scheduler';
 import { analyticsQueue, shutdownAnalyticsQueue } from '@/jobs/queues/analyticsQueue';
+import { articleSchedulerQueue, shutdownArticleSchedulerQueue } from '@/jobs/queues/articleSchedulerQueue';
 import processAnalyticsEvent from '@/jobs/workers/analyticsWorker';
+import processArticleScheduler from '@/jobs/workers/articleSchedulerWorker';
 
 const PORT = env.PORT || 3000;
 
@@ -33,6 +36,13 @@ const gracefulShutdown = (signal: string) => {
       logger.info('Analytics queue closed');
     } catch (error) {
       logger.error('Error closing analytics queue:', error);
+    }
+
+    try {
+      await shutdownArticleSchedulerQueue();
+      logger.info('Article scheduler queue closed');
+    } catch (error) {
+      logger.error('Error closing article scheduler queue:', error);
     }
 
     process.exit(0);
@@ -69,8 +79,13 @@ const server = app.listen(PORT, async () => {
   analyticsQueue.process(processAnalyticsEvent);
   logger.info('Analytics worker initialized');
 
+  // Initialize article scheduler worker
+  articleSchedulerQueue.process(processArticleScheduler);
+  logger.info('Article scheduler worker initialized');
+
   // Initialize scheduled jobs
   setupSessionCleanupScheduler();
+  setupArticleScheduler();
 });
 
 // Handle unhandled promise rejections

@@ -3,3 +3,4 @@ export { useArticles, useFeaturedArticles, useTrendingArticles } from './useArti
 export { useCategories } from './useCategories';
 export { useTags } from './useTags';
 export { useNewsFilters } from './useNewsFilters';
+export { useArticleAnalytics } from './useArticleAnalytics';

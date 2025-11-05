@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import ArticleController from './articles.controller';
+import articleRevisionRoutes from './articleRevisions.routes';
 import {
   authenticate,
   optionalAuth,
@@ -15,6 +16,9 @@ import { trackArticleAnalytics } from '@/middleware/analytics.middleware';
 
 const router = Router();
 const controller = new ArticleController();
+
+// Mount revision routes
+router.use('/', articleRevisionRoutes);
 
 // Rate limiters
 const publicReadLimiter = createRateLimiter({
@@ -58,6 +62,21 @@ router.get(
   optionalAuth,
   trackArticleAnalytics,
   controller.getArticleBySlug
+);
+
+/**
+ * @route   GET /api/v1/news/articles/:id/related
+ * @desc    Get related articles using advanced scoring algorithm
+ * @access  Public
+ * @param   id - Article UUID
+ * @returns Min 3, max 6 related articles
+ * @cache   1 hour TTL
+ * @performance <200ms target response time
+ */
+router.get(
+  '/:id/related',
+  publicReadLimiter,
+  controller.getRelatedArticles
 );
 
 // ============================================================================
@@ -119,6 +138,49 @@ router.delete(
   authenticate,
   requireAdmin,
   controller.deleteArticle
+);
+
+/**
+ * @route   GET /api/v1/admin/articles/scheduled
+ * @desc    List upcoming scheduled articles
+ * @access  Admin only
+ * @query   page, limit, sortBy, sortOrder
+ */
+router.get(
+  '/admin/scheduled',
+  publicReadLimiter,
+  authenticate,
+  requireAdmin,
+  controller.listScheduledArticles
+);
+
+/**
+ * @route   POST /api/v1/admin/articles/:id/schedule
+ * @desc    Schedule article for publishing
+ * @access  Admin only
+ * @param   id - Article UUID
+ * @body    ScheduleArticleInput { scheduledAt: ISO 8601 datetime }
+ */
+router.post(
+  '/admin/:id/schedule',
+  adminWriteLimiter,
+  authenticate,
+  requireAdmin,
+  controller.scheduleArticle
+);
+
+/**
+ * @route   DELETE /api/v1/admin/articles/:id/schedule
+ * @desc    Cancel scheduled publishing
+ * @access  Admin only
+ * @param   id - Article UUID
+ */
+router.delete(
+  '/admin/:id/schedule',
+  adminWriteLimiter,
+  authenticate,
+  requireAdmin,
+  controller.cancelSchedule
 );
 
 export default router;

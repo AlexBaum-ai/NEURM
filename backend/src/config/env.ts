@@ -50,6 +50,7 @@ const envSchema = z.object({
   AWS_SECRET_ACCESS_KEY: z.string().optional(),
   AWS_S3_BUCKET: z.string().optional(),
   AWS_REGION: z.string().default('eu-west-1'),
+  CDN_URL: z.string().url().optional(), // Cloudflare/CloudFront CDN URL
 
   // Sentry
   SENTRY_DSN: z.string().url().optional(),

@@ -1,17 +1,23 @@
+import crypto from 'crypto';
+import { PrismaClient } from '@prisma/client';
 import { redis } from '@/config/redis';
 import { trackEvent, AnalyticsEventData } from '@/jobs/queues/analyticsQueue';
 import logger from '@/utils/logger';
 import * as Sentry from '@sentry/node';
+import ArticleViewsRepository from './articleViews.repository';
+
+const prisma = new PrismaClient();
 
 /**
  * Analytics Service
  *
  * Handles tracking of user interactions with articles and other content.
  * Provides methods for:
- * - View tracking (with IP deduplication)
+ * - View tracking (with IP deduplication - 24h window)
  * - Read tracking (completed reading)
  * - Share tracking
  * - Bookmark tracking
+ * - Analytics statistics (views, engagement metrics)
  *
  * All tracking is asynchronous and non-blocking.
  */
@@ -47,24 +53,47 @@ interface TrackBookmarkParams {
 }
 
 class AnalyticsService {
-  private readonly VIEW_DEDUP_TTL = 3600; // 1 hour in seconds
+  private readonly VIEW_DEDUP_TTL = 86400; // 24 hours in seconds
   private readonly READ_TIME_WPM = 200; // Average reading speed: 200 words per minute
+  private readonly viewsRepository: ArticleViewsRepository;
+
+  constructor() {
+    this.viewsRepository = new ArticleViewsRepository(prisma);
+  }
 
   /**
    * Track article view with IP deduplication
-   * One view per IP per hour
+   * One view per user/IP per 24 hours
    */
   async trackArticleView(params: TrackViewParams): Promise<boolean> {
     const { articleId, userId, sessionId, ipAddress, userAgent, referrer } = params;
 
     try {
-      // Check if this IP has viewed this article recently
+      // Check for duplicate view (authenticated user)
+      if (userId) {
+        const hasViewed = await this.viewsRepository.hasRecentViewByUser(articleId, userId, 24);
+        if (hasViewed) {
+          logger.debug('Article view deduplicated (user)', { articleId, userId });
+          return false;
+        }
+      }
+      // Check for duplicate view (anonymous user by IP)
+      else if (ipAddress) {
+        const ipHash = this.hashIp(ipAddress);
+        const hasViewed = await this.viewsRepository.hasRecentViewByIp(articleId, ipHash, 24);
+        if (hasViewed) {
+          logger.debug('Article view deduplicated (IP)', { articleId, ipHash: ipHash.substring(0, 8) });
+          return false;
+        }
+      }
+
+      // Also check Redis cache for faster deduplication
       if (ipAddress) {
         const dedupKey = this.getViewDedupKey(articleId, ipAddress);
         const alreadyViewed = await redis.get(dedupKey);
 
         if (alreadyViewed) {
-          logger.debug('Article view deduplicated', { articleId, ipAddress });
+          logger.debug('Article view deduplicated (Redis)', { articleId });
           return false; // View not counted (duplicate)
         }
 
@@ -72,7 +101,7 @@ class AnalyticsService {
         await redis.setex(dedupKey, this.VIEW_DEDUP_TTL, '1');
       }
 
-      // Queue analytics event
+      // Queue analytics event for background processing
       const eventData: AnalyticsEventData = {
         eventType: 'article_view',
         entityType: 'article',
@@ -236,6 +265,61 @@ class AnalyticsService {
       await redis.del(dedupKey);
     } catch (error) {
       logger.error('Failed to clear view dedup:', error);
+    }
+  }
+
+  /**
+   * Hash IP address using SHA-256 for privacy
+   */
+  private hashIp(ipAddress: string): string {
+    return crypto.createHash('sha256').update(ipAddress).digest('hex');
+  }
+
+  /**
+   * Get article analytics statistics
+   */
+  async getArticleAnalytics(articleId: string, daysAgo?: number) {
+    try {
+      return await this.viewsRepository.getViewStats(articleId, daysAgo);
+    } catch (error) {
+      logger.error('Failed to get article analytics:', error);
+      Sentry.captureException(error, {
+        tags: { operation: 'get_article_analytics' },
+        extra: { articleId, daysAgo },
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get popular articles
+   */
+  async getPopularArticles(limit: number = 10, daysAgo?: number) {
+    try {
+      return await this.viewsRepository.getPopularArticles(limit, daysAgo);
+    } catch (error) {
+      logger.error('Failed to get popular articles:', error);
+      Sentry.captureException(error, {
+        tags: { operation: 'get_popular_articles' },
+        extra: { limit, daysAgo },
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get trending articles
+   */
+  async getTrendingArticles(limit: number = 10) {
+    try {
+      return await this.viewsRepository.getTrendingArticles(limit);
+    } catch (error) {
+      logger.error('Failed to get trending articles:', error);
+      Sentry.captureException(error, {
+        tags: { operation: 'get_trending_articles' },
+        extra: { limit },
+      });
+      throw error;
     }
   }
 }

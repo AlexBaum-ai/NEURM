@@ -17,7 +17,11 @@ import { errorHandler, notFoundHandler } from '@/middleware/errorHandler.middlew
 import userRoutes from '@/modules/users/users.routes';
 import articleRoutes from '@/modules/news/articles.routes';
 import newsRoutes from '@/modules/news/news.routes';
+import rssRoutes from '@/modules/news/rss.routes';
 import analyticsRoutes from '@/modules/analytics/analytics.routes';
+import modelRoutes from '@/modules/models/models.routes';
+import mediaRoutes from '@/modules/media/media.routes';
+import folderRoutes from '@/modules/media/folder.routes';
 
 const app: Application = express();
 
@@ -79,6 +83,12 @@ app.use('/api/v1/news', newsRoutes);
 app.use('/api/v1/news/articles', articleRoutes);
 app.use('/api/v1/admin/articles', articleRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
+app.use('/api/v1/models', modelRoutes);
+app.use('/api/v1/media', mediaRoutes);
+app.use('/api/v1/media/folders', folderRoutes);
+
+// RSS Feed routes (no version prefix for feed URLs)
+app.use('/api/feed', rssRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

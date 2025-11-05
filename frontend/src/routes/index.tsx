@@ -15,7 +15,15 @@ const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage')
 // Lazy load news pages
 const NewsHomePage = lazy(() => import('@/features/news/pages/NewsHomePage'));
 const ArticleDetailPage = lazy(() => import('@/features/news/pages/ArticleDetailPage').then(m => ({ default: m.ArticleDetailPage })));
+const ArticleEditPage = lazy(() => import('@/features/news/pages/ArticleEditPage'));
 const BookmarksPage = lazy(() => import('@/features/bookmarks/pages/BookmarksPage').then(m => ({ default: m.BookmarksPage })));
+
+// Lazy load media pages
+const MediaLibraryPage = lazy(() => import('@/features/media/pages/MediaLibraryPage'));
+
+// Lazy load model tracker pages
+const ModelListPage = lazy(() => import('@/features/models/pages/ModelListPage').then(m => ({ default: m.ModelListPage })));
+const ModelDetailPage = lazy(() => import('@/features/models/pages/ModelDetailPage').then(m => ({ default: m.ModelDetailPage })));
 
 // Loading fallback
 const PageLoader = () => (
@@ -163,10 +171,42 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'admin/articles/:id/edit',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ArticleEditPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'admin/media',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <MediaLibraryPage />
+          </Suspense>
+        ),
+      },
+      {
         path: 'bookmarks',
         element: (
           <Suspense fallback={<PageLoader />}>
             <BookmarksPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'models',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ModelListPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'models/:slug',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ModelDetailPage />
           </Suspense>
         ),
       },

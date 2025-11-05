@@ -24,6 +24,45 @@ const analyticsLimiter = createRateLimiter({
 // ============================================================================
 
 /**
+ * @route   GET /api/v1/analytics/articles/popular
+ * @desc    Get popular articles based on view count
+ * @access  Public
+ * @query   { limit?: number, days?: number }
+ * @note    Must be defined before /:articleId route
+ */
+router.get(
+  '/articles/popular',
+  analyticsLimiter,
+  controller.getPopularArticles
+);
+
+/**
+ * @route   GET /api/v1/analytics/articles/trending
+ * @desc    Get trending articles using weighted scoring algorithm
+ * @access  Public
+ * @query   { limit?: number }
+ * @note    Must be defined before /:articleId route
+ */
+router.get(
+  '/articles/trending',
+  analyticsLimiter,
+  controller.getTrendingArticles
+);
+
+/**
+ * @route   POST /api/v1/analytics/articles/:articleId/view
+ * @desc    Track article view with engagement metrics
+ * @access  Public (optional auth)
+ * @body    { timeOnPage?: number, scrollDepth?: number }
+ */
+router.post(
+  '/articles/:articleId/view',
+  analyticsLimiter,
+  optionalAuth,
+  controller.trackArticleView
+);
+
+/**
  * @route   POST /api/v1/analytics/articles/:articleId/read
  * @desc    Track article read completion
  * @access  Public (optional auth)
@@ -47,6 +86,18 @@ router.post(
   analyticsLimiter,
   optionalAuth,
   controller.trackArticleShare
+);
+
+/**
+ * @route   GET /api/v1/analytics/articles/:articleId
+ * @desc    Get article analytics (views, engagement, bounce rate)
+ * @access  Public
+ * @query   { days?: number }
+ */
+router.get(
+  '/articles/:articleId',
+  analyticsLimiter,
+  controller.getArticleAnalytics
 );
 
 /**

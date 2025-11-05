@@ -242,6 +242,9 @@ model User {
   sentMessages     Message[]        @relation("MessageSender")
   receivedMessages Message[]        @relation("MessageRecipient")
   analyticsEvents  AnalyticsEvent[]
+  articleViews     ArticleView[]
+  modelFollows     ModelFollow[]    @relation("UserModelFollows")
+  uploadedMedia    MediaFile[]      @relation("MediaUploader")
 
   @@index([email])
   @@index([username])
@@ -520,6 +523,7 @@ model Article {
   models    ArticleModel[]
   revisions ArticleRevision[]
   bookmarks Bookmark[]
+  views     ArticleView[]
 
   @@index([slug])
   @@index([status])
@@ -586,20 +590,60 @@ model LLMModel {
   bestFor       String[]      @map("best_for")
   notIdealFor   String[]      @map("not_ideal_for")
   benchmarks    Json?
+  apiQuickstart Json?         @map("api_quickstart")
   articleCount  Int           @default(0) @map("article_count")
   jobCount      Int           @default(0) @map("job_count")
+  viewCount     Int           @default(0) @map("view_count")
+  followCount   Int           @default(0) @map("follow_count")
   createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  articles   ArticleModel[]
-  userModels UserModel[]
-  jobs       JobModel[]
+  articles        ArticleModel[]
+  userModels      UserModel[]
+  jobs            JobModel[]
+  modelBenchmarks ModelBenchmark[]
+  modelFollows    ModelFollow[]
 
   @@index([slug])
   @@index([provider])
   @@index([category])
   @@index([status])
+  @@index([viewCount(sort: Desc)])
+  @@index([followCount(sort: Desc)])
   @@map("llm_models")
+}
+
+model ModelBenchmark {
+  id            String   @id @default(uuid())
+  modelId       String   @map("model_id")
+  benchmarkName String   @map("benchmark_name") @db.VarChar(100)
+  score         Decimal  @db.Decimal(10, 2)
+  maxScore      Decimal? @map("max_score") @db.Decimal(10, 2)
+  metric        String?  @db.VarChar(50)
+  testDate      DateTime @map("test_date") @db.Date
+  sourceUrl     String?  @map("source_url") @db.VarChar(500)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  model LLMModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@unique([modelId, benchmarkName])
+  @@index([modelId])
+  @@index([benchmarkName])
+  @@map("model_benchmarks")
+}
+
+model ModelFollow {
+  modelId   String   @map("model_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  model LLMModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  user  User     @relation("UserModelFollows", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([modelId, userId])
+  @@index([modelId])
+  @@index([userId])
+  @@map("model_follows")
 }
 
 model ArticleModel {
@@ -650,6 +694,32 @@ model Bookmark {
   @@index([articleId])
   @@index([collectionId])
   @@map("bookmarks")
+}
+
+model ArticleView {
+  id          String   @id @default(uuid())
+  articleId   String   @map("article_id")
+  userId      String?  @map("user_id")
+  ipHash      String?  @map("ip_hash") @db.VarChar(64)
+  sessionId   String?  @map("session_id") @db.VarChar(255)
+  viewedAt    DateTime @default(now()) @map("viewed_at") @db.Timestamptz(3)
+  timeOnPage  Int?     @default(0) @map("time_on_page")
+  scrollDepth Int?     @default(0) @map("scroll_depth")
+  userAgent   String?  @map("user_agent") @db.Text
+  referrer    String?  @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([articleId])
+  @@index([userId])
+  @@index([viewedAt(sort: Desc)])
+  @@index([articleId, viewedAt(sort: Desc)])
+  @@index([articleId, userId, viewedAt])
+  @@index([articleId, ipHash, viewedAt])
+  @@index([articleId, viewedAt, timeOnPage, scrollDepth])
+  @@map("article_views")
 }
 
 // ============================================================================
@@ -1154,4 +1224,110 @@ model GlossaryTerm {
   @@index([term])
   @@index([category])
   @@map("glossary_terms")
+}
+
+// ============================================================================
+// MEDIA MODULE DOMAIN
+// ============================================================================
+
+enum MediaType {
+  image
+  video
+  document
+  audio
+  other
+}
+
+model MediaFolder {
+  id           String   @id @default(uuid())
+  name         String   @db.VarChar(100)
+  slug         String   @unique @db.VarChar(100)
+  description  String?  @db.Text
+  parentId     String?  @map("parent_id")
+  level        Int      @default(1)
+  displayOrder Int      @default(0) @map("display_order")
+  fileCount    Int      @default(0) @map("file_count")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  parent   MediaFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children MediaFolder[] @relation("FolderHierarchy")
+  files    MediaFile[]
+
+  @@index([parentId])
+  @@index([slug])
+  @@index([parentId, displayOrder])
+  @@map("media_folders")
+}
+
+model MediaFile {
+  id               String    @id @default(uuid())
+  filename         String    @db.VarChar(255)
+  originalFilename String    @map("original_filename") @db.VarChar(255)
+  mimeType         String    @map("mime_type") @db.VarChar(100)
+  fileSize         Int       @map("file_size")
+  fileType         MediaType @map("file_type")
+  folderId         String?   @map("folder_id")
+  url              String    @db.VarChar(500)
+  cdnUrl           String?   @map("cdn_url") @db.VarChar(500)
+  storageProvider  String    @default("local") @map("storage_provider") @db.VarChar(50)
+  storageKey       String    @map("storage_key") @db.VarChar(500)
+  altText          String?   @map("alt_text") @db.VarChar(255)
+  caption          String?   @db.Text
+  width            Int?
+  height           Int?
+  duration         Int?
+  tags             String[]
+  metadata         Json?
+  uploadedById     String    @map("uploaded_by_id")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  folder     MediaFolder?     @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  uploader   User             @relation("MediaUploader", fields: [uploadedById], references: [id])
+  thumbnails MediaThumbnail[]
+  usage      MediaUsage[]
+
+  @@index([folderId])
+  @@index([uploadedById])
+  @@index([fileType])
+  @@index([mimeType])
+  @@index([createdAt(sort: Desc)])
+  @@map("media_files")
+}
+
+model MediaThumbnail {
+  id         String   @id @default(uuid())
+  mediaId    String   @map("media_id")
+  size       String   @db.VarChar(20)
+  width      Int
+  height     Int
+  url        String   @db.VarChar(500)
+  cdnUrl     String?  @map("cdn_url") @db.VarChar(500)
+  storageKey String   @map("storage_key") @db.VarChar(500)
+  fileSize   Int      @map("file_size")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  media MediaFile @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, size])
+  @@index([mediaId])
+  @@map("media_thumbnails")
+}
+
+model MediaUsage {
+  id           String   @id @default(uuid())
+  mediaId      String   @map("media_id")
+  entityType   String   @map("entity_type") @db.VarChar(50)
+  entityId     String   @map("entity_id")
+  fieldName    String?  @map("field_name") @db.VarChar(100)
+  usageContext String?  @map("usage_context") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  media MediaFile @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, entityType, entityId, fieldName])
+  @@index([mediaId])
+  @@index([entityType, entityId])
+  @@map("media_usage")
 }
