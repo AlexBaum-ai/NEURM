@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/node';
 import { Job, JobStatus } from '@prisma/client';
 import JobRepository from './jobs.repository';
+import MatchingService from './services/matchingService';
 import {
   CreateJobInput,
   UpdateJobInput,
@@ -21,9 +22,11 @@ import prisma from '@/config/database';
  */
 export class JobService {
   private repository: JobRepository;
+  private matchingService: MatchingService;
 
-  constructor(repository?: JobRepository) {
+  constructor(repository?: JobRepository, matchingService?: MatchingService) {
     this.repository = repository || new JobRepository();
+    this.matchingService = matchingService || new MatchingService();
   }
 
   /**
@@ -211,8 +214,8 @@ export class JobService {
   /**
    * List jobs with filters and pagination
    */
-  async listJobs(query: ListJobsQuery): Promise<{
-    jobs: Job[];
+  async listJobs(query: ListJobsQuery, userId?: string): Promise<{
+    jobs: any[];
     pagination: {
       page: number;
       limit: number;
@@ -227,19 +230,86 @@ export class JobService {
       const limit = query.limit || 20;
       const totalPages = Math.ceil(total / limit);
 
+      let jobsWithMatch = jobs;
+
+      // If match scoring is requested and user is authenticated
+      if (query.match && userId) {
+        const jobIds = jobs.map(job => job.id);
+        const matchScores = await this.matchingService.getMatchScoresForJobs(jobIds, userId);
+
+        // Attach match scores to jobs
+        jobsWithMatch = jobs.map(job => ({
+          ...job,
+          matchScore: matchScores.get(job.id) || null,
+        }));
+
+        // Filter by minimum match score if specified
+        if (query.minMatchScore) {
+          jobsWithMatch = jobsWithMatch.filter(
+            job => job.matchScore && job.matchScore.score >= query.minMatchScore!
+          );
+        }
+
+        // Sort by match score if requested
+        if (query.sortBy === 'matchScore') {
+          jobsWithMatch.sort((a, b) => {
+            const scoreA = a.matchScore?.score || 0;
+            const scoreB = b.matchScore?.score || 0;
+            return query.sortOrder === 'desc' ? scoreB - scoreA : scoreA - scoreB;
+          });
+        }
+      }
+
       return {
-        jobs,
+        jobs: jobsWithMatch,
         pagination: {
           page,
           limit,
-          total,
-          totalPages,
+          total: jobsWithMatch.length,
+          totalPages: Math.ceil(jobsWithMatch.length / limit),
         },
       };
     } catch (error) {
       Sentry.captureException(error, {
         tags: { service: 'JobService', method: 'listJobs' },
         extra: { query },
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get match score for a specific job
+   */
+  async getJobMatch(jobId: string, userId: string): Promise<any> {
+    try {
+      // Verify job exists
+      const job = await this.repository.findById(jobId);
+
+      if (!job) {
+        throw new NotFoundError('Job not found');
+      }
+
+      // Calculate match score
+      const matchScore = await this.matchingService.calculateMatchScore(jobId, userId);
+
+      return {
+        job: {
+          id: job.id,
+          title: job.title,
+          slug: job.slug,
+          company: job.company,
+        },
+        match: matchScore,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+
+      Sentry.captureException(error, {
+        tags: { service: 'JobService', method: 'getJobMatch' },
+        extra: { jobId, userId },
       });
       throw error;
     }

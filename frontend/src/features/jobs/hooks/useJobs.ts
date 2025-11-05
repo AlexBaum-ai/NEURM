@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { jobsApi } from '../api/jobsApi';
-import type { JobFilters } from '../types';
+import type { JobFilters, ApplicationFilterType } from '../types';
 
 interface UseJobsParams {
   limit?: number;
@@ -124,5 +124,129 @@ export const useSavedJobs = () => {
     queryKey: ['savedJobs'],
     queryFn: () => jobsApi.getSavedJobs(),
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+/**
+ * Hook for fetching job match score and breakdown
+ */
+export const useJobMatch = (slug: string, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['jobMatch', slug],
+    queryFn: () => jobsApi.getJobMatch(slug),
+    enabled: enabled && !!slug,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    retry: false, // Don't retry on auth errors
+  });
+};
+
+/**
+ * Hook for fetching user's applications with real-time updates (polling)
+ */
+export const useApplications = (filter?: ApplicationFilterType) => {
+  return useQuery({
+    queryKey: ['applications', filter],
+    queryFn: () => jobsApi.getApplications(filter),
+    staleTime: 30 * 1000, // 30 seconds
+    refetchInterval: 30 * 1000, // Refetch every 30 seconds for real-time updates
+  });
+};
+
+/**
+ * Hook for fetching a single application by ID
+ */
+export const useApplication = (id: string) => {
+  return useQuery({
+    queryKey: ['application', id],
+    queryFn: () => jobsApi.getApplicationById(id),
+    enabled: !!id,
+    staleTime: 30 * 1000, // 30 seconds
+  });
+};
+
+/**
+ * Hook for withdrawing an application
+ */
+export const useWithdrawApplication = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => jobsApi.withdrawApplication(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      queryClient.invalidateQueries({ queryKey: ['application'] });
+    },
+  });
+};
+
+/**
+ * Hook for exporting applications
+ */
+export const useExportApplications = () => {
+  return useMutation({
+    mutationFn: () => jobsApi.exportApplications(),
+  });
+};
+
+/**
+ * Hook for fetching user's job alerts
+ */
+export const useJobAlerts = () => {
+  return useQuery({
+    queryKey: ['jobAlerts'],
+    queryFn: () => jobsApi.getJobAlerts(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+/**
+ * Hook for creating a new job alert
+ */
+export const useCreateJobAlert = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: any) => jobsApi.createJobAlert(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobAlerts'] });
+    },
+  });
+};
+
+/**
+ * Hook for updating a job alert
+ */
+export const useUpdateJobAlert = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      jobsApi.updateJobAlert(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobAlerts'] });
+    },
+  });
+};
+
+/**
+ * Hook for deleting a job alert
+ */
+export const useDeleteJobAlert = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => jobsApi.deleteJobAlert(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobAlerts'] });
+    },
+  });
+};
+
+/**
+ * Hook for testing a job alert
+ */
+export const useTestJobAlert = () => {
+  return useMutation({
+    mutationFn: (id: string) => jobsApi.testJobAlert(id),
   });
 };

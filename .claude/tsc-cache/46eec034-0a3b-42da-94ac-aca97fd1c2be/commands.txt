@@ -1,0 +1,2 @@
+frontend:build:cd /home/user/NEURM/frontend && npm run build
+frontend:tsc:cd /home/user/NEURM/frontend && npx tsc --project tsconfig.app.json --noEmit

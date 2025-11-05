@@ -30,7 +30,7 @@
         "Performance: calculate matches in < 100ms"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "algorithm": "Weighted scoring: skills * 0.4 + tech_stack * 0.2 + experience * 0.15 + location * 0.1 + salary * 0.1 + culture * 0.05",
         "skills": "Jaccard similarity on skill sets with proficiency weighting",
@@ -58,7 +58,7 @@
         "Anonymous users see generic 'Create profile to see match score'"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "components": "MatchBadge, MatchExplanation, MatchBreakdown",
         "chart": "Recharts for factor breakdown visualization",
@@ -89,7 +89,7 @@
         "Application timestamp and source tracking"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "table": "applications (id, job_id, user_id, resume_url, cover_letter, screening_answers, status, applied_at, updated_at)",
         "unique": "UNIQUE(user_id, job_id) prevent duplicates",
@@ -120,7 +120,7 @@
         "Accessible (focus management, keyboard nav)"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "components": "ApplyModal, ApplicationForm, ScreeningQuestions",
         "validation": "Check required fields before enabling submit",
@@ -147,7 +147,7 @@
         "Performance: dashboard loads < 2s"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "joins": "JOIN jobs, companies for full application context",
         "history": "application_status_history table logs all status changes",
@@ -208,7 +208,8 @@
         "Track alert effectiveness (jobs clicked from alert emails)"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
+      "completedAt": "2025-11-05T19:52:30Z",
       "technicalNotes": {
         "tables": "saved_jobs (user_id, job_id, saved_at), job_alerts (user_id, name, criteria_json, active)",
         "cron": "Bull queue runs daily at 9am, checks jobs created in last 24h against alerts",
@@ -239,7 +240,8 @@
         "Responsive design"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
+      "completedAt": "2025-11-05T20:15:00Z",
       "technicalNotes": {
         "routes": "/jobs/saved, /jobs/alerts",
         "components": "SavedJobs, SaveButton, JobAlerts, AlertForm",
