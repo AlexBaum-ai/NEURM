@@ -12,6 +12,7 @@ interface Poll {
   question: string;
   options: PollOption[];
   multipleChoice: boolean;
+  isAnonymous: boolean;
   expiresAt?: string;
 }
 
@@ -31,6 +32,7 @@ export const PollBuilder: React.FC<PollBuilderProps> = ({ poll, onChange, error 
       { text: '', votes: 0 },
     ],
     multipleChoice: false,
+    isAnonymous: false,
   });
 
   const handleToggle = () => {
@@ -72,6 +74,11 @@ export const PollBuilder: React.FC<PollBuilderProps> = ({ poll, onChange, error 
   const toggleMultipleChoice = () => {
     if (!poll) return;
     onChange({ ...poll, multipleChoice: !poll.multipleChoice });
+  };
+
+  const toggleAnonymous = () => {
+    if (!poll) return;
+    onChange({ ...poll, isAnonymous: !poll.isAnonymous });
   };
 
   const updateExpiresAt = (expiresAt: string) => {
@@ -173,6 +180,19 @@ export const PollBuilder: React.FC<PollBuilderProps> = ({ poll, onChange, error 
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">
                 Allow multiple choices
+              </span>
+            </label>
+
+            {/* Anonymous Voting */}
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={poll.isAnonymous}
+                onChange={toggleAnonymous}
+                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-2 focus:ring-primary-500 dark:border-gray-600"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                Anonymous voting
               </span>
             </label>
 

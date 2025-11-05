@@ -9,10 +9,26 @@ import topicRoutes from './routes/topicRoutes';
 import replyRoutes from './routes/replyRoutes';
 import voteRoutes from './routes/voteRoutes';
 import reputationRoutes from './routes/reputationRoutes';
+import leaderboardRoutes from './routes/leaderboardRoutes';
+import badgeRoutes from './routes/badgeRoutes';
+import userBadgeRoutes from './routes/userBadgeRoutes';
+import pollRoutes from './routes/pollRoutes';
+import promptRoutes from './prompts/prompts.routes';
 import { registerForumDependencies } from './forum.container';
 
 // Export routes
-export { categoryRoutes, topicRoutes, replyRoutes, voteRoutes, reputationRoutes };
+export {
+  categoryRoutes,
+  topicRoutes,
+  replyRoutes,
+  voteRoutes,
+  reputationRoutes,
+  leaderboardRoutes,
+  badgeRoutes,
+  userBadgeRoutes,
+  pollRoutes,
+  promptRoutes,
+};
 
 // Export DI registration
 export { registerForumDependencies };
@@ -33,6 +49,18 @@ export { VoteController } from './controllers/VoteController';
 export { ReputationService } from './services/reputationService';
 export { ReputationRepository } from './repositories/ReputationRepository';
 export { ReputationController } from './controllers/ReputationController';
+export { LeaderboardService } from './services/leaderboardService';
+export { LeaderboardRepository } from './repositories/LeaderboardRepository';
+export { LeaderboardController } from './controllers/LeaderboardController';
+export { BadgeService } from './services/badgeService';
+export { BadgeRepository } from './repositories/BadgeRepository';
+export { BadgeController } from './controllers/BadgeController';
+export { PollService } from './services/pollService';
+export { PollRepository } from './repositories/PollRepository';
+export { PollController } from './controllers/PollController';
+export { default as PromptService } from './prompts/prompts.service';
+export { default as PromptRepository } from './prompts/prompts.repository';
+export { default as PromptController } from './prompts/prompts.controller';
 
 // Export types and validators
 export * from './validators/categoryValidators';
@@ -40,3 +68,6 @@ export * from './validators/topicValidators';
 export * from './validators/replyValidators';
 export * from './validators/voteValidators';
 export * from './validators/reputationValidators';
+export * from './validators/badgeValidators';
+export * from './validators/pollValidators';
+export * from './prompts/prompts.validation';

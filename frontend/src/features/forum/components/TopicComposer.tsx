@@ -37,6 +37,7 @@ const topicFormSchema = z.object({
       question: z.string().min(5).max(255),
       options: z.array(z.object({ text: z.string(), votes: z.number() })).min(2).max(10),
       multipleChoice: z.boolean(),
+      isAnonymous: z.boolean(),
       expiresAt: z.string().optional(),
     })
     .nullable()
@@ -198,7 +199,11 @@ export const TopicComposer: React.FC<TopicComposerProps> = ({
           category={getCategoryName(formValues.categoryId)}
           tags={formValues.tags}
           images={formValues.images}
-          poll={formValues.poll}
+          poll={formValues.poll ? {
+            ...formValues.poll,
+            allowMultiple: formValues.poll.multipleChoice,
+            endsAt: formValues.poll.expiresAt,
+          } : null}
         />
       ) : (
         // Edit Mode

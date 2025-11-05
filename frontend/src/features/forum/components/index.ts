@@ -33,6 +33,10 @@ export { default as QuoteBlock } from './QuoteBlock';
 export { VoteButton } from './VoteButton';
 export { VotingWidget } from './VotingWidget';
 
+// Poll Components
+export { PollVoting } from './PollVoting';
+export { PollResults } from './PollResults';
+
 // Reputation Components
 export { default as ReputationBadge } from './ReputationBadge';
 export { default as ReputationWidget } from './ReputationWidget';
@@ -55,3 +59,20 @@ export { MergeTopicsModal } from './MergeTopicsModal';
 export { UserModerationPanel } from './UserModerationPanel';
 export { ModerationLog } from './ModerationLog';
 export { TopicStatusIndicators, ReplyStatusIndicators } from './TopicStatusIndicators';
+
+// Prompt Library Components
+export { default as PromptCard } from './PromptCard';
+export { default as StarRating } from './StarRating';
+
+// Badge Components
+export { default as BadgeCard } from './BadgeCard';
+export { default as BadgeProgress } from './BadgeProgress';
+export { default as BadgeGallery } from './BadgeGallery';
+export { default as BadgeModal } from './BadgeModal';
+export { default as BadgeShareButton } from './BadgeShareButton';
+export { default as ProfileBadgesSection } from './ProfileBadgesSection';
+export {
+  default as BadgeNotificationContent,
+  useBadgeNotification,
+  BadgeNotificationListener,
+} from './BadgeNotification';

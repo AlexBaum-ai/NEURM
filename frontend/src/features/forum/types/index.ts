@@ -186,8 +186,13 @@ export interface TopicPoll {
   topicId: string;
   question: string;
   allowMultiple: boolean;
+  isAnonymous: boolean;
   endsAt: string | null;
+  totalVotes: number;
+  userHasVoted: boolean;
   options: PollOption[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PollOption {
@@ -197,6 +202,27 @@ export interface PollOption {
   voteCount: number;
   displayOrder: number;
   userVoted?: boolean;
+}
+
+// Poll input types
+export interface CreatePollInput {
+  topicId: string;
+  question: string;
+  allowMultiple: boolean;
+  isAnonymous: boolean;
+  endsAt?: string;
+  options: string[]; // Array of option texts
+}
+
+export interface VotePollInput {
+  optionIds: string[]; // Array of option IDs to vote for
+}
+
+export interface PollResponse {
+  success: boolean;
+  data: {
+    poll: TopicPoll;
+  };
 }
 
 // Topic filter and query types
@@ -237,6 +263,7 @@ export interface CreateTopicInput {
   poll?: {
     question: string;
     allowMultiple: boolean;
+    isAnonymous: boolean;
     endsAt?: string;
     options: string[];
   };
@@ -505,3 +532,10 @@ export * from './moderation';
 
 // Re-export report types
 export * from './report';
+
+// Re-export prompt types
+export * from './prompt';
+
+// Re-export leaderboard types
+export * from './leaderboard';
+\n// Re-export badge types\nexport * from './badge';

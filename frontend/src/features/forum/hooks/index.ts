@@ -20,6 +20,9 @@ export {
 export { useVote } from './useVote';
 export { useUserVotes } from './useUserVotes';
 
+// Poll Hooks
+export * from './usePolls';
+
 // Reputation Hooks
 export { useReputation, useReputationPermissions, useReputationLevel } from './useReputation';
 
@@ -29,3 +32,4 @@ export { useSearchSuggestions } from './useSearchSuggestions';
 export { useSavedSearches } from './useSavedSearches';
 export { useSearchHistory } from './useSearchHistory';
 export { usePopularSearches } from './usePopularSearches';
+\nexport * from './useBadges';
