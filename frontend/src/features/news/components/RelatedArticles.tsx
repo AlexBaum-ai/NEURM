@@ -3,15 +3,29 @@ import { Link } from 'react-router-dom';
 import { Clock, ArrowRight } from 'lucide-react';
 import type { RelatedArticle } from '../types';
 import { formatDistanceToNow } from '../utils/dateUtils';
+import { trackRelatedArticleClick } from '@/lib/analytics';
 
 interface RelatedArticlesProps {
   articles: RelatedArticle[];
+  sourceArticleId: string;
+  sourceArticleSlug: string;
 }
 
-export const RelatedArticles: React.FC<RelatedArticlesProps> = ({ articles }) => {
+export const RelatedArticles: React.FC<RelatedArticlesProps> = ({ articles, sourceArticleId, sourceArticleSlug }) => {
   if (articles.length === 0) {
     return null;
   }
+
+  const handleArticleClick = (article: RelatedArticle, position: number) => {
+    trackRelatedArticleClick({
+      articleId: article.id,
+      articleSlug: article.slug,
+      articleTitle: article.title,
+      sourceArticleId,
+      sourceArticleSlug,
+      position,
+    });
+  };
 
   return (
     <section className="mt-16 pt-8 border-t border-gray-200 dark:border-gray-800">
@@ -20,10 +34,11 @@ export const RelatedArticles: React.FC<RelatedArticlesProps> = ({ articles }) =>
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {articles.map((article) => (
+        {articles.map((article, index) => (
           <Link
             key={article.id}
             to={`/news/${article.slug}`}
+            onClick={() => handleArticleClick(article, index)}
             className="group bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-lg transition-shadow"
           >
             {/* Featured image */}

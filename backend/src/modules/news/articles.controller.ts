@@ -8,9 +8,13 @@ import {
   listArticlesQuerySchema,
   articleSlugParamSchema,
   articleIdParamSchema,
+  scheduleArticleSchema,
+  listScheduledArticlesQuerySchema,
   CreateArticleInput,
   UpdateArticleInput,
   ListArticlesQuery,
+  ScheduleArticleInput,
+  ListScheduledArticlesQuery,
 } from './articles.validation';
 import { BadRequestError, ValidationError } from '@/utils/errors';
 import logger from '@/utils/logger';
@@ -285,6 +289,187 @@ export class ArticleController {
         extra: {
           id: req.params.id,
           userId: req.user?.id,
+        },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * GET /api/v1/news/articles/:id/related
+   * Get related articles using advanced scoring algorithm
+   * Returns 3-6 related articles based on category, tags, and content similarity
+   */
+  getRelatedArticles = async (req: Request, res: Response): Promise<void> => {
+    try {
+      // Validate ID parameter
+      const validationResult = articleIdParamSchema.safeParse(req.params);
+
+      if (!validationResult.success) {
+        const error = validationResult.error as ZodError;
+        throw new ValidationError(error.issues[0].message);
+      }
+
+      const { id } = validationResult.data;
+
+      const result = await this.service.getRelatedArticles(id);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          articles: result.articles,
+          count: result.count,
+        },
+        meta: {
+          algorithm: 'hybrid',
+          weights: {
+            category: 0.40,
+            tags: 0.30,
+            contentSimilarity: 0.30,
+          },
+        },
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'ArticleController', method: 'getRelatedArticles' },
+        extra: {
+          id: req.params.id,
+        },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * POST /api/v1/admin/articles/:id/schedule
+   * Schedule article for publishing (admin only)
+   */
+  scheduleArticle = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('User ID not found in request');
+      }
+
+      // Validate ID parameter
+      const paramValidation = articleIdParamSchema.safeParse(req.params);
+
+      if (!paramValidation.success) {
+        const error = paramValidation.error as ZodError;
+        throw new ValidationError(error.issues[0].message);
+      }
+
+      const { id } = paramValidation.data;
+
+      // Validate request body
+      const bodyValidation = scheduleArticleSchema.safeParse(req.body);
+
+      if (!bodyValidation.success) {
+        const error = bodyValidation.error as ZodError;
+        throw new ValidationError(error.issues[0].message);
+      }
+
+      const data: ScheduleArticleInput = bodyValidation.data;
+
+      logger.info(`User ${userId} scheduling article ${id} for ${data.scheduledAt.toISOString()}`);
+
+      const article = await this.service.scheduleArticle(id, data, userId);
+
+      res.status(200).json({
+        success: true,
+        data: article,
+        message: `Article scheduled for ${data.scheduledAt.toISOString()}`,
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'ArticleController', method: 'scheduleArticle' },
+        extra: {
+          id: req.params.id,
+          userId: req.user?.id,
+          body: req.body,
+        },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * DELETE /api/v1/admin/articles/:id/schedule
+   * Cancel scheduled publishing (admin only)
+   */
+  cancelSchedule = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('User ID not found in request');
+      }
+
+      // Validate ID parameter
+      const validationResult = articleIdParamSchema.safeParse(req.params);
+
+      if (!validationResult.success) {
+        const error = validationResult.error as ZodError;
+        throw new ValidationError(error.issues[0].message);
+      }
+
+      const { id } = validationResult.data;
+
+      logger.info(`User ${userId} cancelling schedule for article ${id}`);
+
+      const article = await this.service.cancelSchedule(id, userId);
+
+      res.status(200).json({
+        success: true,
+        data: article,
+        message: 'Article schedule cancelled successfully',
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'ArticleController', method: 'cancelSchedule' },
+        extra: {
+          id: req.params.id,
+          userId: req.user?.id,
+        },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * GET /api/v1/admin/articles/scheduled
+   * List upcoming scheduled articles (admin only)
+   */
+  listScheduledArticles = async (req: Request, res: Response): Promise<void> => {
+    try {
+      // Validate query parameters
+      const validationResult = listScheduledArticlesQuerySchema.safeParse(req.query);
+
+      if (!validationResult.success) {
+        const error = validationResult.error as ZodError;
+        throw new ValidationError(error.issues[0].message);
+      }
+
+      const query: ListScheduledArticlesQuery = validationResult.data;
+
+      const result = await this.service.listScheduledArticles(query);
+
+      res.status(200).json({
+        success: true,
+        data: result.articles,
+        pagination: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'ArticleController', method: 'listScheduledArticles' },
+        extra: {
+          query: req.query,
         },
       });
       throw error;

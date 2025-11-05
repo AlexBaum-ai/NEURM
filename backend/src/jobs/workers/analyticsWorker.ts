@@ -1,10 +1,13 @@
+import crypto from 'crypto';
 import { Job } from 'bull';
 import { PrismaClient } from '@prisma/client';
 import logger from '@/utils/logger';
 import { AnalyticsEventData } from '../queues/analyticsQueue';
 import * as Sentry from '@sentry/node';
+import ArticleViewsRepository from '@/modules/analytics/articleViews.repository';
 
 const prisma = new PrismaClient();
+const viewsRepository = new ArticleViewsRepository(prisma);
 
 /**
  * Analytics Worker
@@ -19,6 +22,13 @@ const prisma = new PrismaClient();
  * All operations are idempotent and fault-tolerant.
  */
 
+/**
+ * Hash IP address using SHA-256 for privacy
+ */
+function hashIp(ipAddress: string): string {
+  return crypto.createHash('sha256').update(ipAddress).digest('hex');
+}
+
 export const processAnalyticsEvent = async (job: Job<AnalyticsEventData>): Promise<void> => {
   const { eventType, entityType, entityId, userId, sessionId, ipAddress, userAgent, referrer, metadata } = job.data;
 
@@ -29,7 +39,7 @@ export const processAnalyticsEvent = async (job: Job<AnalyticsEventData>): Promi
       userId,
     });
 
-    // Store event in analytics_events table
+    // Store event in analytics_events table (generic)
     await prisma.analyticsEvent.create({
       data: {
         eventType,
@@ -45,6 +55,20 @@ export const processAnalyticsEvent = async (job: Job<AnalyticsEventData>): Promi
         userAgent: userAgent || null,
       },
     });
+
+    // Special handling for article views - store in dedicated table
+    if (entityType === 'article' && eventType === 'article_view') {
+      await viewsRepository.createView({
+        articleId: entityId,
+        userId,
+        ipHash: ipAddress ? hashIp(ipAddress) : undefined,
+        sessionId,
+        timeOnPage: metadata?.timeOnPage || 0,
+        scrollDepth: metadata?.scrollDepth || 0,
+        userAgent,
+        referrer,
+      });
+    }
 
     // Update article counters based on event type
     if (entityType === 'article') {

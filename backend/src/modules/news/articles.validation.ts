@@ -274,3 +274,37 @@ export const articleIdParamSchema = z.object({
 });
 
 export type ArticleIdParam = z.infer<typeof articleIdParamSchema>;
+
+// Schedule article schema (admin only)
+export const scheduleArticleSchema = z.object({
+  scheduledAt: z
+    .string()
+    .datetime('Scheduled date must be a valid ISO 8601 datetime')
+    .transform((val) => new Date(val))
+    .refine(
+      (date) => date > new Date(),
+      'Scheduled date must be in the future'
+    ),
+});
+
+export type ScheduleArticleInput = z.infer<typeof scheduleArticleSchema>;
+
+// List scheduled articles query schema (admin only)
+export const listScheduledArticlesQuerySchema = z.object({
+  page: z
+    .string()
+    .optional()
+    .default('1')
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().min(1, 'Page must be at least 1')),
+  limit: z
+    .string()
+    .optional()
+    .default('20')
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().min(1, 'Limit must be at least 1').max(100, 'Limit must not exceed 100')),
+  sortBy: z.enum(['scheduledAt', 'createdAt']).default('scheduledAt'),
+  sortOrder: z.enum(['asc', 'desc']).default('asc'),
+});
+
+export type ListScheduledArticlesQuery = z.infer<typeof listScheduledArticlesQuerySchema>;

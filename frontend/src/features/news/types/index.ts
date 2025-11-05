@@ -180,3 +180,6 @@ export interface SortParams {
   sortBy: 'publishedAt' | 'viewCount' | 'bookmarkCount' | 'createdAt' | 'relevance';
   sortOrder?: 'asc' | 'desc';
 }
+
+// Revision history types
+export * from './revision';

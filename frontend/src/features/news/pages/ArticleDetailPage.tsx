@@ -1,7 +1,8 @@
-import React, { Suspense, useState, useEffect } from 'react';
+import React, { Suspense, useState, useRef } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useArticleDetail } from '../hooks/useArticleDetail';
+import { useArticleAnalytics } from '../hooks/useArticleAnalytics';
 import { ArticleHeader } from '../components/ArticleHeader';
 import { ArticleContent } from '../components/ArticleContent';
 import { ArticleMeta } from '../components/ArticleMeta';
@@ -9,24 +10,20 @@ import { TableOfContents } from '../components/TableOfContents';
 import { RelatedArticles } from '../components/RelatedArticles';
 import { ReadingProgress } from '../components/ReadingProgress';
 import type { TableOfContentsItem } from '../types';
-import { newsApi } from '../api/newsApi';
 
 const ArticleDetailContent: React.FC<{ slug: string }> = ({ slug }) => {
   const { data } = useArticleDetail(slug);
   const [tocItems, setTocItems] = useState<TableOfContentsItem[]>([]);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const { article, relatedArticles } = data.data;
 
-  // Increment view count on mount (once per page visit)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      newsApi.incrementViewCount(article.id).catch((err) => {
-        console.error('Failed to increment view count:', err);
-      });
-    }, 3000); // Wait 3 seconds to ensure user is actually reading
-
-    return () => clearTimeout(timer);
-  }, [article.id]);
+  // Analytics tracking - tracks view, reading time, scroll depth
+  useArticleAnalytics({
+    articleId: article.id,
+    contentRef,
+    enabled: true,
+  });
 
   const handleTocGenerated = (items: TableOfContentsItem[]) => {
     setTocItems(items);
@@ -76,10 +73,14 @@ const ArticleDetailContent: React.FC<{ slug: string }> = ({ slug }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Main content */}
-            <div className="lg:col-span-8">
+            <div className="lg:col-span-8" ref={contentRef}>
               <ArticleHeader article={article} />
               <ArticleContent content={article.content} onTocGenerated={handleTocGenerated} />
-              <RelatedArticles articles={relatedArticles} />
+              <RelatedArticles
+                articles={relatedArticles}
+                sourceArticleId={article.id}
+                sourceArticleSlug={article.slug}
+              />
             </div>
 
             {/* Sidebar */}
