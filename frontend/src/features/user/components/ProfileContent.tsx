@@ -6,6 +6,8 @@ import { SkillsSection } from './SkillsSection';
 import { ExperienceSection } from './ExperienceSection';
 import { EducationSection } from './EducationSection';
 import { PortfolioSection } from './PortfolioSection';
+import { ReputationSection } from './ReputationSection';
+import { ReputationHistorySection } from './ReputationHistorySection';
 
 interface ProfileContentProps {
   username: string;
@@ -27,17 +29,19 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({ username, onEdit
 
       {/* Profile Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - About and Skills */}
+        {/* Left Column - About, Skills, and Reputation */}
         <div className="lg:col-span-1 space-y-6">
           <AboutSection profile={profile} />
           <SkillsSection profile={profile} />
+          <ReputationSection profile={profile} />
         </div>
 
-        {/* Right Column - Experience, Education, Portfolio */}
+        {/* Right Column - Experience, Education, Portfolio, and Reputation History */}
         <div className="lg:col-span-2 space-y-6">
           <ExperienceSection profile={profile} />
           <EducationSection profile={profile} />
           <PortfolioSection profile={profile} />
+          <ReputationHistorySection profile={profile} />
         </div>
       </div>
     </div>

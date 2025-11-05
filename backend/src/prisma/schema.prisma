@@ -92,7 +92,9 @@ enum TopicType {
   discussion
   question
   showcase
-  feedback
+  tutorial
+  announcement
+  paper
 }
 
 enum TopicStatus {
@@ -100,6 +102,12 @@ enum TopicStatus {
   closed
   resolved
   archived
+}
+
+enum CategoryVisibility {
+  public
+  private
+  moderator_only
 }
 
 enum ReputationEventType {
@@ -110,6 +118,14 @@ enum ReputationEventType {
   best_answer
   badge_earned
   penalty
+}
+
+enum ReputationLevel {
+  newcomer
+  contributor
+  expert
+  master
+  legend
 }
 
 enum BadgeType {
@@ -220,15 +236,17 @@ model User {
   bookmarkCollections BookmarkCollection[]
 
   // Forum
-  topics            Topic[]
-  replies           Reply[]
-  topicVotes        TopicVote[]
-  replyVotes        ReplyVote[]
-  reputationHistory ReputationHistory[]
-  userBadges        UserBadge[]
-  watchedTopics     TopicWatch[]
-  savedPrompts      SavedPrompt[]
-  pollVotes         PollVote[]
+  topics                  Topic[]
+  replies                 Reply[]
+  topicVotes              TopicVote[]
+  replyVotes              ReplyVote[]
+  reputation              UserReputation?
+  reputationHistory       ReputationHistory[]
+  userBadges              UserBadge[]
+  watchedTopics           TopicWatch[]
+  savedPrompts            SavedPrompt[]
+  pollVotes               PollVote[]
+  moderatedCategories     CategoryModerator[] @relation("CategoryModerators")
 
   // Jobs
   company         Company?         @relation("CompanyOwner")
@@ -727,28 +745,48 @@ model ArticleView {
 // ============================================================================
 
 model ForumCategory {
-  id           String   @id @default(uuid())
-  name         String   @db.VarChar(100)
-  slug         String   @unique @db.VarChar(100)
-  description  String?  @db.Text
-  icon         String?  @db.VarChar(50)
-  parentId     String?  @map("parent_id")
-  level        Int      @default(1)
-  displayOrder Int      @default(0) @map("display_order")
-  isActive     Boolean  @default(true) @map("is_active")
-  topicCount   Int      @default(0) @map("topic_count")
-  replyCount   Int      @default(0) @map("reply_count")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id             String             @id @default(uuid())
+  name           String             @db.VarChar(100)
+  slug           String             @unique @db.VarChar(100)
+  description    String?            @db.Text
+  icon           String?            @db.VarChar(50)
+  parentId       String?            @map("parent_id")
+  level          Int                @default(1)
+  displayOrder   Int                @default(0) @map("display_order")
+  guidelines     String?            @db.Text
+  visibility     CategoryVisibility @default(public)
+  isActive       Boolean            @default(true) @map("is_active")
+  topicCount     Int                @default(0) @map("topic_count")
+  replyCount     Int                @default(0) @map("reply_count")
+  lastActivityAt DateTime?          @map("last_activity_at") @db.Timestamptz(3)
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  parent   ForumCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children ForumCategory[] @relation("CategoryHierarchy")
-  topics   Topic[]
+  parent     ForumCategory?       @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children   ForumCategory[]      @relation("CategoryHierarchy")
+  topics     Topic[]
+  moderators CategoryModerator[]
 
   @@index([slug])
   @@index([parentId])
   @@index([isActive])
+  @@index([visibility])
+  @@index([parentId, displayOrder])
   @@map("forum_categories")
+}
+
+model CategoryModerator {
+  categoryId String   @map("category_id")
+  userId     String   @map("user_id")
+  assignedAt DateTime @default(now()) @map("assigned_at") @db.Timestamptz(3)
+
+  category ForumCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user     User          @relation("CategoryModerators", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([categoryId, userId])
+  @@index([categoryId])
+  @@index([userId])
+  @@map("category_moderators")
 }
 
 model Topic {
@@ -760,8 +798,11 @@ model Topic {
   categoryId      String      @map("category_id")
   type            TopicType   @default(discussion)
   status          TopicStatus @default(open)
+  isDraft         Boolean     @default(false) @map("is_draft")
+  isFlagged       Boolean     @default(false) @map("is_flagged")
   isPinned        Boolean     @default(false) @map("is_pinned")
   isLocked        Boolean     @default(false) @map("is_locked")
+  pollId          String?     @map("poll_id")
   viewCount       Int         @default(0) @map("view_count")
   replyCount      Int         @default(0) @map("reply_count")
   voteScore       Int         @default(0) @map("vote_score")
@@ -775,46 +816,84 @@ model Topic {
 
   author   User          @relation(fields: [authorId], references: [id])
   category ForumCategory @relation(fields: [categoryId], references: [id])
+  poll     Poll?         @relation(fields: [pollId], references: [id])
 
-  replies  Reply[]
-  votes    TopicVote[]
-  tags     TopicTag[]
-  watchers TopicWatch[]
+  replies     Reply[]
+  votes       TopicVote[]
+  tags        TopicTag[]
+  watchers    TopicWatch[]
+  attachments TopicAttachment[]
 
   @@index([slug])
   @@index([authorId])
   @@index([categoryId])
   @@index([status])
+  @@index([isDraft])
+  @@index([isFlagged])
+  @@index([type])
+  @@index([pollId])
   @@index([createdAt(sort: Desc)])
   @@index([isPinned, createdAt(sort: Desc)])
   @@map("topics")
 }
 
+model TopicAttachment {
+  id           String   @id @default(uuid())
+  topicId      String   @map("topic_id")
+  filename     String   @db.VarChar(255)
+  originalName String   @map("original_name") @db.VarChar(255)
+  mimeType     String   @map("mime_type") @db.VarChar(100)
+  fileSize     Int      @map("file_size")
+  url          String   @db.VarChar(500)
+  storageKey   String   @map("storage_key") @db.VarChar(500)
+  width        Int?
+  height       Int?
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([topicId])
+  @@index([topicId, displayOrder])
+  @@map("topic_attachments")
+}
+
 model Reply {
-  id            String   @id @default(uuid())
-  topicId       String   @map("topic_id")
-  authorId      String   @map("author_id")
-  content       String   @db.Text
-  parentReplyId String?  @map("parent_reply_id")
-  depth         Int      @default(0)
-  voteScore     Int      @default(0) @map("vote_score")
-  upvoteCount   Int      @default(0) @map("upvote_count")
-  downvoteCount Int      @default(0) @map("downvote_count")
-  isAccepted    Boolean  @default(false) @map("is_accepted")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id             String    @id @default(uuid())
+  topicId        String    @map("topic_id")
+  authorId       String    @map("author_id")
+  content        String    @db.Text
+  parentReplyId  String?   @map("parent_reply_id")
+  quotedReplyId  String?   @map("quoted_reply_id")
+  depth          Int       @default(0)
+  mentions       String[]  @default([])
+  voteScore      Int       @default(0) @map("vote_score")
+  upvoteCount    Int       @default(0) @map("upvote_count")
+  downvoteCount  Int       @default(0) @map("downvote_count")
+  isAccepted     Boolean   @default(false) @map("is_accepted")
+  isDeleted      Boolean   @default(false) @map("is_deleted")
+  editedAt       DateTime? @map("edited_at") @db.Timestamptz(3)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   topic        Topic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
   author       User    @relation(fields: [authorId], references: [id])
   parentReply  Reply?  @relation("ReplyThread", fields: [parentReplyId], references: [id])
   childReplies Reply[] @relation("ReplyThread")
+  quotedReply  Reply?  @relation("ReplyQuote", fields: [quotedReplyId], references: [id])
+  quotingReplies Reply[] @relation("ReplyQuote")
 
-  votes ReplyVote[]
+  votes       ReplyVote[]
+  editHistory ReplyEditHistory[]
 
   @@index([topicId])
   @@index([authorId])
   @@index([parentReplyId])
+  @@index([quotedReplyId])
+  @@index([isDeleted])
   @@index([createdAt(sort: Asc)])
+  @@index([topicId, isDeleted])
   @@map("replies")
 }
 
@@ -848,6 +927,21 @@ model ReplyVote {
   @@map("reply_votes")
 }
 
+model ReplyEditHistory {
+  id             String   @id @default(uuid())
+  replyId        String   @map("reply_id")
+  previousContent String  @map("previous_content") @db.Text
+  editedBy       String   @map("edited_by")
+  editReason     String?  @map("edit_reason") @db.Text
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  reply Reply @relation(fields: [replyId], references: [id], onDelete: Cascade)
+
+  @@index([replyId])
+  @@index([createdAt(sort: Desc)])
+  @@map("reply_edit_history")
+}
+
 model TopicTag {
   topicId   String   @map("topic_id")
   tagId     String   @map("tag_id")
@@ -874,6 +968,19 @@ model ForumTag {
   @@index([slug])
   @@index([usageCount(sort: Desc)])
   @@map("forum_tags")
+}
+
+model UserReputation {
+  userId          String           @id @map("user_id")
+  totalReputation Int              @default(0) @map("total_reputation")
+  level           ReputationLevel  @default(newcomer)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([totalReputation(sort: Desc)])
+  @@index([level])
+  @@map("user_reputation")
 }
 
 model ReputationHistory {
@@ -976,10 +1083,24 @@ model Poll {
   expiresAt      DateTime? @map("expires_at") @db.Timestamptz(3)
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  votes PollVote[]
+  votes  PollVote[]
+  topics Topic[]
 
   @@index([expiresAt])
   @@map("polls")
+}
+
+model SpamKeyword {
+  id        String   @id @default(uuid())
+  keyword   String   @unique @db.VarChar(100)
+  severity  Int      @default(1)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([keyword])
+  @@index([isActive])
+  @@map("spam_keywords")
 }
 
 model PollVote {

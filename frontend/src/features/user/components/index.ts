@@ -8,3 +8,5 @@ export { ProfileContent } from './ProfileContent';
 export { ProfileSkeleton } from './ProfileSkeleton';
 export { ProfileErrorFallback } from './ProfileErrorFallback';
 export { default as ProfileEditModal } from './ProfileEditModal';
+export { ReputationSection } from './ReputationSection';
+export { ReputationHistorySection } from './ReputationHistorySection';

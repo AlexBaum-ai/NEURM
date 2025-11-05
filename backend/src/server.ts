@@ -5,12 +5,14 @@ import app from './app';
 import env from '@/config/env';
 import logger from '@/utils/logger';
 import redisClient from '@/config/redisClient';
+import prisma from '@/config/database';
 import { setupSessionCleanupScheduler } from '@/jobs/schedulers/sessionCleanup.scheduler';
 import { setupArticleScheduler } from '@/jobs/schedulers/articleScheduler.scheduler';
 import { analyticsQueue, shutdownAnalyticsQueue } from '@/jobs/queues/analyticsQueue';
 import { articleSchedulerQueue, shutdownArticleSchedulerQueue } from '@/jobs/queues/articleSchedulerQueue';
 import processAnalyticsEvent from '@/jobs/workers/analyticsWorker';
 import processArticleScheduler from '@/jobs/workers/articleSchedulerWorker';
+import { registerForumDependencies } from '@/modules/forum/forum.container';
 
 const PORT = env.PORT || 3000;
 
@@ -74,6 +76,10 @@ const server = app.listen(PORT, async () => {
 
   // Initialize Redis
   await initializeRedis();
+
+  // Initialize forum dependencies
+  registerForumDependencies(prisma);
+  logger.info('Forum dependencies initialized');
 
   // Initialize analytics worker
   analyticsQueue.process(processAnalyticsEvent);
