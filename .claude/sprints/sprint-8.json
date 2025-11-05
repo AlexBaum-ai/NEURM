@@ -208,7 +208,8 @@
         "Track alert effectiveness (jobs clicked from alert emails)"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
+      "completedAt": "2025-11-05T19:52:30Z",
       "technicalNotes": {
         "tables": "saved_jobs (user_id, job_id, saved_at), job_alerts (user_id, name, criteria_json, active)",
         "cron": "Bull queue runs daily at 9am, checks jobs created in last 24h against alerts",
