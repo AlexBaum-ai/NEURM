@@ -124,6 +124,7 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
     filters.salaryMin ? 1 : 0,
     filters.hasVisaSponsorship ? 1 : 0,
     filters.location ? 1 : 0,
+    filters.minMatchScore ? 1 : 0,
   ].reduce((sum, count) => sum + count, 0);
 
   return (
@@ -284,6 +285,32 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
             Visa Sponsorship
           </span>
         </label>
+      </FilterSection>
+
+      {/* Match Score Filter */}
+      <FilterSection title="Match Score">
+        <div className="space-y-2">
+          <label className="text-sm text-gray-600 dark:text-gray-400">
+            Minimum Match Score (%)
+          </label>
+          <Input
+            type="number"
+            min="0"
+            max="100"
+            step="10"
+            placeholder="e.g., 70"
+            value={filters.minMatchScore || ''}
+            onChange={(e) =>
+              onFiltersChange({
+                ...filters,
+                minMatchScore: e.target.value ? Number(e.target.value) : undefined,
+              })
+            }
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Only show jobs with a match score above this threshold
+          </p>
+        </div>
       </FilterSection>
     </div>
   );

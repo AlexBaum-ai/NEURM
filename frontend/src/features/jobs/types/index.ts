@@ -80,6 +80,8 @@ export interface JobFilters {
   hasVisaSponsorship?: boolean;
   search?: string;
   sort?: 'newest' | 'highest_salary' | 'best_match';
+  minMatchScore?: number;
+  includeMatches?: boolean;
 }
 
 export interface JobsResponse {
@@ -98,4 +100,25 @@ export interface ApplyJobRequest {
   coverLetter: string;
   resumeUrl?: string;
   screeningAnswers?: Array<{ question: string; answer: string }>;
+}
+
+// Match-related types
+export interface MatchFactor {
+  name: string;
+  score: number;
+  weight: number;
+  details?: string;
+}
+
+export interface JobMatch {
+  jobId: string;
+  matchScore: number;
+  factors: MatchFactor[];
+  topReasons: string[];
+  lastUpdated: string;
+}
+
+export interface JobMatchResponse {
+  success: boolean;
+  data: JobMatch;
 }

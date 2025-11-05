@@ -126,3 +126,16 @@ export const useSavedJobs = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
+
+/**
+ * Hook for fetching job match score and breakdown
+ */
+export const useJobMatch = (slug: string, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['jobMatch', slug],
+    queryFn: () => jobsApi.getJobMatch(slug),
+    enabled: enabled && !!slug,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    retry: false, // Don't retry on auth errors
+  });
+};

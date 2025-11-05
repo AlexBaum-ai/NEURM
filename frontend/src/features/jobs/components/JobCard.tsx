@@ -5,6 +5,8 @@ import { Card } from '@/components/common/Card/Card';
 import { Badge } from '@/components/common/Badge/Badge';
 import { Button } from '@/components/common/Button/Button';
 import { formatDistanceToNow } from 'date-fns';
+import { useAuthStore } from '@/store/authStore';
+import { MatchBadge } from './matching/MatchBadge';
 import type { JobListItem } from '../types';
 import { cn } from '@/lib/utils';
 
@@ -45,6 +47,7 @@ export const JobCard: React.FC<JobCardProps> = ({
   onUnsave,
   isSaving = false,
 }) => {
+  const { isAuthenticated } = useAuthStore();
   const salaryDisplay = job.salaryIsPublic
     ? formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency)
     : null;
@@ -184,11 +187,23 @@ export const JobCard: React.FC<JobCardProps> = ({
               </span>
             </div>
 
-            {job.matchScore !== undefined && job.matchScore > 0 && (
-              <Badge variant="default" className="text-xs">
-                {job.matchScore}% match
-              </Badge>
-            )}
+            {/* Match Score Badge */}
+            {isAuthenticated && job.matchScore !== undefined && job.matchScore > 0 ? (
+              <MatchBadge
+                matchScore={job.matchScore}
+                showTooltip={true}
+                tooltipText="Match based on your profile and preferences"
+                className="text-xs"
+              />
+            ) : !isAuthenticated ? (
+              <Link
+                to="/login"
+                onClick={(e) => e.stopPropagation()}
+                className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:underline"
+              >
+                Login to see match score
+              </Link>
+            ) : null}
           </div>
         </div>
       </Card>

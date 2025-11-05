@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import * as Sentry from '@sentry/node';
 import { ZodError } from 'zod';
 import JobService from './jobs.service';
+import SavedJobsService from './services/savedJobsService';
+import JobAlertsService from './services/jobAlertsService';
 import {
   createJobSchema,
   updateJobSchema,
@@ -12,6 +14,24 @@ import {
   UpdateJobInput,
   ListJobsQuery,
 } from './jobs.validation';
+import {
+  saveJobSchema,
+  updateSavedJobSchema,
+  listSavedJobsQuerySchema,
+  SaveJobInput,
+  UpdateSavedJobInput,
+  ListSavedJobsQuery,
+} from './savedJobs.validation';
+import {
+  createJobAlertSchema,
+  updateJobAlertSchema,
+  listJobAlertsQuerySchema,
+  alertIdParamSchema,
+  trackAlertClickSchema,
+  CreateJobAlertInput,
+  UpdateJobAlertInput,
+  ListJobAlertsQuery,
+} from './jobAlerts.validation';
 import { BadRequestError, ValidationError } from '@/utils/errors';
 import logger from '@/utils/logger';
 
@@ -21,9 +41,17 @@ import logger from '@/utils/logger';
  */
 export class JobController {
   private service: JobService;
+  private savedJobsService: SavedJobsService;
+  private jobAlertsService: JobAlertsService;
 
-  constructor(service?: JobService) {
+  constructor(
+    service?: JobService,
+    savedJobsService?: SavedJobsService,
+    jobAlertsService?: JobAlertsService
+  ) {
     this.service = service || new JobService();
+    this.savedJobsService = savedJobsService || new SavedJobsService();
+    this.jobAlertsService = jobAlertsService || new JobAlertsService();
   }
 
   /**
@@ -358,6 +386,388 @@ export class JobController {
           userId: req.user?.id,
           jobId: req.params.id,
         },
+      });
+      throw error;
+    }
+  };
+
+  // ============================================================================
+  // SAVED JOBS ENDPOINTS
+  // ============================================================================
+
+  /**
+   * POST /api/v1/jobs/:id/save
+   * Save/bookmark a job
+   */
+  saveJob = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('Authentication required');
+      }
+
+      const paramValidation = jobIdParamSchema.safeParse(req.params);
+      if (!paramValidation.success) {
+        throw new ValidationError(paramValidation.error.issues[0].message);
+      }
+
+      const { id: jobId } = paramValidation.data;
+
+      const bodyValidation = saveJobSchema.safeParse(req.body);
+      if (!bodyValidation.success) {
+        throw new ValidationError(bodyValidation.error.issues[0].message);
+      }
+
+      const input: SaveJobInput = bodyValidation.data;
+
+      const savedJob = await this.savedJobsService.saveJob(userId, jobId, input);
+
+      res.status(201).json({
+        success: true,
+        data: savedJob,
+        message: 'Job saved successfully',
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'JobController', method: 'saveJob' },
+        extra: { userId: req.user?.id, jobId: req.params.id },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * DELETE /api/v1/jobs/:id/save
+   * Remove saved/bookmarked job
+   */
+  unsaveJob = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('Authentication required');
+      }
+
+      const paramValidation = jobIdParamSchema.safeParse(req.params);
+      if (!paramValidation.success) {
+        throw new ValidationError(paramValidation.error.issues[0].message);
+      }
+
+      const { id: jobId } = paramValidation.data;
+
+      await this.savedJobsService.unsaveJob(userId, jobId);
+
+      res.status(200).json({
+        success: true,
+        message: 'Job removed from saved jobs',
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'JobController', method: 'unsaveJob' },
+        extra: { userId: req.user?.id, jobId: req.params.id },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * PATCH /api/v1/jobs/:id/save
+   * Update saved job notes
+   */
+  updateSavedJob = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('Authentication required');
+      }
+
+      const paramValidation = jobIdParamSchema.safeParse(req.params);
+      if (!paramValidation.success) {
+        throw new ValidationError(paramValidation.error.issues[0].message);
+      }
+
+      const { id: jobId } = paramValidation.data;
+
+      const bodyValidation = updateSavedJobSchema.safeParse(req.body);
+      if (!bodyValidation.success) {
+        throw new ValidationError(bodyValidation.error.issues[0].message);
+      }
+
+      const input: UpdateSavedJobInput = bodyValidation.data;
+
+      const updated = await this.savedJobsService.updateSavedJob(userId, jobId, input);
+
+      res.status(200).json({
+        success: true,
+        data: updated,
+        message: 'Saved job updated successfully',
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'JobController', method: 'updateSavedJob' },
+        extra: { userId: req.user?.id, jobId: req.params.id },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * GET /api/v1/jobs/saved
+   * Get user's saved jobs
+   */
+  getSavedJobs = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('Authentication required');
+      }
+
+      const queryValidation = listSavedJobsQuerySchema.safeParse(req.query);
+      if (!queryValidation.success) {
+        throw new ValidationError(queryValidation.error.issues[0].message);
+      }
+
+      const query: ListSavedJobsQuery = queryValidation.data;
+
+      const result = await this.savedJobsService.getSavedJobs(userId, query);
+
+      res.status(200).json({
+        success: true,
+        data: result.savedJobs,
+        pagination: result.pagination,
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'JobController', method: 'getSavedJobs' },
+        extra: { userId: req.user?.id, query: req.query },
+      });
+      throw error;
+    }
+  };
+
+  // ============================================================================
+  // JOB ALERTS ENDPOINTS
+  // ============================================================================
+
+  /**
+   * POST /api/v1/jobs/alerts
+   * Create a new job alert
+   */
+  createJobAlert = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('Authentication required');
+      }
+
+      const bodyValidation = createJobAlertSchema.safeParse(req.body);
+      if (!bodyValidation.success) {
+        const error = bodyValidation.error as ZodError;
+        const errors = error.issues.map((err) => ({
+          field: err.path.join('.'),
+          message: err.message,
+        }));
+        throw new ValidationError(
+          `Validation failed: ${errors.map((e) => e.message).join(', ')}`
+        );
+      }
+
+      const input: CreateJobAlertInput = bodyValidation.data;
+
+      const alert = await this.jobAlertsService.createAlert(userId, input);
+
+      res.status(201).json({
+        success: true,
+        data: alert,
+        message: 'Job alert created successfully',
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'JobController', method: 'createJobAlert' },
+        extra: { userId: req.user?.id, body: req.body },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * GET /api/v1/jobs/alerts
+   * Get user's job alerts
+   */
+  getJobAlerts = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('Authentication required');
+      }
+
+      const queryValidation = listJobAlertsQuerySchema.safeParse(req.query);
+      if (!queryValidation.success) {
+        throw new ValidationError(queryValidation.error.issues[0].message);
+      }
+
+      const query: ListJobAlertsQuery = queryValidation.data;
+
+      const alerts = await this.jobAlertsService.getUserAlerts(userId, query);
+
+      res.status(200).json({
+        success: true,
+        data: alerts,
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'JobController', method: 'getJobAlerts' },
+        extra: { userId: req.user?.id, query: req.query },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * GET /api/v1/jobs/alerts/:id
+   * Get specific job alert
+   */
+  getJobAlert = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('Authentication required');
+      }
+
+      const paramValidation = alertIdParamSchema.safeParse(req.params);
+      if (!paramValidation.success) {
+        throw new ValidationError(paramValidation.error.issues[0].message);
+      }
+
+      const { id: alertId } = paramValidation.data;
+
+      const alert = await this.jobAlertsService.getAlertById(userId, alertId);
+
+      res.status(200).json({
+        success: true,
+        data: alert,
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'JobController', method: 'getJobAlert' },
+        extra: { userId: req.user?.id, alertId: req.params.id },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * PATCH /api/v1/jobs/alerts/:id
+   * Update job alert
+   */
+  updateJobAlert = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('Authentication required');
+      }
+
+      const paramValidation = alertIdParamSchema.safeParse(req.params);
+      if (!paramValidation.success) {
+        throw new ValidationError(paramValidation.error.issues[0].message);
+      }
+
+      const { id: alertId } = paramValidation.data;
+
+      const bodyValidation = updateJobAlertSchema.safeParse(req.body);
+      if (!bodyValidation.success) {
+        const error = bodyValidation.error as ZodError;
+        const errors = error.issues.map((err) => ({
+          field: err.path.join('.'),
+          message: err.message,
+        }));
+        throw new ValidationError(
+          `Validation failed: ${errors.map((e) => e.message).join(', ')}`
+        );
+      }
+
+      const input: UpdateJobAlertInput = bodyValidation.data;
+
+      const updated = await this.jobAlertsService.updateAlert(userId, alertId, input);
+
+      res.status(200).json({
+        success: true,
+        data: updated,
+        message: 'Job alert updated successfully',
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'JobController', method: 'updateJobAlert' },
+        extra: { userId: req.user?.id, alertId: req.params.id, body: req.body },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * DELETE /api/v1/jobs/alerts/:id
+   * Delete job alert
+   */
+  deleteJobAlert = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('Authentication required');
+      }
+
+      const paramValidation = alertIdParamSchema.safeParse(req.params);
+      if (!paramValidation.success) {
+        throw new ValidationError(paramValidation.error.issues[0].message);
+      }
+
+      const { id: alertId } = paramValidation.data;
+
+      await this.jobAlertsService.deleteAlert(userId, alertId);
+
+      res.status(200).json({
+        success: true,
+        message: 'Job alert deleted successfully',
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'JobController', method: 'deleteJobAlert' },
+        extra: { userId: req.user?.id, alertId: req.params.id },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * POST /api/v1/jobs/alerts/track-click
+   * Track alert click (when user clicks job from alert email)
+   */
+  trackAlertClick = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const bodyValidation = trackAlertClickSchema.safeParse(req.body);
+      if (!bodyValidation.success) {
+        throw new ValidationError(bodyValidation.error.issues[0].message);
+      }
+
+      const { alertId, jobId } = bodyValidation.data;
+
+      await this.jobAlertsService.trackAlertClick(alertId, jobId);
+
+      res.status(200).json({
+        success: true,
+        message: 'Click tracked successfully',
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'JobController', method: 'trackAlertClick' },
+        extra: { body: req.body },
       });
       throw error;
     }

@@ -6,6 +6,8 @@ import type {
   SaveJobRequest,
   ApplyJobRequest,
   JobListItem,
+  JobMatch,
+  JobMatchResponse,
 } from '../types';
 
 export const jobsApi = {
@@ -78,6 +80,14 @@ export const jobsApi = {
         };
         queryParams.append('sort', sortMap[params.filters.sort] || '-publishedAt');
       }
+
+      // Match filters
+      if (params.filters.minMatchScore !== undefined) {
+        queryParams.append('minMatchScore', params.filters.minMatchScore.toString());
+      }
+      if (params.filters.includeMatches !== undefined) {
+        queryParams.append('match', params.filters.includeMatches.toString());
+      }
     }
 
     const queryString = queryParams.toString();
@@ -149,5 +159,13 @@ export const jobsApi = {
       data: { savedJobs: Array<{ job: JobListItem }> };
     }>('/users/me/saved-jobs');
     return response.data.savedJobs.map((item) => item.job);
+  },
+
+  /**
+   * Get match score for a specific job
+   */
+  getJobMatch: async (slug: string): Promise<JobMatch> => {
+    const response = await apiClient.get<JobMatchResponse>(`/jobs/${slug}/match`);
+    return response.data;
   },
 };
