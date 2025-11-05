@@ -240,7 +240,8 @@
         "Responsive design"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
+      "completedAt": "2025-11-05T20:15:00Z",
       "technicalNotes": {
         "routes": "/jobs/saved, /jobs/alerts",
         "components": "SavedJobs, SaveButton, JobAlerts, AlertForm",
