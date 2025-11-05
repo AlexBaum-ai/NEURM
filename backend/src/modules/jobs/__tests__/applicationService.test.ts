@@ -21,6 +21,10 @@ vi.mock('@/config/database', () => ({
       create: vi.fn(),
       update: vi.fn(),
     },
+    applicationStatusHistory: {
+      create: vi.fn(),
+      findMany: vi.fn(),
+    },
     notification: {
       create: vi.fn(),
     },
@@ -457,6 +461,178 @@ describe('ApplicationService', () => {
       expect(stats.viewedRate).toBe(30);
       expect(stats.interviewRate).toBe(20);
       expect(stats.offerRate).toBe(10);
+    });
+  });
+
+  describe('getUserApplications with filters', () => {
+    const mockApplications = [
+      {
+        id: 'app-1',
+        status: 'submitted',
+        appliedAt: new Date(),
+        updatedAt: new Date(),
+        job: {
+          id: 'job-1',
+          title: 'Senior ML Engineer',
+          slug: 'senior-ml-engineer',
+          jobType: 'full_time',
+          workLocation: 'remote',
+          location: 'San Francisco',
+          status: 'active',
+          company: {
+            name: 'Tech Corp',
+            logoUrl: 'logo.png',
+            slug: 'tech-corp',
+          },
+        },
+      },
+    ];
+
+    it('should filter applications by "active" preset', async () => {
+      mockPrisma.jobApplication.findMany.mockResolvedValue(mockApplications);
+
+      const result = await service.getUserApplications('user-123', {
+        filter: 'active',
+      });
+
+      expect(result).toBeDefined();
+      expect(mockPrisma.jobApplication.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            userId: 'user-123',
+            status: { in: ['submitted', 'viewed', 'screening'] },
+          }),
+        })
+      );
+    });
+
+    it('should filter applications by "interviews" preset', async () => {
+      mockPrisma.jobApplication.findMany.mockResolvedValue(mockApplications);
+
+      const result = await service.getUserApplications('user-123', {
+        filter: 'interviews',
+      });
+
+      expect(result).toBeDefined();
+      expect(mockPrisma.jobApplication.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            userId: 'user-123',
+            status: 'interview',
+          }),
+        })
+      );
+    });
+  });
+
+  describe('getApplicationHistory', () => {
+    it('should return application status history for owner', async () => {
+      const mockHistory = [
+        {
+          id: 'history-1',
+          applicationId: 'app-123',
+          fromStatus: null,
+          toStatus: 'submitted',
+          changedById: 'user-123',
+          notes: 'Application submitted',
+          createdAt: new Date(),
+        },
+        {
+          id: 'history-2',
+          applicationId: 'app-123',
+          fromStatus: 'submitted',
+          toStatus: 'viewed',
+          changedById: 'company-owner-123',
+          notes: 'Status changed from submitted to viewed',
+          createdAt: new Date(),
+        },
+      ];
+
+      mockPrisma.jobApplication.findUnique.mockResolvedValue({
+        ...mockApplication,
+        userId: 'user-123',
+        job: {
+          company: {
+            ownerUserId: 'company-owner-123',
+          },
+        },
+      });
+
+      mockPrisma.applicationStatusHistory = {
+        findMany: vi.fn().mockResolvedValue(mockHistory),
+      };
+
+      const result = await service.getApplicationHistory('app-123', 'user-123');
+
+      expect(result).toHaveLength(2);
+      expect(result[0].toStatus).toBe('submitted');
+      expect(result[1].toStatus).toBe('viewed');
+    });
+
+    it('should throw ForbiddenError when unauthorized user tries to access history', async () => {
+      mockPrisma.jobApplication.findUnique.mockResolvedValue({
+        ...mockApplication,
+        userId: 'user-456',
+        job: {
+          company: {
+            ownerUserId: 'company-owner-789',
+          },
+        },
+      });
+
+      await expect(
+        service.getApplicationHistory('app-123', 'user-123')
+      ).rejects.toThrow(ForbiddenError);
+    });
+  });
+
+  describe('exportApplicationsToCSV', () => {
+    it('should export applications as CSV format', async () => {
+      const mockApplications = [
+        {
+          id: 'app-1',
+          status: 'submitted',
+          appliedAt: new Date('2025-01-01'),
+          updatedAt: new Date('2025-01-02'),
+          job: {
+            id: 'job-1',
+            title: 'Senior ML Engineer',
+            slug: 'senior-ml-engineer',
+            jobType: 'full_time',
+            workLocation: 'remote',
+            location: 'San Francisco',
+            status: 'active',
+            company: {
+              name: 'Tech Corp',
+              logoUrl: 'logo.png',
+              slug: 'tech-corp',
+            },
+          },
+        },
+      ];
+
+      mockPrisma.jobApplication.findMany.mockResolvedValue(mockApplications);
+
+      const csv = await service.exportApplicationsToCSV('user-123');
+
+      expect(csv).toContain('Application ID');
+      expect(csv).toContain('Job Title');
+      expect(csv).toContain('Company');
+      expect(csv).toContain('Status');
+      expect(csv).toContain('app-1');
+      expect(csv).toContain('Senior ML Engineer');
+      expect(csv).toContain('Tech Corp');
+      expect(csv).toContain('submitted');
+    });
+
+    it('should handle empty applications list', async () => {
+      mockPrisma.jobApplication.findMany.mockResolvedValue([]);
+
+      const csv = await service.exportApplicationsToCSV('user-123');
+
+      expect(csv).toContain('Application ID');
+      // Should only contain header
+      expect(csv.split('\n').length).toBe(1);
     });
   });
 });

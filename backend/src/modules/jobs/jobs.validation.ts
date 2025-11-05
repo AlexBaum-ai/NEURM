@@ -156,11 +156,20 @@ export type ApplyToJobInput = z.infer<typeof applyToJobSchema>;
 
 export const listApplicationsQuerySchema = z.object({
   status: ApplicationStatusEnum.optional(),
+  // Filter presets
+  filter: z.enum(['all', 'active', 'interviews', 'offers', 'rejected', 'withdrawn']).optional(),
   sortBy: z.enum(['date_applied', 'status', 'company']).default('date_applied'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
 export type ListApplicationsQuery = z.infer<typeof listApplicationsQuerySchema>;
+
+export const exportApplicationsQuerySchema = z.object({
+  status: ApplicationStatusEnum.optional(),
+  filter: z.enum(['all', 'active', 'interviews', 'offers', 'rejected', 'withdrawn']).optional(),
+});
+
+export type ExportApplicationsQuery = z.infer<typeof exportApplicationsQuerySchema>;
 
 export const updateApplicationStatusSchema = z.object({
   status: ApplicationStatusEnum,

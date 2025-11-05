@@ -315,6 +315,98 @@ export class ApplicationController {
       throw error;
     }
   };
+
+  /**
+   * GET /api/v1/applications/:id/history
+   * Get application status history
+   */
+  getApplicationHistory = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('User ID not found in request');
+      }
+
+      // Validate application ID
+      const validationResult = applicationIdParamSchema.safeParse(req.params);
+      if (!validationResult.success) {
+        const error = validationResult.error as ZodError;
+        throw new ValidationError(
+          `Invalid application ID: ${error.issues.map((e) => e.message).join(', ')}`
+        );
+      }
+
+      const { id: applicationId } = validationResult.data;
+
+      logger.info(`User ${userId} fetching application history for ${applicationId}`);
+
+      const history = await this.service.getApplicationHistory(applicationId, userId);
+
+      res.status(200).json({
+        success: true,
+        data: history,
+        count: history.length,
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'ApplicationController', method: 'getApplicationHistory' },
+        extra: {
+          userId: req.user?.id,
+          applicationId: req.params.id,
+        },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * GET /api/v1/applications/export
+   * Export applications as CSV
+   */
+  exportApplications = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('User ID not found in request');
+      }
+
+      // Import the export schema at runtime to avoid circular dependency
+      const { exportApplicationsQuerySchema } = await import('./jobs.validation');
+
+      // Validate query parameters
+      const validationResult = exportApplicationsQuerySchema.safeParse(req.query);
+
+      if (!validationResult.success) {
+        const error = validationResult.error as ZodError;
+        throw new ValidationError(
+          `Invalid query parameters: ${error.issues.map((e) => e.message).join(', ')}`
+        );
+      }
+
+      const filters = validationResult.data;
+
+      logger.info(`User ${userId} exporting applications`, { filters });
+
+      const csv = await this.service.exportApplicationsToCSV(userId, filters);
+
+      // Set CSV headers
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="applications-${new Date().toISOString().split('T')[0]}.csv"`);
+
+      res.status(200).send(csv);
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'ApplicationController', method: 'exportApplications' },
+        extra: {
+          userId: req.user?.id,
+          query: req.query,
+        },
+      });
+      throw error;
+    }
+  };
 }
 
 export default ApplicationController;

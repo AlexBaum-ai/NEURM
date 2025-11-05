@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -13,12 +13,15 @@ import {
   Bookmark,
   ExternalLink,
 } from 'lucide-react';
-import { useJob, useRelatedJobs, useSaveJob, useUnsaveJob } from '../hooks';
+import { useJob, useRelatedJobs, useSaveJob, useUnsaveJob, useJobMatch } from '../hooks';
 import { ShareButtons } from '../components/ShareButtons';
 import { JobCard } from '../components/JobCard';
+import { ApplyModal } from '../components/apply';
+import { MatchExplanation, MatchBreakdown, MatchBadge } from '../components/matching';
 import { Button } from '@/components/common/Button/Button';
 import { Badge } from '@/components/common/Badge/Badge';
 import { Card } from '@/components/common/Card/Card';
+import { useAuthStore } from '@/store/authStore';
 import { formatDistanceToNow, format } from 'date-fns';
 import type { JobSkill } from '../types';
 import { cn } from '@/lib/utils';
@@ -69,11 +72,15 @@ const SkillLevel: React.FC<{ skill: JobSkill }> = ({ skill }) => {
 
 export const JobDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const { isAuthenticated } = useAuthStore();
   const { data: job, isLoading, error } = useJob(slug!);
   const { data: relatedJobs } = useRelatedJobs(slug!);
+  const { data: jobMatch } = useJobMatch(slug!, isAuthenticated);
 
   const saveJobMutation = useSaveJob();
   const unsaveJobMutation = useUnsaveJob();
+
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -240,8 +247,38 @@ export const JobDetailPage: React.FC = () => {
                   <Badge variant="success">Visa Sponsorship</Badge>
                 )}
                 {job.isFeatured && <Badge variant="default">Featured</Badge>}
+                {/* Show match badge for authenticated users */}
+                {isAuthenticated && job.matchScore !== undefined && job.matchScore > 0 && (
+                  <MatchBadge matchScore={job.matchScore} />
+                )}
               </div>
             </div>
+
+            {/* Match Explanation (for authenticated users) */}
+            {isAuthenticated && jobMatch && (
+              <MatchExplanation
+                topReasons={jobMatch.topReasons}
+                matchScore={jobMatch.matchScore}
+                lastUpdated={jobMatch.lastUpdated}
+              />
+            )}
+
+            {/* Not authenticated - show CTA */}
+            {!isAuthenticated && (
+              <Card className="p-6 bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  See Your Match Score
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Create a profile to see how well this job matches your skills, experience, and preferences.
+                </p>
+                <Link to="/register">
+                  <Button className="w-full">
+                    Create Profile
+                  </Button>
+                </Link>
+              </Card>
+            )}
 
             {/* Description */}
             <Card>
@@ -417,8 +454,13 @@ export const JobDetailPage: React.FC = () => {
             {/* Apply CTA */}
             <Card className="sticky top-4">
               <div className="p-6 space-y-4">
-                <Button className="w-full" size="lg">
-                  Apply Now
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={() => setIsApplyModalOpen(true)}
+                  disabled={job.hasApplied}
+                >
+                  {job.hasApplied ? 'Applied' : 'Apply Now'}
                 </Button>
                 <Button
                   variant="outline"
@@ -437,6 +479,14 @@ export const JobDetailPage: React.FC = () => {
                 <ShareButtons url={currentUrl} title={job.title} />
               </div>
             </Card>
+
+            {/* Match Breakdown (for authenticated users with detailed data) */}
+            {isAuthenticated && jobMatch && jobMatch.factors.length > 0 && (
+              <MatchBreakdown
+                factors={jobMatch.factors}
+                matchScore={jobMatch.matchScore}
+              />
+            )}
 
             {/* Company Info */}
             <Card>
@@ -541,6 +591,13 @@ export const JobDetailPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Apply Modal */}
+      <ApplyModal
+        job={job}
+        isOpen={isApplyModalOpen}
+        onClose={() => setIsApplyModalOpen(false)}
+      />
     </>
   );
 };

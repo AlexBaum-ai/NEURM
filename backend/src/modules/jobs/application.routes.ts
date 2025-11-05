@@ -56,6 +56,19 @@ router.get(
 );
 
 /**
+ * @route   GET /api/v1/applications/export
+ * @desc    Export applications as CSV
+ * @access  Private (authenticated users only)
+ * @query   status, filter
+ */
+router.get(
+  '/export',
+  authMiddleware,
+  rateLimiterMiddleware({ points: 10, duration: 60 }), // 10 exports per minute
+  asyncHandler(applicationController.exportApplications)
+);
+
+/**
  * @route   GET /api/v1/applications/:id
  * @desc    Get application details
  * @access  Private (owner or company only)
@@ -66,6 +79,19 @@ router.get(
   authMiddleware,
   rateLimiterMiddleware({ points: 60, duration: 60 }), // 60 requests per minute
   asyncHandler(applicationController.getApplicationById)
+);
+
+/**
+ * @route   GET /api/v1/applications/:id/history
+ * @desc    Get application status history
+ * @access  Private (owner or company only)
+ * @param   id - Application UUID
+ */
+router.get(
+  '/:id/history',
+  authMiddleware,
+  rateLimiterMiddleware({ points: 60, duration: 60 }), // 60 requests per minute
+  asyncHandler(applicationController.getApplicationHistory)
 );
 
 /**

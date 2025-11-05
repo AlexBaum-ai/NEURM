@@ -292,6 +292,8 @@ model User {
   company         Company?         @relation("CompanyOwner")
   jobApplications JobApplication[]
   jobMatches      JobMatch[]
+  savedJobs       SavedJob[]       @relation("UserSavedJobs")
+  jobAlerts       JobAlert[]       @relation("UserJobAlerts")
 
   // Platform
   notifications           Notification[]
@@ -1465,6 +1467,7 @@ model Job {
   models       JobModel[]
   matches      JobMatch[]
   skills       JobSkill[]
+  savedBy      SavedJob[]       @relation("JobSaves")
 
   @@index([slug])
   @@index([companyId])
@@ -1504,14 +1507,32 @@ model JobApplication {
   reviewedAt       DateTime?         @map("reviewed_at") @db.Timestamptz(3)
   updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job           Job                          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user          User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  statusHistory ApplicationStatusHistory[]
 
   @@unique([jobId, userId])
   @@index([userId])
   @@index([status])
   @@index([source])
   @@map("job_applications")
+}
+
+model ApplicationStatusHistory {
+  id            String            @id @default(uuid())
+  applicationId String            @map("application_id")
+  fromStatus    ApplicationStatus? @map("from_status")
+  toStatus      ApplicationStatus  @map("to_status")
+  changedById   String?            @map("changed_by_id")
+  notes         String?            @db.Text
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  application JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([createdAt(sort: Desc)])
+  @@index([applicationId, createdAt(sort: Desc)])
+  @@map("application_status_history")
 }
 
 model JobMatch {
@@ -1547,6 +1568,43 @@ model JobSkill {
   @@index([jobId])
   @@index([skillType])
   @@map("job_skills")
+}
+
+model SavedJob {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  jobId     String   @map("job_id")
+  notes     String?  @db.Text
+  savedAt   DateTime @default(now()) @map("saved_at") @db.Timestamptz(3)
+
+  user User @relation("UserSavedJobs", fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation("JobSaves", fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([userId])
+  @@index([jobId])
+  @@index([savedAt(sort: Desc)])
+  @@map("saved_jobs")
+}
+
+model JobAlert {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  name           String   @db.VarChar(100)
+  criteriaJson   Json     @map("criteria_json")
+  active         Boolean  @default(true)
+  lastSentAt     DateTime? @map("last_sent_at") @db.Timestamptz(3)
+  jobsClickedCount Int    @default(0) @map("jobs_clicked_count")
+  jobsSentCount  Int      @default(0) @map("jobs_sent_count")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation("UserJobAlerts", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([active])
+  @@index([lastSentAt])
+  @@map("job_alerts")
 }
 
 // ============================================================================

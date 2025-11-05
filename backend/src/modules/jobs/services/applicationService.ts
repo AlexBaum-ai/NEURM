@@ -203,7 +203,16 @@ export class ApplicationService {
         },
       });
 
-      // 6. Update job application count
+      // 6. Track initial status in history
+      await this.trackStatusChange(
+        application.id,
+        null,
+        'submitted',
+        input.userId,
+        'Application submitted'
+      );
+
+      // 7. Update job application count
       await prisma.job.update({
         where: { id: input.jobId },
         data: {
@@ -213,10 +222,10 @@ export class ApplicationService {
         },
       });
 
-      // 7. Send notification to company owner
+      // 8. Send notification to company owner
       await this.notifyCompanyOfNewApplication(application);
 
-      // 8. Send confirmation notification to candidate
+      // 9. Send confirmation notification to candidate
       await this.notifyCandidateOfSubmission(application);
 
       logger.info('Job application created', {
@@ -236,12 +245,13 @@ export class ApplicationService {
   }
 
   /**
-   * Get user's applications
+   * Get user's applications with enhanced filtering
    */
   async getUserApplications(
     userId: string,
     filters?: {
       status?: ApplicationStatus;
+      filter?: 'all' | 'active' | 'interviews' | 'offers' | 'rejected' | 'withdrawn';
       sortBy?: 'date_applied' | 'status' | 'company';
       sortOrder?: 'asc' | 'desc';
     }
@@ -251,8 +261,35 @@ export class ApplicationService {
         userId,
       };
 
+      // Apply status filter
       if (filters?.status) {
         where.status = filters.status;
+      }
+
+      // Apply filter presets
+      if (filters?.filter) {
+        switch (filters.filter) {
+          case 'active':
+            // Active: submitted, viewed, screening
+            where.status = { in: ['submitted', 'viewed', 'screening'] };
+            break;
+          case 'interviews':
+            where.status = 'interview';
+            break;
+          case 'offers':
+            where.status = 'offer';
+            break;
+          case 'rejected':
+            where.status = 'rejected';
+            break;
+          case 'withdrawn':
+            where.status = 'withdrawn';
+            break;
+          case 'all':
+          default:
+            // No filter - show all
+            break;
+        }
       }
 
       const orderBy: Prisma.JobApplicationOrderByWithRelationInput = {};
@@ -304,12 +341,12 @@ export class ApplicationService {
   }
 
   /**
-   * Get application details by ID
+   * Get application details by ID (with status history)
    */
   async getApplicationById(
     applicationId: string,
     userId: string
-  ): Promise<JobApplication> {
+  ): Promise<any> {
     try {
       const application = await prisma.jobApplication.findUnique({
         where: { id: applicationId },
@@ -324,6 +361,11 @@ export class ApplicationService {
               username: true,
               email: true,
               profile: true,
+            },
+          },
+          statusHistory: {
+            orderBy: {
+              createdAt: 'asc',
             },
           },
         },
@@ -346,6 +388,84 @@ export class ApplicationService {
       Sentry.captureException(error);
       logger.error('Error fetching application details:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Get application status history
+   */
+  async getApplicationHistory(
+    applicationId: string,
+    userId: string
+  ): Promise<any[]> {
+    try {
+      // First verify access
+      const application = await prisma.jobApplication.findUnique({
+        where: { id: applicationId },
+        include: {
+          job: {
+            include: {
+              company: {
+                select: {
+                  ownerUserId: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!application) {
+        throw new NotFoundError('Application not found');
+      }
+
+      // Verify ownership
+      const isOwner = application.userId === userId;
+      const isCompanyOwner = application.job.company.ownerUserId === userId;
+
+      if (!isOwner && !isCompanyOwner) {
+        throw new ForbiddenError('You do not have permission to view this application history');
+      }
+
+      // Get history
+      const history = await prisma.applicationStatusHistory.findMany({
+        where: { applicationId },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+
+      return history;
+    } catch (error) {
+      Sentry.captureException(error);
+      logger.error('Error fetching application history:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Track status change in history
+   */
+  private async trackStatusChange(
+    applicationId: string,
+    fromStatus: ApplicationStatus | null,
+    toStatus: ApplicationStatus,
+    changedById?: string,
+    notes?: string
+  ): Promise<void> {
+    try {
+      await prisma.applicationStatusHistory.create({
+        data: {
+          applicationId,
+          fromStatus,
+          toStatus,
+          changedById,
+          notes,
+        },
+      });
+    } catch (error) {
+      logger.error('Error tracking status change:', error);
+      // Don't throw - history failure shouldn't fail the operation
     }
   }
 
@@ -416,6 +536,15 @@ export class ApplicationService {
           },
         },
       });
+
+      // Track status change
+      await this.trackStatusChange(
+        applicationId,
+        application.status,
+        'withdrawn',
+        userId,
+        'Candidate withdrew application'
+      );
 
       // Notify company owner
       await this.notifyCompanyOfWithdrawal(updatedApplication);
@@ -493,6 +622,15 @@ export class ApplicationService {
           },
         },
       });
+
+      // Track status change
+      await this.trackStatusChange(
+        applicationId,
+        application.status,
+        status,
+        userId,
+        `Status changed from ${application.status} to ${status}`
+      );
 
       // Notify candidate of status change
       await this.notifyCandidateOfStatusChange(updatedApplication);
@@ -639,6 +777,65 @@ export class ApplicationService {
       });
     } catch (error) {
       logger.error('Error sending status change notification:', error);
+    }
+  }
+
+  /**
+   * Export applications as CSV
+   */
+  async exportApplicationsToCSV(
+    userId: string,
+    filters?: {
+      status?: ApplicationStatus;
+      filter?: 'all' | 'active' | 'interviews' | 'offers' | 'rejected' | 'withdrawn';
+    }
+  ): Promise<string> {
+    try {
+      // Get applications with the same filtering logic
+      const applications = await this.getUserApplications(userId, {
+        ...filters,
+        sortBy: 'date_applied',
+        sortOrder: 'desc',
+      });
+
+      // Build CSV header
+      const header = [
+        'Application ID',
+        'Job Title',
+        'Company',
+        'Status',
+        'Applied Date',
+        'Last Updated',
+        'Job Type',
+        'Work Location',
+        'Location',
+      ].join(',');
+
+      // Build CSV rows
+      const rows = applications.map((app) => {
+        return [
+          app.id,
+          `"${app.job.title.replace(/"/g, '""')}"`, // Escape quotes
+          `"${app.job.company.name.replace(/"/g, '""')}"`,
+          app.status,
+          new Date(app.appliedAt).toISOString().split('T')[0],
+          new Date(app.updatedAt).toISOString().split('T')[0],
+          app.job.jobType,
+          app.job.workLocation,
+          `"${app.job.location.replace(/"/g, '""')}"`,
+        ].join(',');
+      });
+
+      // Combine header and rows
+      const csv = [header, ...rows].join('\n');
+
+      logger.info(`Exported ${applications.length} applications to CSV for user ${userId}`);
+
+      return csv;
+    } catch (error) {
+      Sentry.captureException(error);
+      logger.error('Error exporting applications to CSV:', error);
+      throw error;
     }
   }
 }
