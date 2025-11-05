@@ -120,7 +120,7 @@
         "Accessible (focus management, keyboard nav)"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "components": "ApplyModal, ApplicationForm, ScreeningQuestions",
         "validation": "Check required fields before enabling submit",
