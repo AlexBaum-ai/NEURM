@@ -124,3 +124,19 @@ export const lockTopicSchema = z.object({
 export const topicIdParamSchema = z.object({
   id: z.string().uuid('Invalid topic ID'),
 });
+
+// Unanswered questions query parameters validation
+export const unansweredQuestionsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  categoryId: z.string().uuid().optional(),
+  tag: z.string().optional(),
+  dateFrom: z.string().datetime().optional().transform((val) => (val ? new Date(val) : undefined)),
+  dateTo: z.string().datetime().optional().transform((val) => (val ? new Date(val) : undefined)),
+  sortBy: z
+    .enum(['createdAt', 'viewCount', 'voteScore'])
+    .default('createdAt'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+});
+
+export type UnansweredQuestionsQuery = z.infer<typeof unansweredQuestionsQuerySchema>;

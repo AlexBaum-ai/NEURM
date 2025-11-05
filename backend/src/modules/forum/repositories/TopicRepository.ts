@@ -87,6 +87,20 @@ export interface TopicPagination {
   sortOrder?: 'asc' | 'desc';
 }
 
+export interface UnansweredQuestionsFilters {
+  categoryId?: string;
+  tag?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+}
+
+export interface UnansweredQuestionsPagination {
+  page: number;
+  limit: number;
+  sortBy?: 'createdAt' | 'viewCount' | 'voteScore';
+  sortOrder?: 'asc' | 'desc';
+}
+
 @injectable()
 export class TopicRepository {
   constructor(private prisma: PrismaClient) {}
@@ -500,5 +514,131 @@ export class TopicRepository {
         severity: true,
       },
     });
+  }
+
+  /**
+   * Find unanswered questions with filters and pagination
+   */
+  async findUnanswered(
+    filters: UnansweredQuestionsFilters,
+    pagination: UnansweredQuestionsPagination
+  ): Promise<{ topics: TopicWithRelations[]; total: number }> {
+    const where: Prisma.TopicWhereInput = {
+      type: 'question',
+      acceptedReplyId: null,
+      isLocked: false,
+      isDraft: false,
+      status: {
+        in: ['open', 'resolved'], // Include open and resolved but not archived
+      },
+    };
+
+    // Apply filters
+    if (filters.categoryId) {
+      where.categoryId = filters.categoryId;
+    }
+
+    if (filters.tag) {
+      where.tags = {
+        some: {
+          tag: {
+            slug: filters.tag,
+          },
+        },
+      };
+    }
+
+    if (filters.dateFrom || filters.dateTo) {
+      where.createdAt = {};
+      if (filters.dateFrom) {
+        where.createdAt.gte = filters.dateFrom;
+      }
+      if (filters.dateTo) {
+        where.createdAt.lte = filters.dateTo;
+      }
+    }
+
+    // Build order by clause
+    const orderBy: Prisma.TopicOrderByWithRelationInput = {};
+    if (pagination.sortBy) {
+      orderBy[pagination.sortBy] = pagination.sortOrder || 'desc';
+    } else {
+      orderBy.createdAt = 'desc';
+    }
+
+    // Get total count
+    const total = await this.prisma.topic.count({ where });
+
+    // Get paginated topics
+    const topics = await this.prisma.topic.findMany({
+      where,
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            profile: {
+              select: {
+                displayName: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+        category: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        tags: {
+          include: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
+          },
+        },
+        attachments: {
+          select: {
+            id: true,
+            filename: true,
+            mimeType: true,
+            fileSize: true,
+            url: true,
+            width: true,
+            height: true,
+          },
+          orderBy: {
+            displayOrder: 'asc',
+          },
+        },
+        poll: {
+          select: {
+            id: true,
+            question: true,
+            options: true,
+            multipleChoice: true,
+            expiresAt: true,
+          },
+        },
+        _count: {
+          select: {
+            replies: true,
+            votes: true,
+          },
+        },
+      },
+      orderBy,
+      skip: (pagination.page - 1) * pagination.limit,
+      take: pagination.limit,
+    });
+
+    return { topics, total };
   }
 }

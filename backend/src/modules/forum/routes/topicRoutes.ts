@@ -68,6 +68,27 @@ const moderatorLimiter = createRateLimiter({
 // ============================================================================
 
 /**
+ * @route   GET /api/forum/topics/unanswered
+ * @desc    Get unanswered questions with filters and pagination
+ * @access  Public
+ * @query   page - Page number (default: 1)
+ * @query   limit - Items per page (default: 20, max: 100)
+ * @query   categoryId - Filter by category UUID
+ * @query   tag - Filter by tag slug
+ * @query   dateFrom - Filter by date from (ISO 8601 format)
+ * @query   dateTo - Filter by date to (ISO 8601 format)
+ * @query   sortBy - Sort field (createdAt, viewCount, voteScore)
+ * @query   sortOrder - Sort order (asc, desc)
+ * @returns Paginated list of unanswered questions with total count
+ * @example GET /api/forum/topics/unanswered?categoryId=xxx&sortBy=viewCount&page=1&limit=20
+ */
+router.get(
+  '/unanswered',
+  publicReadLimiter,
+  controller.getUnansweredQuestions
+);
+
+/**
  * @route   GET /api/forum/topics
  * @desc    List topics with filters and pagination
  * @access  Public (authentication optional for drafts)

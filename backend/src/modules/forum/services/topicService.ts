@@ -6,9 +6,12 @@ import {
   UpdateTopicData,
   TopicFilters,
   TopicPagination,
+  UnansweredQuestionsFilters,
+  UnansweredQuestionsPagination,
 } from '../repositories/TopicRepository';
 import { TopicType, UserRole } from '@prisma/client';
 import { ReputationService } from './reputationService';
+import redisClient from '@/config/redisClient';
 
 interface User {
   id: string;
@@ -552,5 +555,130 @@ export class TopicService {
       user.role === 'admin' ||
       user.role === 'moderator'
     );
+  }
+
+  /**
+   * Get unanswered questions with caching
+   */
+  async getUnansweredQuestions(
+    filters: UnansweredQuestionsFilters,
+    pagination: UnansweredQuestionsPagination
+  ) {
+    try {
+      // Generate cache key based on filters and pagination
+      const cacheKey = this.generateUnansweredCacheKey(filters, pagination);
+
+      // Try to get from cache first
+      if (redisClient.isReady()) {
+        try {
+          const cached = await redisClient.getJSON<any>(cacheKey);
+          if (cached) {
+            Sentry.addBreadcrumb({
+              category: 'forum',
+              message: 'Unanswered questions served from cache',
+              level: 'info',
+              data: { cacheKey },
+            });
+            return cached;
+          }
+        } catch (cacheError) {
+          // Log cache error but continue with database query
+          Sentry.captureException(cacheError, {
+            tags: { module: 'forum', operation: 'getUnansweredQuestionsCache' },
+            extra: { cacheKey },
+          });
+        }
+      }
+
+      // Fetch from database
+      const result = await this.topicRepository.findUnanswered(filters, pagination);
+
+      const response = {
+        topics: result.topics,
+        pagination: {
+          page: pagination.page,
+          limit: pagination.limit,
+          total: result.total,
+          totalPages: Math.ceil(result.total / pagination.limit),
+        },
+        meta: {
+          totalUnanswered: result.total,
+        },
+      };
+
+      // Cache the result for 5 minutes (300 seconds)
+      if (redisClient.isReady()) {
+        try {
+          await redisClient.setJSON(cacheKey, response, 300);
+        } catch (cacheError) {
+          // Log cache error but don't fail the request
+          Sentry.captureException(cacheError, {
+            tags: { module: 'forum', operation: 'setUnansweredQuestionsCache' },
+            extra: { cacheKey },
+          });
+        }
+      }
+
+      Sentry.addBreadcrumb({
+        category: 'forum',
+        message: 'Unanswered questions fetched from database',
+        level: 'info',
+        data: {
+          total: result.total,
+          page: pagination.page,
+        },
+      });
+
+      return response;
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { module: 'forum', operation: 'getUnansweredQuestions' },
+        extra: { filters, pagination },
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Generate cache key for unanswered questions
+   */
+  private generateUnansweredCacheKey(
+    filters: UnansweredQuestionsFilters,
+    pagination: UnansweredQuestionsPagination
+  ): string {
+    const parts = ['unanswered_questions'];
+
+    if (filters.categoryId) parts.push(`cat:${filters.categoryId}`);
+    if (filters.tag) parts.push(`tag:${filters.tag}`);
+    if (filters.dateFrom) parts.push(`from:${filters.dateFrom.toISOString()}`);
+    if (filters.dateTo) parts.push(`to:${filters.dateTo.toISOString()}`);
+
+    parts.push(`page:${pagination.page}`);
+    parts.push(`limit:${pagination.limit}`);
+    parts.push(`sort:${pagination.sortBy || 'createdAt'}`);
+    parts.push(`order:${pagination.sortOrder || 'desc'}`);
+
+    return parts.join(':');
+  }
+
+  /**
+   * Invalidate unanswered questions cache
+   * Call this when a question is answered or when topics are created/updated
+   */
+  async invalidateUnansweredCache(): Promise<void> {
+    if (redisClient.isReady()) {
+      try {
+        await redisClient.delPattern('unanswered_questions:*');
+        Sentry.addBreadcrumb({
+          category: 'forum',
+          message: 'Unanswered questions cache invalidated',
+          level: 'info',
+        });
+      } catch (error) {
+        Sentry.captureException(error, {
+          tags: { module: 'forum', operation: 'invalidateUnansweredCache' },
+        });
+      }
+    }
   }
 }

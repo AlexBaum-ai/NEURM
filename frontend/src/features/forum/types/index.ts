@@ -377,5 +377,131 @@ export interface VotesMap {
   [key: string]: VoteType; // key format: "{type}:{id}"
 }
 
+// ============================================================================
+// SEARCH TYPES
+// ============================================================================
+
+export type SearchResultType = 'topic' | 'reply';
+export type SearchSortBy = 'relevance' | 'date' | 'votes' | 'popularity';
+
+export interface SearchFilters {
+  categoryId?: string;
+  type?: TopicType;
+  status?: TopicStatus;
+  dateFrom?: string;
+  dateTo?: string;
+  hasCode?: boolean;
+  minUpvotes?: number;
+  tag?: string;
+}
+
+export interface SearchQuery extends SearchFilters {
+  q: string;
+  page?: number;
+  limit?: number;
+  sortBy?: SearchSortBy;
+}
+
+export interface SearchResultTopic extends ForumTopic {
+  resultType: 'topic';
+  highlightedTitle?: string;
+  highlightedContent?: string;
+  matchedTerms?: string[];
+}
+
+export interface SearchResultReply extends ForumReply {
+  resultType: 'reply';
+  topicTitle: string;
+  topicSlug: string;
+  highlightedContent?: string;
+  matchedTerms?: string[];
+}
+
+export type SearchResult = SearchResultTopic | SearchResultReply;
+
+export interface SearchResponse {
+  success: boolean;
+  data: {
+    results: SearchResult[];
+    pagination: {
+      page: number;
+      limit: number;
+      totalCount: number;
+      totalPages: number;
+      hasNextPage: boolean;
+      hasPreviousPage: boolean;
+    };
+    query: string;
+    filters: SearchFilters;
+  };
+}
+
+export interface SearchSuggestion {
+  id: string;
+  title: string;
+  type: TopicType;
+  slug: string;
+  categoryName: string;
+}
+
+export interface SearchSuggestionsResponse {
+  success: boolean;
+  data: {
+    suggestions: SearchSuggestion[];
+  };
+}
+
+export interface PopularSearch {
+  query: string;
+  count: number;
+}
+
+export interface PopularSearchesResponse {
+  success: boolean;
+  data: {
+    searches: PopularSearch[];
+  };
+}
+
+export interface SavedSearch {
+  id: string;
+  userId: string;
+  name: string;
+  query: string;
+  filters: SearchFilters;
+  createdAt: string;
+}
+
+export interface SavedSearchInput {
+  name: string;
+  query: string;
+  filters?: SearchFilters;
+}
+
+export interface SavedSearchesResponse {
+  success: boolean;
+  data: {
+    searches: SavedSearch[];
+  };
+}
+
+export interface SearchHistoryItem {
+  query: string;
+  timestamp: string;
+}
+
+export interface SearchHistoryResponse {
+  success: boolean;
+  data: {
+    history: SearchHistoryItem[];
+  };
+}
+
 // Re-export reputation types
 export * from './reputation';
+
+// Re-export moderation types
+export * from './moderation';
+
+// Re-export report types
+export * from './report';
