@@ -3,9 +3,11 @@ import { asyncHandler } from '@/middleware/asyncHandler.middleware';
 import { authMiddleware } from '@/middleware/auth.middleware';
 import { rateLimiterMiddleware } from '@/middleware/rateLimiter.middleware';
 import JobController from './jobs.controller';
+import ApplicationController from './application.controller';
 
 const router: Router = express.Router();
 const jobController = new JobController();
+const applicationController = new ApplicationController();
 
 /**
  * Job Routes
@@ -28,6 +30,20 @@ router.get(
   '/',
   rateLimiterMiddleware({ points: 100, duration: 60 }), // 100 requests per minute
   asyncHandler(jobController.listJobs)
+);
+
+/**
+ * @route   POST /api/v1/jobs/:id/apply
+ * @desc    Apply to a job (Easy Apply)
+ * @access  Private (authenticated users only)
+ * @param   id - Job UUID
+ * @body    ApplyToJobInput - coverLetter, screeningAnswers, source
+ */
+router.post(
+  '/:id/apply',
+  authMiddleware,
+  rateLimiterMiddleware({ points: 20, duration: 3600 }), // 20 applications per hour
+  asyncHandler(applicationController.applyToJob)
 );
 
 /**

@@ -177,12 +177,11 @@ enum JobStatus {
 }
 
 enum ApplicationStatus {
-  pending
-  reviewed
-  shortlisted
-  interviewed
-  offered
-  accepted
+  submitted
+  viewed
+  screening
+  interview
+  offer
   rejected
   withdrawn
 }
@@ -1493,15 +1492,17 @@ model JobModel {
 }
 
 model JobApplication {
-  id          String            @id @default(uuid())
-  jobId       String            @map("job_id")
-  userId      String            @map("user_id")
-  coverLetter String?           @map("cover_letter") @db.Text
-  resumeUrl   String?           @map("resume_url") @db.VarChar(500)
-  status      ApplicationStatus @default(pending)
-  appliedAt   DateTime          @default(now()) @map("applied_at") @db.Timestamptz(3)
-  reviewedAt  DateTime?         @map("reviewed_at") @db.Timestamptz(3)
-  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id               String            @id @default(uuid())
+  jobId            String            @map("job_id")
+  userId           String            @map("user_id")
+  coverLetter      String?           @map("cover_letter") @db.Text
+  resumeUrl        String?           @map("resume_url") @db.VarChar(500)
+  screeningAnswers Json?             @map("screening_answers")
+  source           String?           @db.VarChar(50)
+  status           ApplicationStatus @default(submitted)
+  appliedAt        DateTime          @default(now()) @map("applied_at") @db.Timestamptz(3)
+  reviewedAt       DateTime?         @map("reviewed_at") @db.Timestamptz(3)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1509,6 +1510,7 @@ model JobApplication {
   @@unique([jobId, userId])
   @@index([userId])
   @@index([status])
+  @@index([source])
   @@map("job_applications")
 }
 

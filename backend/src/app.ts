@@ -27,6 +27,7 @@ import { reputationRoutes, userBadgeRoutes } from '@/modules/forum';
 import messagingRoutes from '@/modules/messaging/messaging.routes';
 import jobRoutes from '@/modules/jobs/jobs.routes';
 import companyRoutes from '@/modules/jobs/company.routes';
+import applicationRoutes from '@/modules/jobs/application.routes';
 import profilesRoutes from '@/modules/profiles/profiles.routes';
 
 const app: Application = express();
@@ -99,6 +100,7 @@ app.use('/api/v1/users/:userId/badges', userBadgeRoutes); // Badge routes for /a
 app.use('/api/v1', messagingRoutes); // Messaging routes for /api/v1/messages and /api/v1/conversations
 app.use('/api/v1/jobs', jobRoutes); // Job posting routes
 app.use('/api/v1/companies', companyRoutes); // Company profile routes
+app.use('/api/v1/applications', applicationRoutes); // Job application routes
 
 // RSS Feed routes (no version prefix for feed URLs)
 app.use('/api/feed', rssRoutes);
