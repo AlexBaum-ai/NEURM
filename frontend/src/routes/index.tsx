@@ -25,6 +25,12 @@ const MediaLibraryPage = lazy(() => import('@/features/media/pages/MediaLibraryP
 const ModelListPage = lazy(() => import('@/features/models/pages/ModelListPage').then(m => ({ default: m.ModelListPage })));
 const ModelDetailPage = lazy(() => import('@/features/models/pages/ModelDetailPage').then(m => ({ default: m.ModelDetailPage })));
 
+// Lazy load forum pages
+const ForumHome = lazy(() => import('@/features/forum/pages/ForumHome'));
+const CategoryDetail = lazy(() => import('@/features/forum/pages/CategoryDetail'));
+const TopicDetail = lazy(() => import('@/features/forum/pages/TopicDetail'));
+const NewTopicPage = lazy(() => import('@/features/forum/pages/NewTopicPage'));
+
 // Loading fallback
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -212,7 +218,35 @@ const router = createBrowserRouter([
       },
       {
         path: 'forum',
-        element: <ComingSoonPage title="Forum" />,
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ForumHome />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'forum/new',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <NewTopicPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'forum/c/:slug',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <CategoryDetail />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'forum/t/:slug/:id',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <TopicDetail />
+          </Suspense>
+        ),
       },
       {
         path: 'jobs',

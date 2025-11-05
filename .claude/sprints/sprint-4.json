@@ -2,10 +2,10 @@
   "sprintNumber": 4,
   "sprintGoal": "Build forum module foundation with categories, topics, replies, and basic voting system",
   "duration": "2 weeks",
-  "status": "pending",
+  "status": "completed",
   "priority": "high",
-  "startDate": null,
-  "endDate": null,
+  "startDate": "2025-11-05",
+  "endDate": "2025-11-05",
   "tasks": [
     {
       "taskId": "SPRINT-4-001",
@@ -13,7 +13,9 @@
       "description": "Create hierarchical category system with subcategories (max 2 levels) and moderator assignments",
       "assignedTo": "backend",
       "estimatedHours": 10,
-      "dependencies": ["SPRINT-0-002"],
+      "dependencies": [
+        "SPRINT-0-002"
+      ],
       "acceptanceCriteria": [
         "forum_categories table with parent_id for hierarchy",
         "Max 2 levels: main categories and subcategories",
@@ -29,7 +31,7 @@
         "Seed with 12 predefined categories from spec"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "tables": "forum_categories, category_moderators",
         "endpoints": [
@@ -50,7 +52,9 @@
       "description": "Create category listing page with hierarchical display and navigation",
       "assignedTo": "frontend",
       "estimatedHours": 12,
-      "dependencies": ["SPRINT-4-001"],
+      "dependencies": [
+        "SPRINT-4-001"
+      ],
       "acceptanceCriteria": [
         "Forum homepage at /forum shows all categories",
         "Hierarchical display (main categories with subcategories indented)",
@@ -64,7 +68,7 @@
         "Follow category button (with count)"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "routes": "/forum, /forum/c/:slug",
         "components": "ForumHome, CategoryCard, CategoryList",
@@ -78,7 +82,9 @@
       "description": "Create topic CRUD with multiple types (Question, Discussion, Showcase, Tutorial, Announcement, Paper Discussion)",
       "assignedTo": "backend",
       "estimatedHours": 14,
-      "dependencies": ["SPRINT-4-001"],
+      "dependencies": [
+        "SPRINT-4-001"
+      ],
       "acceptanceCriteria": [
         "forum_topics table with all required fields",
         "Topic types: question, discussion, showcase, tutorial, announcement, paper",
@@ -97,7 +103,7 @@
         "Link preview generation for external URLs"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "tables": "forum_topics, topic_attachments, topic_tags",
         "endpoints": [
@@ -119,7 +125,9 @@
       "description": "Create rich topic composer with markdown editor, image upload, tags, and polls",
       "assignedTo": "frontend",
       "estimatedHours": 16,
-      "dependencies": ["SPRINT-4-003"],
+      "dependencies": [
+        "SPRINT-4-003"
+      ],
       "acceptanceCriteria": [
         "Topic creation page at /forum/new",
         "Topic type selector (radio buttons for 6 types)",
@@ -138,7 +146,7 @@
         "Responsive design (mobile-friendly)"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "route": "/forum/new",
         "components": "TopicComposer, TopicTypeSelector, MarkdownEditor, PollBuilder",
@@ -153,7 +161,9 @@
       "description": "Create topic list view with filters and topic detail page with replies",
       "assignedTo": "frontend",
       "estimatedHours": 14,
-      "dependencies": ["SPRINT-4-003"],
+      "dependencies": [
+        "SPRINT-4-003"
+      ],
       "acceptanceCriteria": [
         "Topic list at /forum/c/:category shows topics in category",
         "Filters: type, status (open/closed/solved), date, has_code",
@@ -169,7 +179,7 @@
         "Loading states and error handling"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "routes": "/forum/c/:slug, /forum/t/:slug/:id",
         "components": "TopicList, TopicCard, TopicDetail, TopicHeader",
@@ -183,7 +193,9 @@
       "description": "Create reply system with max 3 levels of threading and nested structure",
       "assignedTo": "backend",
       "estimatedHours": 12,
-      "dependencies": ["SPRINT-4-003"],
+      "dependencies": [
+        "SPRINT-4-003"
+      ],
       "acceptanceCriteria": [
         "forum_replies table with parent_reply_id for threading",
         "Max 3 levels deep (topic → reply → reply → reply)",
@@ -200,7 +212,7 @@
         "Sort replies: oldest, newest, most_voted"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "table": "forum_replies (id, topic_id, parent_reply_id, user_id, content, created_at, updated_at, edited_at, depth)",
         "depth": "CHECK depth <= 3, calculated from parent chain",
@@ -215,7 +227,9 @@
       "description": "Create nested reply interface with quote, edit, and accepted answer features",
       "assignedTo": "frontend",
       "estimatedHours": 16,
-      "dependencies": ["SPRINT-4-006"],
+      "dependencies": [
+        "SPRINT-4-006"
+      ],
       "acceptanceCriteria": [
         "Threaded reply display below topic content",
         "Visual indentation for nested replies (max 3 levels)",
@@ -234,7 +248,7 @@
         "Real-time updates for new replies (polling or websocket)"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "components": "ReplyTree, ReplyCard, ReplyComposer, QuoteBlock",
         "nesting": "Recursive component rendering for threads",
@@ -248,7 +262,10 @@
       "description": "Create upvote/downvote system for topics and replies with score calculation",
       "assignedTo": "backend",
       "estimatedHours": 8,
-      "dependencies": ["SPRINT-4-003", "SPRINT-4-006"],
+      "dependencies": [
+        "SPRINT-4-003",
+        "SPRINT-4-006"
+      ],
       "acceptanceCriteria": [
         "forum_votes table tracks votes on topics and replies",
         "POST /api/forum/topics/:id/vote upvotes/downvotes topic",
@@ -264,7 +281,7 @@
         "Prevent self-voting"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "table": "forum_votes (user_id, voteable_type, voteable_id, vote_type, created_at)",
         "unique": "UNIQUE(user_id, voteable_type, voteable_id)",
@@ -279,7 +296,9 @@
       "description": "Create upvote/downvote buttons with score display and animations",
       "assignedTo": "frontend",
       "estimatedHours": 8,
-      "dependencies": ["SPRINT-4-008"],
+      "dependencies": [
+        "SPRINT-4-008"
+      ],
       "acceptanceCriteria": [
         "Voting widget on topics and replies (left sidebar)",
         "Upvote arrow button (gray inactive, green active)",
@@ -297,7 +316,7 @@
         "Accessible (ARIA labels)"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "components": "VotingWidget, VoteButton",
         "animation": "Framer Motion for score change animation",
@@ -311,7 +330,9 @@
       "description": "Calculate and display user reputation based on forum activity",
       "assignedTo": "backend",
       "estimatedHours": 10,
-      "dependencies": ["SPRINT-4-008"],
+      "dependencies": [
+        "SPRINT-4-008"
+      ],
       "acceptanceCriteria": [
         "user_reputation table tracks total reputation",
         "Reputation earned from: topic (+5), reply (+2), upvote received (+10), downvote received (-5), accepted answer (+25)",
@@ -325,7 +346,7 @@
         "Recalculate reputation on vote changes"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "table": "user_reputation (user_id, total_reputation, level, updated_at)",
         "log": "reputation_history (user_id, change, reason, source_id, created_at)",
@@ -340,7 +361,9 @@
       "description": "Show reputation points, level, and badges on user interface elements",
       "assignedTo": "frontend",
       "estimatedHours": 6,
-      "dependencies": ["SPRINT-4-010"],
+      "dependencies": [
+        "SPRINT-4-010"
+      ],
       "acceptanceCriteria": [
         "Reputation score displayed next to username on posts",
         "Reputation level badge with color coding",
@@ -354,7 +377,7 @@
         "Accessible labels for screen readers"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "components": "ReputationBadge, ReputationWidget, ReputationHistory",
         "colors": "Newcomer: gray, Contributor: blue, Expert: purple, Master: gold, Legend: red",
@@ -393,7 +416,7 @@
         "No console errors or warnings"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "tools": "Playwright for E2E, Jest for unit tests",
         "scenarios": [
