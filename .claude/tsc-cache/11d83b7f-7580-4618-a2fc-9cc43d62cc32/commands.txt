@@ -1,0 +1,2 @@
+frontend:build:cd /home/neurmatic/nEURM/frontend && npm run build
+frontend:tsc:cd /home/neurmatic/nEURM/frontend && npx tsc --project tsconfig.app.json --noEmit

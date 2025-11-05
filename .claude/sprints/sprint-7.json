@@ -1,0 +1,282 @@
+{
+  "sprintNumber": 7,
+  "sprintGoal": "Build Jobs Module foundation with job posting, company profiles, and candidate profiles",
+  "duration": "2 weeks",
+  "status": "pending",
+  "priority": "high",
+  "startDate": null,
+  "endDate": null,
+  "tasks": [
+    {
+      "taskId": "SPRINT-7-001",
+      "title": "Implement job posting backend API",
+      "description": "Create job posting system with LLM-specific metadata and comprehensive fields",
+      "assignedTo": "backend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-0-002"],
+      "acceptanceCriteria": [
+        "jobs table with all required fields from spec",
+        "POST /api/jobs creates job posting (company accounts only)",
+        "GET /api/jobs returns paginated job listings with filters",
+        "GET /api/jobs/:id returns job details",
+        "PUT /api/jobs/:id updates job (company only)",
+        "DELETE /api/jobs/:id soft deletes job",
+        "Job status: draft, active, closed, filled",
+        "Required fields: title, description, requirements, experience_level, employment_type, location, positions_count",
+        "Optional fields: salary_min, salary_max, deadline, benefits, screening_questions",
+        "LLM metadata: models_used, frameworks, vector_dbs, cloud_platforms, languages, use_case_type, model_strategy",
+        "Skills rating system (required_skills with 1-5 stars)",
+        "Automatic status change to closed on deadline",
+        "Search and filter by all metadata fields",
+        "Company verification check before posting"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tables": "jobs (id, company_id, title, description, requirements, experience_level, employment_type, location, remote_type, salary_min, salary_max, deadline, status), job_metadata (job_id, models_used, frameworks, etc.), job_skills (job_id, skill_name, skill_level)",
+        "enums": "experience_level (junior, mid, senior, lead), employment_type (full_time, part_time, freelance, internship), remote_type (remote, hybrid, on_site)",
+        "endpoints": ["GET /api/jobs", "POST /api/jobs", "GET /api/jobs/:id", "PUT /api/jobs/:id", "DELETE /api/jobs/:id"]
+      }
+    },
+    {
+      "taskId": "SPRINT-7-002",
+      "title": "Build job posting creation form",
+      "description": "Create comprehensive job posting form with all LLM-specific fields",
+      "assignedTo": "frontend",
+      "estimatedHours": 20,
+      "dependencies": ["SPRINT-7-001"],
+      "acceptanceCriteria": [
+        "Job posting page at /jobs/new (company accounts)",
+        "Multi-step form: Basic Info → Requirements → Tech Stack → Details",
+        "Step 1: title, description (rich text), employment type, positions",
+        "Step 2: experience level, requirements, required skills (with star rating)",
+        "Step 3: LLM models (multi-select), frameworks, vector DBs, cloud platforms, languages",
+        "Step 4: location, remote type, salary range, deadline, benefits, screening questions",
+        "Form validation with error messages",
+        "Save as draft functionality",
+        "Preview mode",
+        "Progress indicator (step 1 of 4)",
+        "Auto-save to localStorage every 60s",
+        "Responsive design",
+        "Duplicate job feature (copy existing job)",
+        "Character limits with counters"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/jobs/new",
+        "components": "JobPostingForm, StepIndicator, SkillsSelector, TechStackSelector",
+        "validation": "Zod schema with step-by-step validation",
+        "draft": "localStorage: job_draft_{companyId}"
+      }
+    },
+    {
+      "taskId": "SPRINT-7-003",
+      "title": "Build job listings and detail pages",
+      "description": "Create job browsing interface with filters and detailed job pages",
+      "assignedTo": "frontend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-7-001"],
+      "acceptanceCriteria": [
+        "Job listings at /jobs",
+        "Job cards show: title, company, location, salary, remote type, key tech stack",
+        "Filters sidebar: location, remote, salary range, experience level, employment type, models, frameworks, has_visa_sponsorship",
+        "Sort: best_match (later), newest, highest_salary",
+        "Pagination (20 per page) or infinite scroll",
+        "Job detail page at /jobs/:id",
+        "Detail shows: full description, requirements, tech stack overview, skills with levels, use case, benefits, interview process, company info",
+        "Apply button (prominent CTA)",
+        "Save job button (bookmark)",
+        "Share buttons (LinkedIn, Twitter, copy link)",
+        "Related jobs section (3-6 similar jobs)",
+        "Breadcrumbs navigation",
+        "Responsive design",
+        "SEO optimized (meta tags, structured data)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "routes": "/jobs, /jobs/:id",
+        "components": "JobListings, JobCard, JobFilters, JobDetail, ApplyButton",
+        "seo": "Dynamic meta tags, JSON-LD structured data for job postings"
+      }
+    },
+    {
+      "taskId": "SPRINT-7-004",
+      "title": "Implement company profiles backend",
+      "description": "Create company profile system with branding, info, and job management",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-0-002"],
+      "acceptanceCriteria": [
+        "companies table with comprehensive profile fields",
+        "GET /api/companies/:id returns public company profile",
+        "PUT /api/companies/:id updates company profile (company admin)",
+        "Company fields: name, slug, logo, header_image, description, mission, team_size, founded, locations, website, benefits, culture_description",
+        "Tech stack fields: models_used, frameworks, tech_stack",
+        "Social links (LinkedIn, Twitter, GitHub)",
+        "GET /api/companies/:id/jobs returns company's active jobs",
+        "Follow company functionality",
+        "Company verification status (verified badge)",
+        "View count tracking",
+        "Reviews/ratings placeholder (future: Glassdoor integration)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "companies (id, user_id, name, slug, logo_url, header_image_url, description, mission, team_size, founded, website, verified)",
+        "endpoints": ["GET /api/companies/:id", "PUT /api/companies/:id", "GET /api/companies/:id/jobs", "POST /api/companies/:id/follow"],
+        "slug": "Auto-generate from company name, ensure uniqueness"
+      }
+    },
+    {
+      "taskId": "SPRINT-7-005",
+      "title": "Build company profile pages",
+      "description": "Create public company profiles with jobs, info, and culture",
+      "assignedTo": "frontend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-7-004"],
+      "acceptanceCriteria": [
+        "Company profile at /companies/:slug",
+        "Hero section: logo, header image, company name, verified badge",
+        "About section: description, mission, team size, founded, locations",
+        "Tech stack badges (models, frameworks)",
+        "Benefits & perks list",
+        "Culture section with photos/videos",
+        "Active jobs section (grid of job cards)",
+        "Social media links",
+        "Follow button with count",
+        "Company stats (employees, jobs posted, followers)",
+        "Edit button (company admins only)",
+        "Company settings page at /companies/:slug/settings",
+        "Settings: edit all profile fields, upload logo/header",
+        "Responsive design",
+        "SEO optimized"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "routes": "/companies/:slug, /companies/:slug/settings",
+        "components": "CompanyProfile, CompanyHero, CompanyAbout, CompanyJobs, CompanySettings",
+        "upload": "Image upload for logo (max 2MB) and header (max 5MB)"
+      }
+    },
+    {
+      "taskId": "SPRINT-7-006",
+      "title": "Implement candidate profiles backend",
+      "description": "Create candidate profile system with work experience, skills, portfolio, and job preferences",
+      "assignedTo": "backend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-1-001"],
+      "acceptanceCriteria": [
+        "candidate_profiles table extends user profiles",
+        "work_experiences table: job_title, company, period, description",
+        "education table: degree, institution, field, period",
+        "portfolio_projects table: title, description, tech_stack, links, screenshots",
+        "candidate_skills table: skill_name, proficiency (1-5), endorsement_count",
+        "job_preferences table: roles_interested, company_preferences, location, remote, salary_expectations, availability",
+        "PUT /api/profiles/candidate updates candidate profile",
+        "GET /api/profiles/:username returns public candidate profile",
+        "Privacy settings per section (public, community, recruiters, private)",
+        "Profile visibility toggle (visible_to_recruiters boolean)",
+        "GET /api/profiles/:username/portfolio returns portfolio projects",
+        "Community stats included (forum reputation, badges, top answers)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tables": "candidate_profiles, work_experiences, education, portfolio_projects, candidate_skills, job_preferences, profile_privacy",
+        "privacy": "Enum: public, community, recruiters, private per section",
+        "endpoints": ["PUT /api/profiles/candidate", "GET /api/profiles/:username", "GET /api/profiles/:username/portfolio"]
+      }
+    },
+    {
+      "taskId": "SPRINT-7-007",
+      "title": "Build candidate profile pages and forms",
+      "description": "Create comprehensive candidate profile interface with edit forms",
+      "assignedTo": "frontend",
+      "estimatedHours": 20,
+      "dependencies": ["SPRINT-7-006"],
+      "acceptanceCriteria": [
+        "Public profile at /u/:username",
+        "Header: photo, name, headline, location, availability status",
+        "About section (elevator pitch)",
+        "LLM Experience section: models worked with (proficiency stars), skills, frameworks, programming languages",
+        "Work Experience section (timeline view)",
+        "Education section",
+        "Portfolio section (max 5 featured projects with screenshots)",
+        "Community Stats: forum reputation, badges, top answers, tutorials published",
+        "Social links (GitHub, LinkedIn, website, HuggingFace)",
+        "Job Preferences section (if looking for work)",
+        "Profile edit page at /profile/edit",
+        "Edit forms for all sections",
+        "Privacy toggles per section",
+        "Drag-drop reordering (work exp, portfolio)",
+        "Add/edit/delete experience, education, projects",
+        "Skills autocomplete with endorsements",
+        "Responsive design"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "routes": "/u/:username, /profile/edit",
+        "components": "CandidateProfile, ProfileHeader, WorkExperience, Portfolio, SkillsGrid, ProfileEditor",
+        "drag": "react-beautiful-dnd for reordering"
+      }
+    },
+    {
+      "taskId": "SPRINT-7-008",
+      "title": "Test jobs module foundation",
+      "description": "Test job posting, company profiles, and candidate profiles",
+      "assignedTo": "qa",
+      "estimatedHours": 14,
+      "dependencies": [
+        "SPRINT-7-002",
+        "SPRINT-7-003",
+        "SPRINT-7-005",
+        "SPRINT-7-007"
+      ],
+      "acceptanceCriteria": [
+        "Job posting form submits successfully with all fields",
+        "Job draft saves and restores correctly",
+        "Job listings display with accurate filters",
+        "Job detail pages show all information",
+        "Company profiles display correctly",
+        "Company settings update properly",
+        "Follow company functionality works",
+        "Candidate profiles show all sections",
+        "Profile privacy settings enforced",
+        "Work experience, education, portfolio CRUD works",
+        "Skills autocomplete functions",
+        "All forms validate correctly",
+        "Responsive on all devices",
+        "Performance: job listings load < 2s",
+        "No console errors"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tools": "Playwright E2E, Jest unit tests",
+        "scenarios": [
+          "Create job posting with full details",
+          "Complete candidate profile with all sections",
+          "Browse jobs with various filters",
+          "View company profile and follow"
+        ]
+      }
+    }
+  ],
+  "deliverables": [
+    "Job posting system with LLM metadata",
+    "Company profiles with branding",
+    "Candidate profiles with portfolio",
+    "Job listings with advanced filters",
+    "Comprehensive test suite"
+  ],
+  "notes": "Sprint 7 establishes the Jobs Module foundation. Focus on making job postings rich with LLM-specific metadata - this is the platform's differentiator. Candidate profiles should showcase both technical skills and community contributions.",
+  "risks": [
+    "Job posting form complexity may overwhelm users - consider progressive disclosure",
+    "Candidate profile may be too detailed - ensure optional fields are clearly marked",
+    "Privacy settings complexity needs clear UX"
+  ]
+}

@@ -1,0 +1,421 @@
+{
+  "sprintNumber": 3,
+  "sprintGoal": "Complete News Module with advanced features including media management, RSS, and model tracker pages",
+  "duration": "2 weeks",
+  "status": "pending",
+  "priority": "high",
+  "startDate": null,
+  "endDate": null,
+  "tasks": [
+    {
+      "taskId": "SPRINT-3-001",
+      "title": "Implement media library backend API",
+      "description": "Create comprehensive media management system with folder organization, CDN integration, and automatic image optimization",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-0-002"],
+      "acceptanceCriteria": [
+        "POST /api/media/upload accepts images (max 10MB)",
+        "Automatic thumbnail generation (3 sizes: sm, md, lg)",
+        "CDN integration (Cloudflare) for serving images",
+        "GET /api/media returns paginated media library",
+        "Folder organization (create, rename, delete folders)",
+        "Image metadata stored (dimensions, size, format, alt text)",
+        "Search media by filename, tags, folder",
+        "Bulk operations (move, delete multiple files)",
+        "Usage tracking (which articles use which images)",
+        "Image optimization on upload (compression, format conversion)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "storage": "AWS S3 or local storage with CDN",
+        "processing": "Sharp library for image manipulation",
+        "tables": "media_files, media_folders, media_usage",
+        "endpoints": [
+          "POST /api/media/upload",
+          "GET /api/media",
+          "PUT /api/media/:id",
+          "DELETE /api/media/:id",
+          "POST /api/media/folders",
+          "DELETE /api/media/folders/:id"
+        ]
+      }
+    },
+    {
+      "taskId": "SPRINT-3-002",
+      "title": "Build media library UI component",
+      "description": "Create rich media management interface with drag-drop upload, folder navigation, and image selection modal",
+      "assignedTo": "frontend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-3-001"],
+      "acceptanceCriteria": [
+        "Drag-and-drop file upload with progress indicators",
+        "Grid/list view toggle for media display",
+        "Folder tree navigation on sidebar",
+        "Image preview with metadata display",
+        "Search and filter media",
+        "Bulk select and actions (move, delete)",
+        "Media picker modal for article editor integration",
+        "Responsive design (mobile-friendly)",
+        "Loading states and error handling",
+        "Alt text editing inline"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "components": "MediaLibrary, MediaUploader, MediaPicker, FolderTree",
+        "libraries": "react-dropzone for upload, react-grid-gallery for display",
+        "routes": "/admin/media",
+        "integration": "Used in article editor (Tiptap image insertion)"
+      }
+    },
+    {
+      "taskId": "SPRINT-3-003",
+      "title": "Implement article scheduling system",
+      "description": "Enable scheduled publishing of articles with cron job processing and status management",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-2-001"],
+      "acceptanceCriteria": [
+        "Articles can have scheduled_publish_at timestamp",
+        "Status transitions: draft → scheduled → published",
+        "Bull queue job runs every minute checking scheduled articles",
+        "Auto-publish articles when scheduled_publish_at is reached",
+        "Notifications sent to author on publish",
+        "Can edit/cancel scheduled articles before publish time",
+        "Scheduled articles not visible to public until published",
+        "Admin dashboard shows upcoming scheduled articles",
+        "Timezone handling for scheduled times",
+        "Failed publishes logged and retried"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "queue": "Bull queue with 'article-scheduler' processor",
+        "cron": "Every minute check articles.scheduled_publish_at <= NOW()",
+        "database": "Add scheduled_publish_at column to articles table",
+        "notification": "Trigger notification on publish success"
+      }
+    },
+    {
+      "taskId": "SPRINT-3-004",
+      "title": "Build article revision history system",
+      "description": "Track and display last 20 versions of each article with diff view and restore capability",
+      "assignedTo": "backend",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-2-001"],
+      "acceptanceCriteria": [
+        "article_revisions table stores snapshots on save",
+        "Keep last 20 revisions per article (auto-delete older)",
+        "Store title, content, summary, metadata changes",
+        "GET /api/articles/:id/revisions returns revision history",
+        "GET /api/articles/:id/revisions/:revisionId shows specific version",
+        "POST /api/articles/:id/revisions/:revisionId/restore restores version",
+        "Track revision author and timestamp",
+        "Show what changed between revisions (diff)",
+        "Admin can view all revisions, authors can view own",
+        "Revisions read-only except for restore action"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "article_revisions (article_id, revision_number, content_snapshot, created_by, created_at)",
+        "diff": "Use diff library (jsdiff) for change highlighting",
+        "storage": "JSON column for snapshot, or TEXT for content",
+        "indexing": "Index on (article_id, created_at DESC)"
+      }
+    },
+    {
+      "taskId": "SPRINT-3-005",
+      "title": "Create revision history UI",
+      "description": "Build interface to view, compare, and restore article revisions",
+      "assignedTo": "frontend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-3-004"],
+      "acceptanceCriteria": [
+        "Revision history panel in article editor sidebar",
+        "Timeline view showing all revisions with timestamps",
+        "Click revision to preview that version",
+        "Side-by-side diff view comparing revisions",
+        "Restore button with confirmation dialog",
+        "Show who made each revision",
+        "Highlight changes (additions green, deletions red)",
+        "Responsive on mobile devices",
+        "Loading states for async operations",
+        "Success/error messages for restore actions"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "components": "RevisionHistory, RevisionDiff, RevisionTimeline",
+        "libraries": "react-diff-viewer for visual diffs",
+        "location": "Article edit page at /admin/articles/:id/edit"
+      }
+    },
+    {
+      "taskId": "SPRINT-3-006",
+      "title": "Implement RSS feed generation",
+      "description": "Generate RSS feeds for articles with category filtering and automatic updates",
+      "assignedTo": "backend",
+      "estimatedHours": 6,
+      "dependencies": ["SPRINT-2-001"],
+      "acceptanceCriteria": [
+        "GET /api/feed/rss returns valid RSS 2.0 XML",
+        "GET /api/feed/rss?category=:slug filters by category",
+        "Include last 50 published articles",
+        "RSS items include: title, description, pubDate, link, guid",
+        "Featured image included as enclosure",
+        "Categories mapped to RSS categories",
+        "Cache feed for 15 minutes (Redis)",
+        "Feed updates automatically on new article publish",
+        "Valid XML validation",
+        "Proper Content-Type header (application/rss+xml)"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "library": "rss npm package for feed generation",
+        "caching": "Redis cache key: 'rss:feed:{category}' TTL 15min",
+        "endpoint": "GET /api/feed/rss",
+        "invalidation": "Clear cache on article publish/update"
+      }
+    },
+    {
+      "taskId": "SPRINT-3-007",
+      "title": "Create model tracker pages backend",
+      "description": "Build dedicated pages for each LLM with aggregated news, specs, and community content",
+      "assignedTo": "backend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-2-001"],
+      "acceptanceCriteria": [
+        "llm_models table with 47+ models (GPT-4, Claude, Llama, etc.)",
+        "Each model has: name, slug, provider, description, specs, pricing, status",
+        "GET /api/models returns all LLM models",
+        "GET /api/models/:slug returns model details",
+        "GET /api/models/:slug/news returns related articles",
+        "GET /api/models/:slug/discussions returns forum topics",
+        "GET /api/models/:slug/jobs returns related jobs",
+        "Model specs: context_window, size, modalities, release_date",
+        "Benchmark scores stored and displayed",
+        "API quickstart code snippets per model",
+        "Follow/unfollow models functionality",
+        "Model popularity tracking (views, follows)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tables": "llm_models, model_benchmarks, model_follows",
+        "endpoints": [
+          "GET /api/models",
+          "GET /api/models/:slug",
+          "GET /api/models/:slug/news",
+          "GET /api/models/:slug/discussions",
+          "GET /api/models/:slug/jobs",
+          "POST /api/models/:slug/follow"
+        ],
+        "seed": "Seed database with initial 47 models"
+      }
+    },
+    {
+      "taskId": "SPRINT-3-008",
+      "title": "Build model tracker page UI",
+      "description": "Create rich model detail pages with tabs for news, discussions, jobs, and specs",
+      "assignedTo": "frontend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-3-007"],
+      "acceptanceCriteria": [
+        "Model overview page at /models/:slug",
+        "Hero section with model name, provider, status",
+        "Quick stats cards (context window, size, release date)",
+        "Tabbed interface: Overview, News, Discussions, Jobs, Specs",
+        "News tab shows related articles (infinite scroll)",
+        "Discussions tab shows forum topics",
+        "Jobs tab shows positions using this model",
+        "Specs tab shows detailed technical specifications",
+        "Pricing comparison table",
+        "Benchmark scores visualization (bar charts)",
+        "API quickstart code block with syntax highlighting",
+        "Follow button with count",
+        "Responsive design (mobile/tablet/desktop)",
+        "Loading states and error handling"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "routes": "/models, /models/:slug",
+        "components": "ModelTracker, ModelOverview, ModelNews, ModelSpecs, ModelPricing",
+        "charts": "Use recharts for benchmark visualization",
+        "code": "react-syntax-highlighter for code snippets"
+      }
+    },
+    {
+      "taskId": "SPRINT-3-009",
+      "title": "Implement related articles algorithm",
+      "description": "Build recommendation system showing 3+ related articles based on content similarity",
+      "assignedTo": "backend",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-2-001"],
+      "acceptanceCriteria": [
+        "GET /api/articles/:id/related returns min 3 related articles",
+        "Algorithm considers: same category (weight 40%), shared tags (30%), content similarity (30%)",
+        "Uses TF-IDF or embeddings for content similarity",
+        "Excludes current article from results",
+        "Results cached for 1 hour per article",
+        "Returns max 6 related articles",
+        "Orders by relevance score descending",
+        "Falls back to popular articles if insufficient matches",
+        "Performance: <200ms response time",
+        "Updates cache when article is published/updated"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "algorithm": "Hybrid: category match + tag overlap + text similarity",
+        "caching": "Redis key: 'related:{articleId}' TTL 1h",
+        "similarity": "Use PostgreSQL pg_trgm extension or external vector DB",
+        "fallback": "If <3 matches, fill with popular articles from same category"
+      }
+    },
+    {
+      "taskId": "SPRINT-3-010",
+      "title": "Add related articles section to article pages",
+      "description": "Display related articles widget at bottom of article detail pages",
+      "assignedTo": "frontend",
+      "estimatedHours": 6,
+      "dependencies": ["SPRINT-3-009"],
+      "acceptanceCriteria": [
+        "Related articles section appears below article content",
+        "Shows 3-6 related articles in card grid",
+        "Each card shows: thumbnail, title, excerpt, date",
+        "Hover effects on cards",
+        "Click navigates to related article",
+        "Responsive layout (1 col mobile, 3 cols desktop)",
+        "Loading skeleton while fetching",
+        "Graceful handling if no related articles",
+        "Section header: 'Related Articles' or 'You Might Also Like'",
+        "Analytics tracking for related article clicks"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "component": "RelatedArticles",
+        "location": "ArticleDetailPage, below main content",
+        "analytics": "Track clicks with event 'related_article_click'"
+      }
+    },
+    {
+      "taskId": "SPRINT-3-011",
+      "title": "Implement article view tracking and analytics",
+      "description": "Track article views, reading time, and engagement metrics for analytics",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-2-001"],
+      "acceptanceCriteria": [
+        "POST /api/articles/:id/view tracks article view",
+        "Prevents duplicate views (same user within 24h)",
+        "Tracks: user_id, article_id, timestamp, time_on_page, scroll_depth",
+        "GET /api/articles/:id/analytics returns view stats",
+        "Analytics include: total views, unique views, avg time, bounce rate",
+        "Aggregated daily/weekly/monthly stats",
+        "Popular articles endpoint (GET /api/articles/popular)",
+        "Trending algorithm considers: recent views, time_on_page, recency",
+        "Performance: use background job for heavy analytics",
+        "Admin dashboard shows article performance metrics"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "article_views (article_id, user_id, ip_hash, viewed_at, time_on_page, scroll_depth)",
+        "deduplication": "Check view exists with WHERE user_id = ? AND article_id = ? AND viewed_at > NOW() - INTERVAL 24h",
+        "aggregation": "Materialized view or cron job for daily rollups",
+        "trending": "Score = views_7d * 0.5 + time_on_page * 0.3 + recency_score * 0.2"
+      }
+    },
+    {
+      "taskId": "SPRINT-3-012",
+      "title": "Add analytics tracking to article pages",
+      "description": "Implement client-side tracking for views, reading time, and scroll depth",
+      "assignedTo": "frontend",
+      "estimatedHours": 6,
+      "dependencies": ["SPRINT-3-011"],
+      "acceptanceCriteria": [
+        "Track article view on page mount",
+        "Calculate estimated reading time from word count",
+        "Track actual time spent on page (active tab only)",
+        "Measure scroll depth (0-100%)",
+        "Send analytics data on page unmount or visibility change",
+        "Use IntersectionObserver for scroll tracking",
+        "Debounce analytics calls (send max once per 30 seconds)",
+        "Handle page refresh (save progress to localStorage)",
+        "Display 'X min read' badge on article",
+        "Privacy-compliant (respect Do Not Track)"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "hooks": "useArticleAnalytics custom hook",
+        "visibility": "Page Visibility API to detect tab switches",
+        "scroll": "IntersectionObserver on article sections",
+        "storage": "localStorage for temporary tracking state",
+        "privacy": "Check navigator.doNotTrack before sending"
+      }
+    },
+    {
+      "taskId": "SPRINT-3-013",
+      "title": "Test news module advanced features",
+      "description": "Comprehensive testing of media library, scheduling, revisions, RSS, model tracker, and analytics",
+      "assignedTo": "qa",
+      "estimatedHours": 12,
+      "dependencies": [
+        "SPRINT-3-002",
+        "SPRINT-3-003",
+        "SPRINT-3-005",
+        "SPRINT-3-006",
+        "SPRINT-3-008",
+        "SPRINT-3-010",
+        "SPRINT-3-012"
+      ],
+      "acceptanceCriteria": [
+        "Media library upload works with various image formats",
+        "CDN URLs properly generated and images load",
+        "Folder organization works correctly",
+        "Article scheduling publishes at correct time",
+        "Scheduled articles properly hidden until publish time",
+        "Revision history shows all changes accurately",
+        "Revision restore works without data loss",
+        "RSS feed validates and displays in RSS readers",
+        "Model tracker pages load all related content",
+        "Related articles show relevant suggestions",
+        "Article analytics track views and time correctly",
+        "All features work on mobile devices",
+        "Performance: pages load < 2 seconds",
+        "No console errors or warnings"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tools": "Playwright for E2E, Jest for unit tests",
+        "coverage": "Aim for >80% code coverage",
+        "manual": "Test RSS in Feedly, create scheduled articles and verify auto-publish",
+        "performance": "Lighthouse audit for model tracker pages"
+      }
+    }
+  ],
+  "deliverables": [
+    "Media library with CDN integration",
+    "Article scheduling system",
+    "Revision history with restore",
+    "RSS feed generation",
+    "Model tracker pages (47+ models)",
+    "Related articles algorithm",
+    "Article analytics tracking",
+    "Comprehensive test suite"
+  ],
+  "notes": "Sprint 3 completes the News module with all advanced features required for MVP. Focus on performance and caching for model tracker pages. Ensure RSS feed is valid and well-structured. The related articles algorithm is critical for engagement - consider A/B testing different weighting strategies.",
+  "risks": [
+    "CDN integration may require additional configuration",
+    "Related articles algorithm may need tuning for accuracy",
+    "Model tracker pages may have performance issues with many articles"
+  ]
+}

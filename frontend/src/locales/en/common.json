@@ -1,0 +1,39 @@
+{
+  "appName": "Neurmatic",
+  "nav": {
+    "home": "Home",
+    "news": "News",
+    "forum": "Forum",
+    "jobs": "Jobs",
+    "guide": "LLM Guide",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "actions": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "loadMore": "Load More"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success",
+    "noResults": "No results found",
+    "comingSoon": "Coming Soon"
+  },
+  "footer": {
+    "copyright": "© 2025 Neurmatic. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "followUs": "Follow Us"
+  }
+}

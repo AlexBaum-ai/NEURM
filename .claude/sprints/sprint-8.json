@@ -1,0 +1,306 @@
+{
+  "sprintNumber": 8,
+  "sprintGoal": "Implement job matching algorithm, Easy Apply, and application tracking system",
+  "duration": "2 weeks",
+  "status": "pending",
+  "priority": "high",
+  "startDate": null,
+  "endDate": null,
+  "tasks": [
+    {
+      "taskId": "SPRINT-8-001",
+      "title": "Implement job matching algorithm backend",
+      "description": "Create matching system scoring jobs against candidate profiles with 40% skills, tech stack, experience, location, salary alignment",
+      "assignedTo": "backend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-7-001", "SPRINT-7-006"],
+      "acceptanceCriteria": [
+        "Matching algorithm calculates score 0-100% per job-candidate pair",
+        "Factors: skills overlap (40%), tech stack match (20%), experience level (15%), location/remote (10%), salary expectations (10%), cultural fit (5%)",
+        "GET /api/jobs/:id/match returns match score with explanation",
+        "GET /api/jobs?match=true returns jobs sorted by match score",
+        "Match explanation: 'Top 3 reasons why this matches'",
+        "Skills matching: compare required vs candidate skills with proficiency weighting",
+        "Tech stack matching: models, frameworks, languages overlap",
+        "Experience matching: junior/mid/senior alignment",
+        "Location matching: remote preference vs job remote type",
+        "Salary matching: candidate expectations vs job offer",
+        "Interest signals: views, saves, applies boost score",
+        "Cache match scores (recalculate on profile update)",
+        "Performance: calculate matches in < 100ms"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "algorithm": "Weighted scoring: skills * 0.4 + tech_stack * 0.2 + experience * 0.15 + location * 0.1 + salary * 0.1 + culture * 0.05",
+        "skills": "Jaccard similarity on skill sets with proficiency weighting",
+        "cache": "Redis: match_score:{userId}:{jobId} TTL 24h",
+        "explanation": "Return top 3 factors with highest contribution to score"
+      }
+    },
+    {
+      "taskId": "SPRINT-8-002",
+      "title": "Display match scores on job listings",
+      "description": "Show match percentage and explanation on job cards and detail pages",
+      "assignedTo": "frontend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-8-001"],
+      "acceptanceCriteria": [
+        "Match score badge on each job card (e.g., '87% Match')",
+        "Color-coded: >80% green, 60-80% yellow, <60% gray",
+        "Match details panel on job detail page",
+        "Shows: match %, visual breakdown by factor (bar chart), top 3 match reasons",
+        "Hover tooltip on match badge shows brief explanation",
+        "Filter jobs by match threshold (e.g., >70%)",
+        "Sort jobs by 'Best Match' option",
+        "Match score updates when profile changes (with notification)",
+        "Responsive display",
+        "Anonymous users see generic 'Create profile to see match score'"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "components": "MatchBadge, MatchExplanation, MatchBreakdown",
+        "chart": "Recharts for factor breakdown visualization",
+        "colors": "green (#10b981), yellow (#f59e0b), gray (#6b7280)"
+      }
+    },
+    {
+      "taskId": "SPRINT-8-003",
+      "title": "Implement Easy Apply backend",
+      "description": "Create one-click application system auto-filling from candidate profile",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-7-001", "SPRINT-7-006"],
+      "acceptanceCriteria": [
+        "applications table tracks all job applications",
+        "POST /api/jobs/:id/apply creates application",
+        "Auto-fill from profile: name, email, phone, work experience, education, skills, portfolio",
+        "Attach resume (PDF from profile)",
+        "Optional: custom cover letter",
+        "Optional: answer screening questions",
+        "Application status: submitted, viewed, screening, interview, offer, rejected, withdrawn",
+        "Prevent duplicate applications (same user + job)",
+        "GET /api/applications returns user's applications",
+        "GET /api/applications/:id returns application details",
+        "PUT /api/applications/:id/withdraw withdraws application",
+        "Notification to company on new application",
+        "Notification to candidate on status change",
+        "Application timestamp and source tracking"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "applications (id, job_id, user_id, resume_url, cover_letter, screening_answers, status, applied_at, updated_at)",
+        "unique": "UNIQUE(user_id, job_id) prevent duplicates",
+        "status": "ENUM: submitted, viewed, screening, interview, offer, rejected, withdrawn",
+        "endpoints": ["POST /api/jobs/:id/apply", "GET /api/applications", "GET /api/applications/:id", "PUT /api/applications/:id/withdraw"]
+      }
+    },
+    {
+      "taskId": "SPRINT-8-004",
+      "title": "Build Easy Apply UI and application flow",
+      "description": "Create streamlined application modal with pre-filled data and one-click submit",
+      "assignedTo": "frontend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-8-003"],
+      "acceptanceCriteria": [
+        "Apply button opens application modal",
+        "Modal shows: auto-filled profile data (name, email, phone), resume preview",
+        "Cover letter textarea (optional)",
+        "Screening questions form (if job has questions)",
+        "Profile completeness check (warn if missing key fields)",
+        "Submit button with loading state",
+        "Success confirmation with next steps",
+        "Error handling (duplicate application, missing data)",
+        "Close modal without losing input (draft save)",
+        "Application successful page with tracking info",
+        "Redirect to 'My Applications' after submit",
+        "Responsive design",
+        "Accessible (focus management, keyboard nav)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "components": "ApplyModal, ApplicationForm, ScreeningQuestions",
+        "validation": "Check required fields before enabling submit",
+        "draft": "Save cover letter and answers to localStorage temporarily"
+      }
+    },
+    {
+      "taskId": "SPRINT-8-005",
+      "title": "Implement application tracking dashboard",
+      "description": "Create candidate-facing dashboard to track all applications and statuses",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-8-003"],
+      "acceptanceCriteria": [
+        "GET /api/applications returns user's applications with job details",
+        "Filter by status: all, active, interviews, offers, rejected, withdrawn",
+        "Sort by: date_applied, status, company",
+        "Include: job title, company, status, applied date, last update",
+        "GET /api/applications/:id returns full application with history",
+        "Status history log (submitted → viewed → interview → etc.)",
+        "Company messages/notes visible to candidate",
+        "Application statistics (total applied, interview rate, etc.)",
+        "Export applications (CSV)",
+        "Performance: dashboard loads < 2s"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "joins": "JOIN jobs, companies for full application context",
+        "history": "application_status_history table logs all status changes",
+        "stats": "Calculate: total_applied, viewed_rate, interview_rate, offer_rate"
+      }
+    },
+    {
+      "taskId": "SPRINT-8-006",
+      "title": "Build application tracking UI",
+      "description": "Create 'My Applications' page with status pipeline and application details",
+      "assignedTo": "frontend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-8-005"],
+      "acceptanceCriteria": [
+        "My Applications page at /applications",
+        "Summary cards: total applied, in progress, interviews, offers",
+        "Status tabs: All, Active, Interviews, Offers, Rejected, Withdrawn",
+        "Application cards show: job title, company logo, status badge, dates",
+        "Status color-coding (submitted: blue, interview: yellow, offer: green, rejected: red)",
+        "Click card opens detail panel",
+        "Detail panel: full job description, application data, status timeline, messages",
+        "Withdraw button (with confirmation)",
+        "Status timeline visualization (stepper component)",
+        "Messages from recruiter (if any)",
+        "Export applications button",
+        "Empty state for each status filter",
+        "Responsive design",
+        "Real-time status updates (polling every 30s)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/applications",
+        "components": "ApplicationsDashboard, ApplicationCard, ApplicationDetail, StatusTimeline",
+        "realtime": "TanStack Query refetchInterval: 30000",
+        "stepper": "MUI Stepper or custom timeline component"
+      }
+    },
+    {
+      "taskId": "SPRINT-8-007",
+      "title": "Implement saved jobs and job alerts",
+      "description": "Add bookmark jobs feature and email alerts for new matching jobs",
+      "assignedTo": "backend",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-8-001"],
+      "acceptanceCriteria": [
+        "saved_jobs table tracks bookmarked jobs",
+        "POST /api/jobs/:id/save bookmarks job",
+        "DELETE /api/jobs/:id/save removes bookmark",
+        "GET /api/jobs/saved returns user's saved jobs",
+        "job_alerts table for custom alert criteria",
+        "POST /api/jobs/alerts creates alert (keywords, location, remote, etc.)",
+        "GET /api/jobs/alerts returns user's alerts",
+        "DELETE /api/jobs/alerts/:id removes alert",
+        "Daily cron job matches new jobs against alerts",
+        "Email sent with matching jobs (max 1 email/day per alert)",
+        "Saved jobs include deadline reminder (3 days before expiry)",
+        "Track alert effectiveness (jobs clicked from alert emails)"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "tables": "saved_jobs (user_id, job_id, saved_at), job_alerts (user_id, name, criteria_json, active)",
+        "cron": "Bull queue runs daily at 9am, checks jobs created in last 24h against alerts",
+        "email": "Use SendGrid template with job cards",
+        "criteria": "JSON: {keywords: [], location: '', remote: true, models: [], salary_min: 0}"
+      }
+    },
+    {
+      "taskId": "SPRINT-8-008",
+      "title": "Build saved jobs and alerts UI",
+      "description": "Create saved jobs page and alert management interface",
+      "assignedTo": "frontend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-8-007"],
+      "acceptanceCriteria": [
+        "Save button on job cards and detail pages (heart icon)",
+        "Saved jobs page at /jobs/saved",
+        "Saved jobs display like job listings",
+        "Unsave button on each card",
+        "Deadline warnings (e.g., 'Closes in 3 days')",
+        "Job alerts page at /jobs/alerts",
+        "Create alert form with criteria fields",
+        "Alert list showing active alerts with edit/delete",
+        "Alert toggle (active/inactive)",
+        "Alert notification settings (email frequency)",
+        "Test alert button (sends sample email)",
+        "Empty states for saved jobs and alerts",
+        "Responsive design"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "routes": "/jobs/saved, /jobs/alerts",
+        "components": "SavedJobs, SaveButton, JobAlerts, AlertForm",
+        "icon": "Heart icon filled when saved, outline when not saved"
+      }
+    },
+    {
+      "taskId": "SPRINT-8-009",
+      "title": "Test matching and application features",
+      "description": "Test matching algorithm, Easy Apply, application tracking, saved jobs, and alerts",
+      "assignedTo": "qa",
+      "estimatedHours": 14,
+      "dependencies": [
+        "SPRINT-8-002",
+        "SPRINT-8-004",
+        "SPRINT-8-006",
+        "SPRINT-8-008"
+      ],
+      "acceptanceCriteria": [
+        "Match scores calculate correctly and display accurately",
+        "Match explanations show relevant factors",
+        "Sorting by 'Best Match' orders jobs correctly",
+        "Easy Apply auto-fills profile data",
+        "Application submits successfully",
+        "Duplicate applications prevented",
+        "Application tracking dashboard shows all applications",
+        "Status updates reflect correctly",
+        "Withdraw application works",
+        "Save job functionality works",
+        "Saved jobs page displays bookmarked jobs",
+        "Job alerts create and trigger correctly",
+        "Alert emails send with matching jobs",
+        "All features responsive on mobile",
+        "Performance: matching < 100ms, dashboard < 2s",
+        "No console errors"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tools": "Playwright E2E, Jest unit tests",
+        "scenarios": [
+          "Create profile, view match scores on jobs",
+          "Apply to job using Easy Apply",
+          "Track application status changes",
+          "Save jobs and create alerts",
+          "Test alert email generation"
+        ]
+      }
+    }
+  ],
+  "deliverables": [
+    "Job matching algorithm with scoring",
+    "Easy Apply one-click application",
+    "Application tracking dashboard",
+    "Saved jobs and job alerts",
+    "Comprehensive test suite"
+  ],
+  "notes": "Sprint 8 adds the smart matching and application features that differentiate Neurmatic. The matching algorithm is crucial - ensure accuracy and explainability. Easy Apply should truly be 'easy' - minimal friction.",
+  "risks": [
+    "Matching algorithm may need tuning based on real data",
+    "Easy Apply may lack customization for some candidates",
+    "Alert emails may be marked as spam - ensure proper email authentication"
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "mcpServers": {
+    "sentry": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@sentry/mcp-server@latest",
+        "--access-token=${SENTRY_ACCESS_TOKEN}"
+      ],
+      "env": {
+        "SENTRY_ACCESS_TOKEN": "${SENTRY_ACCESS_TOKEN}"
+      },
+      "description": "Sentry error tracking - query errors, analyze patterns, monitor production issues"
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp"
+      ],
+      "description": "E2E testing with Playwright - screenshots, navigation, form testing, visual regression"
+    },
+    "sequential-thinking": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "description": "Enhanced reasoning for complex problems - architecture, debugging, planning"
+    },
+    "memory": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "description": "Persistent memory across sessions - remember decisions, context, progress"
+    },
+    "brave-search": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+      },
+      "description": "Web search for documentation, best practices, error solutions"
+    },
+    "postgres": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "${DATABASE_URL}"
+      ],
+      "description": "Direct PostgreSQL access - schema inspection, queries, test data"
+    },
+    "git": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-git"
+      ],
+      "description": "Git operations - commits, branches, PRs, history"
+    },
+    "docker": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-docker"
+      ],
+      "description": "Docker container management - start/stop services, logs, health checks"
+    }
+  },
+  "notes": {
+    "setup": "Copy this file to mcp-config.json and replace ${SENTRY_ACCESS_TOKEN} with your actual token",
+    "required_env_vars": [
+      "SENTRY_ACCESS_TOKEN - Sentry User Auth Token (requires: org:read, project:read, team:read, event:read, event:write)",
+      "BRAVE_API_KEY - Brave Search API key (or use built-in WebSearch)",
+      "DATABASE_URL - PostgreSQL connection string (format: postgresql://user:pass@vps-1a707765.vps.ovh.net:5432/dbname)"
+    ],
+    "optional_env_vars": [
+      "DOCKER_HOST - Custom Docker host (defaults to local)"
+    ],
+    "installation": [
+      "MCPs are installed automatically via npx -y",
+      "No global installation needed",
+      "First run may take a few seconds to download packages"
+    ],
+    "usage": {
+      "sentry": "Use mcp__sentry__* tools to query errors, create issues",
+      "playwright": "Use mcp__playwright__* tools for E2E testing, screenshots",
+      "sequential_thinking": "Automatically invoked for complex reasoning tasks",
+      "memory": "Use mcp__memory__* tools to remember/recall information",
+      "brave_search": "Use mcp__brave_search__* tools for web searches",
+      "postgres": "Use mcp__postgres__* tools for database queries",
+      "git": "Use mcp__git__* tools for git operations",
+      "docker": "Use mcp__docker__* tools for container management"
+    }
+  }
+}

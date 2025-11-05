@@ -1,0 +1,337 @@
+{
+  "sprintNumber": 2,
+  "sprintGoal": "News module core: article listing, detail pages, categories, tags, and basic search",
+  "duration": "2 weeks",
+  "status": "pending",
+  "tasks": [
+    {
+      "taskId": "SPRINT-2-001",
+      "title": "Implement articles API (CRUD operations)",
+      "description": "Create REST API endpoints for creating, reading, updating, and deleting news articles with admin authentication",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-0-003"],
+      "acceptanceCriteria": [
+        "POST /api/v1/admin/articles creates article (admin only)",
+        "GET /api/v1/news/articles lists published articles with pagination",
+        "GET /api/v1/news/articles/:slug returns article detail",
+        "PATCH /api/v1/admin/articles/:id updates article (admin only)",
+        "DELETE /api/v1/admin/articles/:id deletes article (admin only)",
+        "Articles filtered by status (published only for public)",
+        "View count incremented on article view",
+        "Related articles calculated (tag-based)",
+        "Full-text search using PostgreSQL tsvector",
+        "Proper error handling and validation"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "routes": "src/modules/news/articles.routes.ts",
+        "fullText": "GIN index on to_tsvector(title || summary || content)",
+        "related": "Find articles with common tags, order by relevance",
+        "caching": "Cache article detail pages in Redis (5min TTL)"
+      }
+    },
+    {
+      "taskId": "SPRINT-2-002",
+      "title": "Implement news categories and tags API",
+      "description": "Create endpoints for browsing categories and tags, with hierarchical category support",
+      "assignedTo": "backend",
+      "estimatedHours": 6,
+      "dependencies": ["SPRINT-0-003"],
+      "acceptanceCriteria": [
+        "GET /api/v1/news/categories returns hierarchical category tree",
+        "GET /api/v1/news/tags returns all tags with usage counts",
+        "GET /api/v1/news/tags?search=query for tag autocomplete",
+        "Categories support 3 levels (parent > child > grandchild)",
+        "Article count per category (cached)",
+        "Tag usage count updated on article create/update/delete"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "hierarchy": "Recursive CTE or self-join for category tree",
+        "caching": "Cache category tree in Redis",
+        "autocomplete": "ILIKE query with limit 10"
+      }
+    },
+    {
+      "taskId": "SPRINT-2-003",
+      "title": "Implement article search and filtering",
+      "description": "Build search functionality with filters for category, tags, difficulty, and models",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-2-001", "SPRINT-2-002"],
+      "acceptanceCriteria": [
+        "GET /api/v1/news/articles?search=query full-text search",
+        "Filter by category (?category=slug)",
+        "Filter by tags (?tags=tag1,tag2)",
+        "Filter by difficulty (?difficulty=beginner|intermediate|advanced)",
+        "Filter by model (?model=gpt-4)",
+        "Sort options: -published_at, -view_count, -bookmark_count, relevance",
+        "Pagination with cursor support",
+        "Search results include highlighting",
+        "Fast response time (<300ms p95)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "search": "ts_rank for relevance sorting",
+        "filters": "Combine WHERE clauses efficiently",
+        "performance": "Use indexes on filtered columns",
+        "cursor": "Cursor-based pagination for infinite scroll"
+      }
+    },
+    {
+      "taskId": "SPRINT-2-004",
+      "title": "Implement bookmarks API",
+      "description": "Create endpoints for bookmarking articles with collections support",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-2-001"],
+      "acceptanceCriteria": [
+        "POST /api/v1/news/articles/:slug/bookmark creates bookmark",
+        "DELETE /api/v1/news/articles/:slug/bookmark removes bookmark",
+        "GET /api/v1/users/me/bookmarks lists user bookmarks",
+        "POST /api/v1/users/me/bookmark-collections creates collection",
+        "GET /api/v1/users/me/bookmark-collections lists collections",
+        "Default 'Read Later' collection created automatically",
+        "Max 500 bookmarks per user enforced",
+        "Notes field for personal annotations",
+        "Bookmark count updated on articles table"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "constraint": "Unique (user_id, article_id)",
+        "limit": "Check count before creating bookmark",
+        "default": "Create 'Read Later' on first bookmark",
+        "trigger": "Update article.bookmark_count via trigger"
+      }
+    },
+    {
+      "taskId": "SPRINT-2-005",
+      "title": "Implement analytics tracking for articles",
+      "description": "Track article views, reads, and engagement metrics for analytics",
+      "assignedTo": "backend",
+      "estimatedHours": 4,
+      "dependencies": ["SPRINT-2-001"],
+      "acceptanceCriteria": [
+        "View count incremented on article page load",
+        "Analytics events logged to analytics_events table",
+        "Events: article_view, article_read, article_share, article_bookmark",
+        "IP-based view deduplication (1 view per IP per hour)",
+        "Reading time estimation based on word count",
+        "Share tracking via URL parameters",
+        "Async event logging via Bull queue"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "dedup": "Redis SET with TTL for IP tracking",
+        "queue": "analytics queue for async processing",
+        "readTime": "~200 words per minute",
+        "events": "Store in analytics_events for later aggregation"
+      }
+    },
+    {
+      "taskId": "SPRINT-2-006",
+      "title": "Build news homepage UI",
+      "description": "Create news homepage with article grid, featured articles, and category navigation",
+      "assignedTo": "frontend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-2-003", "SPRINT-0-018"],
+      "acceptanceCriteria": [
+        "Homepage at /news with article grid",
+        "Featured articles section (carousel or hero)",
+        "Trending articles sidebar",
+        "Category filter sidebar with hierarchy",
+        "Tag filter pills (show applied filters)",
+        "Search bar with autocomplete",
+        "Grid/list view toggle",
+        "Infinite scroll or pagination",
+        "Loading skeletons",
+        "Empty state when no results",
+        "Responsive design (mobile, tablet, desktop)",
+        "Fast initial load (<2s)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/news",
+        "query": "useInfiniteQuery for pagination",
+        "layout": "Grid on desktop, list on mobile",
+        "components": "ArticleCard, ArticleGrid, CategorySidebar, SearchBar"
+      }
+    },
+    {
+      "taskId": "SPRINT-2-007",
+      "title": "Build article detail page UI",
+      "description": "Create comprehensive article detail page with content, metadata, and related articles",
+      "assignedTo": "frontend",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-2-001"],
+      "acceptanceCriteria": [
+        "Article detail page at /news/:slug",
+        "Article title, author, published date, reading time",
+        "Featured image display",
+        "Article content with proper formatting",
+        "Category and tags display (clickable)",
+        "Bookmark button (authenticated users)",
+        "Share buttons (Twitter, LinkedIn, copy link)",
+        "Related articles section",
+        "Author info sidebar",
+        "Table of contents for long articles (auto-generated)",
+        "Reading progress indicator",
+        "Syntax highlighting for code blocks",
+        "Responsive images",
+        "SEO meta tags (Open Graph, Twitter Card)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/news/:slug",
+        "markdown": "react-markdown or marked for rendering",
+        "code": "prism-react-renderer for syntax highlighting",
+        "toc": "Auto-generate from h2, h3 headings",
+        "progress": "Scroll progress bar at top",
+        "seo": "react-helmet-async for meta tags"
+      }
+    },
+    {
+      "taskId": "SPRINT-2-008",
+      "title": "Build article card component",
+      "description": "Create reusable article card component with multiple layout variants",
+      "assignedTo": "frontend",
+      "estimatedHours": 6,
+      "dependencies": ["SPRINT-2-006"],
+      "acceptanceCriteria": [
+        "ArticleCard component with props: article, variant, onClick",
+        "Variants: grid (default), list, featured, compact",
+        "Display: title, summary, featured image, author, date",
+        "Metadata: reading time, view count, bookmark count",
+        "Category badge, tag pills (max 3)",
+        "Hover effects and transitions",
+        "Bookmark button (authenticated)",
+        "Loading skeleton variant",
+        "Accessible (keyboard nav, ARIA labels)",
+        "Optimized images (lazy loading, srcset)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "component": "src/components/news/ArticleCard.tsx",
+        "images": "next/image or react-lazy-load-image",
+        "variants": "Use className prop for styling",
+        "responsive": "Adjust layout based on screen size"
+      }
+    },
+    {
+      "taskId": "SPRINT-2-009",
+      "title": "Build category filter and search UI",
+      "description": "Create interactive category sidebar and search interface with filters",
+      "assignedTo": "frontend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-2-002", "SPRINT-2-003"],
+      "acceptanceCriteria": [
+        "Category sidebar with hierarchical tree",
+        "Expand/collapse category groups",
+        "Active category highlighted",
+        "Article count per category",
+        "Search bar with autocomplete",
+        "Tag filter dropdown (multi-select)",
+        "Difficulty filter (beginner, intermediate, advanced)",
+        "Model filter (select LLM)",
+        "Active filters display as pills with remove option",
+        "Clear all filters button",
+        "Filter state synced with URL params",
+        "Mobile: filter drawer/modal"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "state": "Zustand or URL params for filter state",
+        "tree": "Recursive component for category hierarchy",
+        "autocomplete": "Debounced search with suggestions",
+        "mobile": "Slide-out drawer for filters",
+        "sync": "Update URL params on filter change"
+      }
+    },
+    {
+      "taskId": "SPRINT-2-010",
+      "title": "Build bookmarks page and collections UI",
+      "description": "Create bookmarks management page with collections and notes",
+      "assignedTo": "frontend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-2-004"],
+      "acceptanceCriteria": [
+        "Bookmarks page at /bookmarks",
+        "Collections sidebar (list all collections)",
+        "Default 'Read Later' collection",
+        "Create collection modal",
+        "Edit collection (rename, delete)",
+        "Bookmarked articles list (filterable by collection)",
+        "Notes display and edit per bookmark",
+        "Move bookmark to different collection (drag-drop or menu)",
+        "Remove bookmark button",
+        "Empty state when no bookmarks",
+        "Search within bookmarks",
+        "Article count per collection",
+        "Max 500 bookmarks indicator"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/bookmarks",
+        "dnd": "react-beautiful-dnd for drag-drop (optional)",
+        "components": "CollectionSidebar, BookmarkList, BookmarkCard",
+        "search": "Client-side search or API endpoint",
+        "limit": "Show warning at 450+ bookmarks"
+      }
+    },
+    {
+      "taskId": "SPRINT-2-011",
+      "title": "Test news module end-to-end",
+      "description": "Comprehensive testing of news module features including article browsing, search, and bookmarks",
+      "assignedTo": "qa",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-2-010"],
+      "acceptanceCriteria": [
+        "Article listing loads with proper pagination",
+        "Featured articles display correctly",
+        "Category filtering works (all levels)",
+        "Tag filtering works (multi-select)",
+        "Search returns relevant results",
+        "Article detail page displays all content",
+        "Related articles are relevant",
+        "Bookmark feature works (add, remove, collections)",
+        "Collections CRUD works",
+        "Analytics events tracked correctly",
+        "Search autocomplete works",
+        "Mobile responsive design works",
+        "Performance: homepage < 2s, article page < 1.5s",
+        "Accessibility: WCAG 2.1 AA compliance",
+        "SEO: proper meta tags, sitemap"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "e2e": "Playwright tests for critical flows",
+        "performance": "Lighthouse audit, Core Web Vitals",
+        "seo": "Check meta tags, structured data",
+        "accessibility": "axe DevTools, keyboard navigation"
+      }
+    }
+  ],
+  "deliverables": [
+    "Complete news article system (CRUD)",
+    "Article listing with filters and search",
+    "Article detail pages with related content",
+    "Category and tag browsing",
+    "Bookmark system with collections",
+    "Analytics tracking for articles",
+    "Responsive news homepage",
+    "Comprehensive testing"
+  ],
+  "dependencies": ["SPRINT-0", "SPRINT-1"]
+}

@@ -1,0 +1,29 @@
+/**
+ * PRIVACY SETTINGS ROUTES
+ */
+
+/**
+ * @route   GET /api/v1/users/me/privacy
+ * @desc    Get current user's privacy settings
+ * @access  Private (requires authentication)
+ */
+router.get(
+  '/me/privacy',
+  authenticate,
+  apiLimiter,
+  asyncHandler(userController.getPrivacySettings)
+);
+
+/**
+ * @route   PATCH /api/v1/users/me/privacy
+ * @desc    Update current user's privacy settings
+ * @access  Private (requires authentication)
+ * @rate    10 requests per hour
+ */
+router.patch(
+  '/me/privacy',
+  authenticate,
+  profileUpdateLimiter,
+  asyncHandler(userController.updatePrivacySettings)
+);
+

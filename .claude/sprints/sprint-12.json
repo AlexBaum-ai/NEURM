@@ -1,0 +1,388 @@
+{
+  "sprintNumber": 12,
+  "sprintGoal": "Build comprehensive admin tools and moderation dashboard for platform management",
+  "duration": "2 weeks",
+  "status": "pending",
+  "priority": "high",
+  "startDate": null,
+  "endDate": null,
+  "tasks": [
+    {
+      "taskId": "SPRINT-12-001",
+      "title": "Implement admin dashboard backend",
+      "description": "Create comprehensive admin dashboard with real-time stats, metrics, and quick actions",
+      "assignedTo": "backend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-0-002"],
+      "acceptanceCriteria": [
+        "GET /api/admin/dashboard returns overview metrics",
+        "Real-time stats: users_online, posts_per_hour, applications_today",
+        "Key metrics: DAU, MAU, WAU, MRR, ARPU, NPS, retention_rate",
+        "Growth charts: users, content, revenue over time",
+        "Alerts: errors, spam reports, abuse flags",
+        "Quick stats: total_users, total_articles, total_topics, total_jobs, total_applications",
+        "Recent activity feed: new users, new content, reports",
+        "System health: API response times, error rates, database size",
+        "Cache dashboard data (refresh every 5 min)",
+        "Export metrics (CSV, PDF)",
+        "Performance: dashboard loads < 1s"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "endpoint": "GET /api/admin/dashboard",
+        "metrics": "Precompute daily via cron, store in platform_metrics table",
+        "realtime": "Use Redis for current counters (users_online, posts_per_hour)",
+        "cache": "Redis: admin_dashboard TTL 300s",
+        "monitoring": "Integrate with Sentry for error tracking"
+      }
+    },
+    {
+      "taskId": "SPRINT-12-002",
+      "title": "Build admin dashboard UI",
+      "description": "Create visual admin dashboard with charts, metrics cards, and navigation",
+      "assignedTo": "frontend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-12-001"],
+      "acceptanceCriteria": [
+        "Admin dashboard at /admin",
+        "Overview section: key metrics cards (DAU, MAU, MRR, etc.)",
+        "Real-time indicators: online users, posts/hour",
+        "Growth charts: users, content, revenue (line charts)",
+        "Alerts section: high-priority items requiring attention",
+        "Recent activity feed",
+        "System health status indicators",
+        "Quick actions: Create Article, Review Reports, Manage Users",
+        "Navigation sidebar: Dashboard, Users, Content, Forum, Jobs, Analytics, Settings",
+        "Date range selector for metrics",
+        "Export button (CSV, PDF)",
+        "Responsive design (desktop-focused, mobile functional)",
+        "Real-time updates (polling every 30s)",
+        "Loading skeletons"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/admin",
+        "components": "AdminDashboard, MetricsCards, GrowthChart, ActivityFeed, AlertsPanel",
+        "charts": "Recharts for all visualizations",
+        "realtime": "TanStack Query with refetchInterval: 30000"
+      }
+    },
+    {
+      "taskId": "SPRINT-12-003",
+      "title": "Implement user management admin backend",
+      "description": "Create comprehensive user management system for admins",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-0-002"],
+      "acceptanceCriteria": [
+        "GET /api/admin/users returns paginated user list",
+        "Search users by: name, email, username, ID",
+        "Filter by: role, status, registration_date, activity_level",
+        "Sort by: created_at, last_login, reputation, content_count",
+        "GET /api/admin/users/:id returns full user profile (including private data)",
+        "PUT /api/admin/users/:id updates user data",
+        "PUT /api/admin/users/:id/role changes user role",
+        "POST /api/admin/users/:id/verify manually verifies email",
+        "POST /api/admin/users/:id/suspend suspends user with reason and duration",
+        "POST /api/admin/users/:id/ban permanently bans user",
+        "DELETE /api/admin/users/:id soft deletes user account",
+        "GET /api/admin/users/:id/activity returns activity history",
+        "GET /api/admin/users/:id/reports returns reports against user",
+        "Bulk operations: export users, bulk status change",
+        "Audit log for all admin actions on users"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "endpoints": [
+          "GET /api/admin/users",
+          "GET /api/admin/users/:id",
+          "PUT /api/admin/users/:id",
+          "PUT /api/admin/users/:id/role",
+          "POST /api/admin/users/:id/suspend",
+          "POST /api/admin/users/:id/ban",
+          "DELETE /api/admin/users/:id"
+        ],
+        "audit": "admin_audit_log table (admin_id, action, target_type, target_id, reason, created_at)"
+      }
+    },
+    {
+      "taskId": "SPRINT-12-004",
+      "title": "Build user management UI",
+      "description": "Create user management interface with search, filters, and actions",
+      "assignedTo": "frontend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-12-003"],
+      "acceptanceCriteria": [
+        "User management at /admin/users",
+        "Search bar with real-time filtering",
+        "Filters: role, status, registration date range",
+        "User table: avatar, name, email, role, status, joined date, last login, actions",
+        "Sortable columns",
+        "Pagination (50 per page)",
+        "Click user opens detail panel/page",
+        "User detail page at /admin/users/:id",
+        "Shows: full profile, activity history, content created, reports against user",
+        "Edit user button (opens edit form)",
+        "Role dropdown (update role)",
+        "Actions: Verify Email, Send Message, Suspend, Ban, Delete",
+        "Suspend modal: reason, duration selector",
+        "Ban modal: reason, permanent warning",
+        "Activity timeline visualization",
+        "Bulk actions: select multiple, export CSV",
+        "Confirmation dialogs for destructive actions",
+        "Responsive design"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "routes": "/admin/users, /admin/users/:id",
+        "components": "UserManagement, UserTable, UserDetail, UserActions, SuspendModal, BanModal",
+        "table": "TanStack Table for advanced features"
+      }
+    },
+    {
+      "taskId": "SPRINT-12-005",
+      "title": "Implement content moderation backend",
+      "description": "Create unified content moderation system for articles, topics, replies, jobs",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-2-001", "SPRINT-4-003"],
+      "acceptanceCriteria": [
+        "GET /api/admin/content returns all content types for review",
+        "Filter by: type (article, topic, reply, job), status, reported, flagged_by_system",
+        "GET /api/admin/content/reported returns reported content queue",
+        "PUT /api/admin/content/:type/:id/approve approves content",
+        "PUT /api/admin/content/:type/:id/reject rejects with reason",
+        "PUT /api/admin/content/:type/:id/hide hides from public view",
+        "DELETE /api/admin/content/:type/:id hard deletes content",
+        "Spam detection integration (keyword matching, ML model placeholder)",
+        "Auto-flag content with high spam score",
+        "Content review workflow: pending → approved/rejected",
+        "Notification to author on content action",
+        "Bulk operations: approve/reject multiple items",
+        "Audit log for all moderation actions"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "unified": "Polymorphic approach: content_id + content_type",
+        "spam": "Use spam_keywords table, calculate spam_score, flag if > threshold",
+        "workflow": "content_status: pending, approved, rejected, hidden, deleted"
+      }
+    },
+    {
+      "taskId": "SPRINT-12-006",
+      "title": "Build content moderation UI",
+      "description": "Create content review interface with queue and bulk actions",
+      "assignedTo": "frontend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-12-005"],
+      "acceptanceCriteria": [
+        "Content moderation at /admin/content",
+        "Tabs: All, Pending Review, Reported, Auto-flagged",
+        "Content list: thumbnail/icon, title, type badge, author, date, status, spam score",
+        "Filter by content type",
+        "Click item opens review panel",
+        "Review panel: full content preview, author info, reports (if any), spam analysis",
+        "Actions: Approve, Reject (with reason), Hide, Delete",
+        "Bulk select and actions",
+        "Reported content shows: report count, reasons, reporters",
+        "Spam score visualization (0-100 with color coding)",
+        "Quick approve/reject buttons on list items",
+        "Confirmation for irreversible actions",
+        "Responsive design",
+        "Real-time updates (polling every 60s)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/admin/content",
+        "components": "ContentModeration, ContentQueue, ReviewPanel, BulkActions",
+        "preview": "Render markdown/rich text safely (sanitize HTML)"
+      }
+    },
+    {
+      "taskId": "SPRINT-12-007",
+      "title": "Implement platform settings backend",
+      "description": "Create system for managing platform-wide configuration",
+      "assignedTo": "backend",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-0-002"],
+      "acceptanceCriteria": [
+        "platform_settings table stores configuration",
+        "GET /api/admin/settings returns all settings",
+        "PUT /api/admin/settings updates settings",
+        "Settings categories: General, Features, Integrations, Security, Email",
+        "General: platform_name, tagline, logo, favicon, default_language, timezone",
+        "Features: feature flags (forum_enabled, jobs_enabled, etc.), beta features",
+        "Integrations: OAuth providers config, analytics IDs, CDN settings, email service",
+        "Security: rate_limits, session_timeout, 2FA_enforcement, CAPTCHA settings",
+        "Email: SMTP config, email templates, notification settings",
+        "Validation for all settings",
+        "Settings change history (audit log)",
+        "Cache settings (reload on change)",
+        "Maintenance mode toggle"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "platform_settings (key, value, category, type, description)",
+        "types": "string, number, boolean, json, encrypted",
+        "cache": "Redis: platform_settings TTL until changed",
+        "validation": "Zod schemas per setting type"
+      }
+    },
+    {
+      "taskId": "SPRINT-12-008",
+      "title": "Build platform settings UI",
+      "description": "Create settings interface with organized sections",
+      "assignedTo": "frontend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-12-007"],
+      "acceptanceCriteria": [
+        "Platform settings at /admin/settings",
+        "Tabs: General, Features, Integrations, Security, Email",
+        "General: text inputs for name, tagline; file uploads for logo, favicon",
+        "Features: toggle switches for feature flags, beta features list",
+        "Integrations: forms for OAuth config, analytics, CDN, email service",
+        "Security: number inputs for rate limits, timeout; toggles for 2FA, CAPTCHA",
+        "Email: SMTP form, template editor, notification toggles",
+        "Validation on all inputs",
+        "Save button (saves all changes in section)",
+        "Unsaved changes warning",
+        "Success/error messages",
+        "Maintenance mode toggle (prominent, with warning)",
+        "Test buttons (e.g., Test Email, Test OAuth)",
+        "Responsive design"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/admin/settings",
+        "components": "PlatformSettings, GeneralSettings, FeatureFlags, IntegrationSettings",
+        "validation": "Zod schema matching backend"
+      }
+    },
+    {
+      "taskId": "SPRINT-12-009",
+      "title": "Implement analytics and reports backend",
+      "description": "Create platform analytics and custom report generation",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-12-001"],
+      "acceptanceCriteria": [
+        "GET /api/admin/analytics returns comprehensive platform analytics",
+        "Metrics: user_growth, engagement_trends, content_performance, revenue, top_contributors, traffic_sources",
+        "Time series data: daily, weekly, monthly aggregations",
+        "GET /api/admin/analytics/custom allows custom date ranges and metric selection",
+        "Cohort analysis: retention by signup date",
+        "Funnel analysis: user onboarding, job application",
+        "A/B testing results (placeholder for future)",
+        "Export analytics (CSV, Excel, PDF report)",
+        "Scheduled reports (email weekly/monthly summary)",
+        "Compare periods (e.g., this month vs last month)",
+        "Performance: analytics queries < 1s"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "aggregation": "Precompute daily via cron, store in analytics_daily table",
+        "custom": "Query raw data with date range filters",
+        "export": "Generate CSV with data, PDF with charts using jsPDF"
+      }
+    },
+    {
+      "taskId": "SPRINT-12-010",
+      "title": "Build analytics dashboard UI",
+      "description": "Create comprehensive analytics visualization dashboard",
+      "assignedTo": "frontend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-12-009"],
+      "acceptanceCriteria": [
+        "Analytics at /admin/analytics",
+        "Overview: key metrics cards with trend indicators",
+        "User growth chart (line chart, daily/weekly/monthly toggle)",
+        "Engagement metrics: DAU/MAU ratio, avg session time, pages per session",
+        "Content performance: most viewed articles, top forum topics, trending jobs",
+        "Revenue charts: MRR, new subscriptions, churn",
+        "Top contributors table (by reputation, posts, etc.)",
+        "Traffic sources pie chart",
+        "Date range picker (presets + custom)",
+        "Compare periods toggle",
+        "Export button (CSV, PDF)",
+        "Custom report builder (select metrics, date range, export)",
+        "Responsive design (desktop-focused)",
+        "Loading states"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/admin/analytics",
+        "components": "AnalyticsDashboard, MetricsCards, AnalyticsCharts, CustomReportBuilder",
+        "charts": "Recharts with interactive tooltips and legends"
+      }
+    },
+    {
+      "taskId": "SPRINT-12-011",
+      "title": "Test admin tools and moderation",
+      "description": "Comprehensive testing of admin dashboard, user management, content moderation, settings, and analytics",
+      "assignedTo": "qa",
+      "estimatedHours": 14,
+      "dependencies": [
+        "SPRINT-12-002",
+        "SPRINT-12-004",
+        "SPRINT-12-006",
+        "SPRINT-12-008",
+        "SPRINT-12-010"
+      ],
+      "acceptanceCriteria": [
+        "Admin dashboard displays all metrics correctly",
+        "Real-time stats update properly",
+        "User management search and filters work",
+        "User actions (suspend, ban, delete) execute correctly",
+        "Audit log records all admin actions",
+        "Content moderation queue displays reported items",
+        "Approve/reject actions work correctly",
+        "Bulk operations function properly",
+        "Platform settings save and apply correctly",
+        "Feature flags toggle features on/off",
+        "Analytics display accurate data",
+        "Custom reports generate correctly",
+        "Export functions (CSV, PDF) work",
+        "All admin features require admin role",
+        "Performance: dashboard < 1s, user list < 2s, analytics < 3s",
+        "No console errors"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tools": "Playwright E2E, Jest unit tests",
+        "scenarios": [
+          "Login as admin, view dashboard",
+          "Search users, suspend a user",
+          "Review reported content, approve/reject",
+          "Change platform settings",
+          "Generate custom analytics report"
+        ],
+        "security": "Test that non-admin users cannot access admin routes"
+      }
+    }
+  ],
+  "deliverables": [
+    "Admin dashboard with real-time metrics",
+    "User management system",
+    "Content moderation tools",
+    "Platform settings interface",
+    "Analytics and reporting",
+    "Comprehensive test suite"
+  ],
+  "notes": "Sprint 12 provides admins with powerful tools to manage the platform. Focus on making the interfaces efficient and intuitive. Ensure all admin actions are logged for accountability. Analytics should provide actionable insights for platform growth.",
+  "risks": [
+    "Admin tools complexity may require extensive UX design",
+    "Content moderation at scale may need automation (ML spam detection)",
+    "Analytics queries may impact database performance - ensure proper indexing"
+  ]
+}

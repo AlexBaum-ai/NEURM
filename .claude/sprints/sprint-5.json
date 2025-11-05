@@ -1,0 +1,381 @@
+{
+  "sprintNumber": 5,
+  "sprintGoal": "Add advanced forum features including moderation tools, reports, search, and private messaging",
+  "duration": "2 weeks",
+  "status": "pending",
+  "priority": "high",
+  "startDate": null,
+  "endDate": null,
+  "tasks": [
+    {
+      "taskId": "SPRINT-5-001",
+      "title": "Implement moderation tools backend",
+      "description": "Create comprehensive moderation API for editing, moving, locking, pinning topics and managing users",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-4-003"],
+      "acceptanceCriteria": [
+        "POST /api/forum/topics/:id/pin pins/unpins topic (moderator)",
+        "POST /api/forum/topics/:id/lock locks/unlocks topic (moderator)",
+        "PUT /api/forum/topics/:id/move moves to different category (moderator)",
+        "POST /api/forum/topics/:id/merge merges duplicate topics (moderator)",
+        "DELETE /api/forum/topics/:id hard delete (admin only)",
+        "POST /api/forum/users/:id/warn issues warning to user (moderator)",
+        "POST /api/forum/users/:id/suspend temporary suspension (moderator)",
+        "POST /api/forum/users/:id/ban permanent ban (admin)",
+        "Moderation actions logged in moderation_log table",
+        "Moderators can edit any content in their categories",
+        "Locked topics prevent new replies",
+        "Pinned topics appear at top of category"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "moderation_log (id, moderator_id, action, target_type, target_id, reason, created_at)",
+        "permissions": "Check user.role IN ('moderator', 'admin') AND category_moderators.category_id",
+        "endpoints": [
+          "POST /api/forum/topics/:id/pin",
+          "POST /api/forum/topics/:id/lock",
+          "PUT /api/forum/topics/:id/move",
+          "POST /api/forum/topics/:id/merge",
+          "POST /api/forum/users/:id/warn",
+          "POST /api/forum/users/:id/suspend",
+          "POST /api/forum/users/:id/ban"
+        ]
+      }
+    },
+    {
+      "taskId": "SPRINT-5-002",
+      "title": "Build moderator UI tools",
+      "description": "Create moderator interface with action buttons and moderation dashboard",
+      "assignedTo": "frontend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-5-001"],
+      "acceptanceCriteria": [
+        "Moderator action menu on topics (pin, lock, move, delete)",
+        "Moderator action menu on replies (edit, hide, delete)",
+        "Move topic modal with category selector",
+        "Merge topics interface (select duplicate, confirm merge)",
+        "User moderation panel (warn, suspend, ban) with reason field",
+        "Moderation log viewer showing recent actions",
+        "Visual indicators (pinned icon, locked badge, edited tag)",
+        "Moderator dashboard at /forum/mod",
+        "Recent reports queue",
+        "Moderation statistics (actions today, pending reports)",
+        "Confirmation dialogs for destructive actions",
+        "Accessible (keyboard navigation, screen reader support)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "routes": "/forum/mod, /forum/mod/log",
+        "components": "ModeratorMenu, ModActionModal, ModerationDashboard, ModLog",
+        "permissions": "Show mod tools only if user.role >= moderator"
+      }
+    },
+    {
+      "taskId": "SPRINT-5-003",
+      "title": "Implement report system backend",
+      "description": "Create reporting mechanism for spam, harassment, and policy violations",
+      "assignedTo": "backend",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-4-003"],
+      "acceptanceCriteria": [
+        "POST /api/forum/reports creates new report",
+        "Report reasons: spam, harassment, off_topic, misinformation, copyright",
+        "Reports can target topics or replies",
+        "GET /api/forum/reports returns moderation queue (moderator)",
+        "PUT /api/forum/reports/:id/resolve marks report resolved",
+        "Auto-hide content after 5 unique reports",
+        "Prevent duplicate reports (same user + same content)",
+        "False report tracking (if resolved as 'not_violation')",
+        "Email notification to moderators on new report",
+        "Reporter notified of resolution",
+        "Reports include: reporter_id, target, reason, description, created_at, status"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "reports (id, reporter_id, reportable_type, reportable_id, reason, description, status, resolved_by, resolved_at)",
+        "status": "ENUM: pending, reviewing, resolved_violation, resolved_no_action, dismissed",
+        "auto_hide": "Trigger: IF (SELECT COUNT(*) FROM reports WHERE reportable_id = NEW.reportable_id) >= 5 THEN UPDATE SET hidden = true",
+        "endpoints": [
+          "POST /api/forum/reports",
+          "GET /api/forum/reports (moderator)",
+          "PUT /api/forum/reports/:id/resolve (moderator)"
+        ]
+      }
+    },
+    {
+      "taskId": "SPRINT-5-004",
+      "title": "Build report UI and moderation queue",
+      "description": "Create report button, report modal, and moderation review interface",
+      "assignedTo": "frontend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-5-003"],
+      "acceptanceCriteria": [
+        "Report button on every topic and reply (flag icon)",
+        "Report modal with reason selector and description field",
+        "Confirmation message after report submitted",
+        "Moderation queue at /forum/mod/reports",
+        "Queue shows: content preview, reporter, reason, timestamp",
+        "Filter reports by: reason, status, date",
+        "Click report opens review panel",
+        "Review panel shows: full content, reporter info, history",
+        "Resolve actions: mark_violation, no_action, dismiss",
+        "Batch actions (resolve multiple reports)",
+        "Visual indicator on reported content (for moderators)",
+        "Responsive design"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "components": "ReportButton, ReportModal, ModerationQueue, ReportReviewPanel",
+        "route": "/forum/mod/reports",
+        "realtime": "Poll for new reports every 60s"
+      }
+    },
+    {
+      "taskId": "SPRINT-5-005",
+      "title": "Implement forum search backend",
+      "description": "Create full-text search for topics and replies with advanced filtering",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-4-003"],
+      "acceptanceCriteria": [
+        "GET /api/forum/search returns search results",
+        "Full-text search on topic titles and content",
+        "Full-text search on reply content",
+        "Filters: category, type, status, date range, has_code, min_upvotes",
+        "Sort: relevance, date, popularity, votes",
+        "Search highlights matching text",
+        "Autocomplete suggestions (GET /api/forum/search/suggest)",
+        "Search history tracked per user (last 10)",
+        "Saved searches functionality",
+        "Performance: <500ms for typical queries",
+        "Support boolean operators (AND, OR, NOT)",
+        "Exact phrase search with quotes"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "search": "PostgreSQL full-text search with tsvector columns or Elasticsearch",
+        "indexing": "CREATE INDEX idx_topics_fts ON forum_topics USING gin(to_tsvector('english', title || ' ' || content))",
+        "ranking": "ts_rank for relevance, combine with vote_score for popularity",
+        "autocomplete": "Use trigram similarity (pg_trgm extension)",
+        "saved": "saved_searches table (user_id, query, filters)"
+      }
+    },
+    {
+      "taskId": "SPRINT-5-006",
+      "title": "Build forum search UI",
+      "description": "Create search interface with autocomplete, filters, and results page",
+      "assignedTo": "frontend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-5-005"],
+      "acceptanceCriteria": [
+        "Search bar in forum header (always visible)",
+        "Autocomplete dropdown with suggestions",
+        "Keyboard navigation (arrow keys, enter)",
+        "Search results page at /forum/search?q=...",
+        "Results grouped by type (topics, replies)",
+        "Highlighted search terms in results",
+        "Advanced filters sidebar (category, type, date, etc.)",
+        "Sort dropdown (relevance, date, votes)",
+        "Save search button (with name input)",
+        "Saved searches dropdown",
+        "Search history (last 10 in dropdown)",
+        "Empty state with search tips",
+        "Pagination (20 results per page)",
+        "Mobile-responsive"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/forum/search",
+        "components": "SearchBar, SearchResults, SearchFilters, SearchAutocomplete",
+        "debounce": "Debounce autocomplete requests (300ms)",
+        "highlight": "Use mark.js or custom highlighting for matched terms"
+      }
+    },
+    {
+      "taskId": "SPRINT-5-007",
+      "title": "Implement private messaging backend",
+      "description": "Create one-on-one messaging system with conversations and message history",
+      "assignedTo": "backend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-0-002"],
+      "acceptanceCriteria": [
+        "conversations table for message threads",
+        "messages table for individual messages",
+        "POST /api/messages sends new message",
+        "GET /api/conversations returns user's conversations",
+        "GET /api/conversations/:id/messages returns conversation messages",
+        "PUT /api/messages/:id/read marks message as read",
+        "DELETE /api/conversations/:id deletes conversation",
+        "POST /api/users/:id/block blocks user from messaging",
+        "Rich text message content (markdown)",
+        "File attachments (max 10MB)",
+        "Typing indicators (via websocket or polling)",
+        "Read receipts (optional, user preference)",
+        "Unread count badge",
+        "Search conversations by participant name or content"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "tables": "conversations (id, participant_1_id, participant_2_id, last_message_at), messages (id, conversation_id, sender_id, content, read_at, created_at)",
+        "endpoints": [
+          "GET /api/conversations",
+          "GET /api/conversations/:id/messages",
+          "POST /api/messages",
+          "PUT /api/messages/:id/read",
+          "DELETE /api/conversations/:id",
+          "POST /api/users/:id/block"
+        ],
+        "realtime": "Consider websockets (Socket.io) for instant delivery"
+      }
+    },
+    {
+      "taskId": "SPRINT-5-008",
+      "title": "Build private messaging UI",
+      "description": "Create messaging interface with conversation list and chat view",
+      "assignedTo": "frontend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-5-007"],
+      "acceptanceCriteria": [
+        "Messages page at /messages",
+        "Conversation list sidebar (left)",
+        "Unread badge on conversations",
+        "Chat view (right) showing message history",
+        "Message composer at bottom with rich text support",
+        "Send button and Ctrl+Enter shortcut",
+        "File attachment button",
+        "Typing indicator ('User is typing...')",
+        "Read receipts (checkmarks)",
+        "Auto-scroll to newest message",
+        "Infinite scroll for message history",
+        "Delete conversation with confirmation",
+        "Block user button",
+        "Responsive: stacked on mobile",
+        "Real-time message delivery (polling every 5s or websocket)"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/messages, /messages/:conversationId",
+        "components": "MessagesPage, ConversationList, ChatView, MessageComposer",
+        "realtime": "TanStack Query refetchInterval: 5000 or Socket.io client",
+        "scroll": "Use IntersectionObserver for infinite scroll"
+      }
+    },
+    {
+      "taskId": "SPRINT-5-009",
+      "title": "Implement unanswered questions queue",
+      "description": "Create filtered view showing questions without accepted answers",
+      "assignedTo": "backend",
+      "estimatedHours": 6,
+      "dependencies": ["SPRINT-4-003"],
+      "acceptanceCriteria": [
+        "GET /api/forum/unanswered returns questions without accepted_answer_id",
+        "Filter by category, tags, date",
+        "Sort by: newest, oldest, most_viewed, most_voted",
+        "Exclude locked/closed questions",
+        "Pagination (20 per page)",
+        "Count total unanswered questions",
+        "Performance: indexed query on accepted_answer_id IS NULL",
+        "Cache results for 5 minutes"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "query": "SELECT * FROM forum_topics WHERE type = 'question' AND accepted_answer_id IS NULL AND locked = false",
+        "index": "CREATE INDEX idx_unanswered ON forum_topics(type, accepted_answer_id) WHERE accepted_answer_id IS NULL",
+        "cache": "Redis: unanswered_questions:{filters} TTL 300s"
+      }
+    },
+    {
+      "taskId": "SPRINT-5-010",
+      "title": "Build unanswered questions page",
+      "description": "Create dedicated page for browsing unanswered questions",
+      "assignedTo": "frontend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-5-009"],
+      "acceptanceCriteria": [
+        "Unanswered page at /forum/unanswered",
+        "Show count of unanswered questions",
+        "Filter by category and tags",
+        "Sort dropdown",
+        "Topic cards show: title, excerpt, views, votes, age",
+        "Call-to-action: 'Help answer this question'",
+        "Empty state if all questions answered",
+        "Responsive design",
+        "Loading skeleton",
+        "Prominent link in forum navigation"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/forum/unanswered",
+        "component": "UnansweredQuestionsPage",
+        "badge": "Show unanswered count in navigation"
+      }
+    },
+    {
+      "taskId": "SPRINT-5-011",
+      "title": "Test forum advanced features",
+      "description": "Comprehensive testing of moderation, reports, search, messaging, and unanswered queue",
+      "assignedTo": "qa",
+      "estimatedHours": 14,
+      "dependencies": [
+        "SPRINT-5-002",
+        "SPRINT-5-004",
+        "SPRINT-5-006",
+        "SPRINT-5-008",
+        "SPRINT-5-010"
+      ],
+      "acceptanceCriteria": [
+        "Moderator tools work correctly (pin, lock, move, merge)",
+        "User warnings and suspensions enforced",
+        "Report system triggers auto-hide at 5 reports",
+        "Moderation queue displays all pending reports",
+        "Search returns relevant results with proper ranking",
+        "Search filters work correctly",
+        "Autocomplete suggestions appear",
+        "Private messages send and receive correctly",
+        "Typing indicators work",
+        "Read receipts update properly",
+        "Unanswered questions page filters correctly",
+        "All features responsive on mobile",
+        "Performance: search results < 500ms, message delivery < 1s",
+        "No console errors"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tools": "Playwright E2E, Jest unit tests",
+        "scenarios": [
+          "Moderate content as moderator",
+          "Report content and verify auto-hide",
+          "Search with various filters",
+          "Send 20 messages between users",
+          "Browse unanswered questions"
+        ]
+      }
+    }
+  ],
+  "deliverables": [
+    "Moderation tools and dashboard",
+    "Report system with queue",
+    "Full-text forum search",
+    "Private messaging system",
+    "Unanswered questions queue",
+    "Comprehensive test suite"
+  ],
+  "notes": "Sprint 5 completes the forum module with essential moderation and communication features. Private messaging is critical for community building. Search quality is important - consider using Elasticsearch for better performance at scale.",
+  "risks": [
+    "Private messaging may need websockets for real-time - decide on polling vs WebSocket",
+    "Search performance may degrade with large datasets - monitor query times",
+    "Moderation queue may become overwhelming - need efficient filtering"
+  ]
+}

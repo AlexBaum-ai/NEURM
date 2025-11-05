@@ -1,0 +1,2 @@
+backend:build:cd /home/neurmatic/nEURM/backend && npm run build
+backend:tsc:cd /home/neurmatic/nEURM/backend && npx tsc --noEmit

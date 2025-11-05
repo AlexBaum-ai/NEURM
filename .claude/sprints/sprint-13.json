@@ -1,0 +1,353 @@
+{
+  "sprintNumber": 13,
+  "sprintGoal": "Implement comprehensive notification system and social features",
+  "duration": "2 weeks",
+  "status": "pending",
+  "priority": "high",
+  "startDate": null,
+  "endDate": null,
+  "tasks": [
+    {
+      "taskId": "SPRINT-13-001",
+      "title": "Implement notification system backend",
+      "description": "Create unified notification system with in-app, email, and push delivery channels",
+      "assignedTo": "backend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-0-002"],
+      "acceptanceCriteria": [
+        "notifications table stores all notifications",
+        "Notification types: news (new articles in followed categories, trending), forum (replies, mentions, upvotes, accepted_answer), jobs (new matches, status_updates, profile_views), social (new_followers, messages, badges_earned, reputation_milestones)",
+        "POST /api/notifications creates notification (internal)",
+        "GET /api/notifications returns user's notifications",
+        "PUT /api/notifications/:id/read marks as read",
+        "PUT /api/notifications/read-all marks all as read",
+        "DELETE /api/notifications/:id deletes notification",
+        "Delivery channels: in-app (always), email (configurable), push (configurable)",
+        "Smart bundling: '3 people replied to your topic' instead of 3 separate notifications",
+        "Notification preferences per type and channel",
+        "Frequency control: real-time, hourly_digest, daily_digest, weekly_digest",
+        "Do-not-disturb schedule per user",
+        "Email templates for all notification types",
+        "Push notification support (web push API)",
+        "Unread count endpoint"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "notifications (id, user_id, type, title, message, data_json, read_at, delivery_channels, created_at)",
+        "preferences": "notification_preferences (user_id, notification_type, channel, frequency, enabled)",
+        "bundling": "Group notifications by type + target within time window (e.g., 1 hour)",
+        "email": "Bull queue processes email delivery with rate limiting",
+        "push": "Use web-push library for browser push notifications"
+      }
+    },
+    {
+      "taskId": "SPRINT-13-002",
+      "title": "Build notification UI components",
+      "description": "Create notification bell, dropdown, and notifications page",
+      "assignedTo": "frontend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-13-001"],
+      "acceptanceCriteria": [
+        "Notification bell icon in header",
+        "Unread count badge on bell",
+        "Click bell opens notification dropdown",
+        "Dropdown shows last 10 notifications",
+        "Each notification: icon, title, message, timestamp, read/unread indicator",
+        "Click notification marks as read and navigates to relevant page",
+        "Mark all as read button",
+        "See all link → notifications page",
+        "Notifications page at /notifications",
+        "Full notification list with infinite scroll",
+        "Filter by: all, unread, type (news, forum, jobs, social)",
+        "Delete notification button",
+        "Empty state for no notifications",
+        "Real-time updates (new notifications appear instantly)",
+        "Notification sound (optional, user preference)",
+        "Responsive design"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/notifications",
+        "components": "NotificationBell, NotificationDropdown, NotificationsList, NotificationItem",
+        "realtime": "WebSocket or polling every 30s for new notifications",
+        "sound": "Play audio file on new notification if enabled in preferences",
+        "badge": "Update unread count dynamically"
+      }
+    },
+    {
+      "taskId": "SPRINT-13-003",
+      "title": "Build notification preferences UI",
+      "description": "Create settings page for notification customization",
+      "assignedTo": "frontend",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-13-001"],
+      "acceptanceCriteria": [
+        "Notification settings at /settings/notifications",
+        "Sections: News, Forum, Jobs, Social",
+        "Per section: list of notification types",
+        "Each type: toggle enable/disable, channel checkboxes (in-app, email, push), frequency selector",
+        "Frequency options: real-time, hourly, daily, weekly, off",
+        "Do-not-disturb schedule: start time, end time, days",
+        "Vacation mode toggle (pauses all notifications)",
+        "Email digest preview",
+        "Push notification test button",
+        "Save button with success message",
+        "Unsaved changes warning",
+        "Responsive design"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/settings/notifications",
+        "components": "NotificationSettings, PreferenceGroup, DndSchedule",
+        "test": "Send test push notification button triggers test notification"
+      }
+    },
+    {
+      "taskId": "SPRINT-13-004",
+      "title": "Implement email digest system",
+      "description": "Create automated email digests (daily, weekly) with personalized content",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-13-001"],
+      "acceptanceCriteria": [
+        "Daily digest cron job runs at user's preferred time",
+        "Weekly digest runs every Monday at 9am user's timezone",
+        "Digest includes: top stories, trending discussions, new job matches, activity summary",
+        "Personalized based on user interests and follows",
+        "Email template: responsive HTML with sections",
+        "Unsubscribe link in every email",
+        "Track email opens and clicks",
+        "Skip digest if no relevant content",
+        "Digest preview API endpoint",
+        "Respect do-not-disturb and vacation mode",
+        "Rate limiting: max 1 digest per day per user"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "cron": "Bull queue with cron expression, process per-user digest generation",
+        "template": "MJML for responsive email templates",
+        "personalization": "Query followed categories, tags, models for relevant content",
+        "tracking": "Use SendGrid tracking or custom pixel/link tracking"
+      }
+    },
+    {
+      "taskId": "SPRINT-13-005",
+      "title": "Implement endorsement system backend",
+      "description": "Create skill endorsement feature for candidate profiles",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-7-006"],
+      "acceptanceCriteria": [
+        "skill_endorsements table tracks endorsements",
+        "POST /api/profiles/:username/skills/:skillId/endorse creates endorsement",
+        "DELETE /api/profiles/:username/skills/:skillId/endorse removes endorsement",
+        "GET /api/profiles/:username/skills/:skillId/endorsements returns endorsers",
+        "One endorsement per user per skill",
+        "Endorsement count displayed on skills",
+        "Notification to profile owner on endorsement",
+        "Only registered users can endorse",
+        "Cannot endorse own skills",
+        "Endorsers visible (public list)"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "skill_endorsements (user_id, profile_id, skill_id, created_at), UNIQUE(user_id, profile_id, skill_id)",
+        "count": "Update candidate_skills.endorsement_count on insert/delete"
+      }
+    },
+    {
+      "taskId": "SPRINT-13-006",
+      "title": "Build endorsement UI",
+      "description": "Add endorsement buttons and display to profile skills",
+      "assignedTo": "frontend",
+      "estimatedHours": 6,
+      "dependencies": ["SPRINT-13-005"],
+      "acceptanceCriteria": [
+        "Endorse button on each skill in profile",
+        "Button shows: '+ Endorse' or 'Endorsed' (if already endorsed)",
+        "Endorsement count displayed",
+        "Click count shows list of endorsers (modal or tooltip)",
+        "Optimistic UI update on endorse/unendorse",
+        "Success message on endorsement",
+        "Cannot endorse own skills (button hidden)",
+        "Responsive design"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "components": "EndorseButton, EndorsersList",
+        "location": "Candidate profile skills section"
+      }
+    },
+    {
+      "taskId": "SPRINT-13-007",
+      "title": "Implement activity feed backend",
+      "description": "Create activity tracking and feed for user actions",
+      "assignedTo": "backend",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-0-002"],
+      "acceptanceCriteria": [
+        "user_activities table logs user actions",
+        "Activity types: posted_article, created_topic, replied, upvoted, bookmarked, applied_job, earned_badge, followed_user",
+        "GET /api/users/:username/activity returns activity feed",
+        "Activity privacy: public, community, private (respects profile settings)",
+        "GET /api/following/feed returns activity from followed users",
+        "Pagination (20 per page)",
+        "Filter by activity type",
+        "Time grouping: 'Today', 'This Week', 'Earlier'",
+        "Performance: activity queries < 500ms"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "user_activities (user_id, activity_type, target_type, target_id, privacy, created_at)",
+        "privacy": "WHERE privacy <= viewer_relationship (public < community < private)",
+        "index": "INDEX on (user_id, created_at DESC), INDEX on (activity_type, created_at DESC)"
+      }
+    },
+    {
+      "taskId": "SPRINT-13-008",
+      "title": "Build activity feed UI",
+      "description": "Display user activity on profiles and following feed",
+      "assignedTo": "frontend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-13-007"],
+      "acceptanceCriteria": [
+        "Activity tab on user profiles",
+        "Activity timeline with icons per type",
+        "Each activity: icon, action description, target link, timestamp",
+        "Time grouping headers",
+        "Filter dropdown by activity type",
+        "Infinite scroll",
+        "Empty state if no activity",
+        "Following feed shows activity from followed users",
+        "Responsive design"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "components": "ActivityFeed, ActivityItem, ActivityTimeline",
+        "location": "User profile /u/:username/activity, Following feed /following"
+      }
+    },
+    {
+      "taskId": "SPRINT-13-009",
+      "title": "Implement 'Who Viewed My Profile' feature",
+      "description": "Track profile views and display to premium users",
+      "assignedTo": "backend",
+      "estimatedHours": 6,
+      "dependencies": ["SPRINT-7-006"],
+      "acceptanceCriteria": [
+        "profile_views table tracks views",
+        "POST /api/profiles/:username/view logs view",
+        "Deduplicate: one view per viewer per 24h",
+        "GET /api/profiles/me/views returns who viewed profile (premium only)",
+        "Last 30 days of views",
+        "Include: viewer name, photo, company (if recruiter), viewed_at",
+        "View count on profile",
+        "Anonymous view option (paid feature for viewers)",
+        "Privacy: users can disable view tracking"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "profile_views (viewer_id, profile_id, anonymous, viewed_at)",
+        "dedup": "UNIQUE(viewer_id, profile_id, DATE(viewed_at))",
+        "premium": "Feature flag: requires user.role >= 'premium'"
+      }
+    },
+    {
+      "taskId": "SPRINT-13-010",
+      "title": "Build profile views UI",
+      "description": "Display profile viewers to premium users",
+      "assignedTo": "frontend",
+      "estimatedHours": 6,
+      "dependencies": ["SPRINT-13-009"],
+      "acceptanceCriteria": [
+        "Profile views section at /profile/views (premium only)",
+        "List of recent viewers with avatar, name, headline, viewed date",
+        "Company badge for recruiters",
+        "Anonymous viewers shown as 'Someone viewed your profile'",
+        "Total view count",
+        "Views chart over time (line chart)",
+        "Empty state for no views",
+        "Premium upsell if not subscribed",
+        "Responsive design"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/profile/views",
+        "components": "ProfileViews, ViewersList, ViewsChart",
+        "paywall": "Show teaser + upgrade button if not premium"
+      }
+    },
+    {
+      "taskId": "SPRINT-13-011",
+      "title": "Test notifications and social features",
+      "description": "Test notification system, digests, endorsements, activity feed, and profile views",
+      "assignedTo": "qa",
+      "estimatedHours": 14,
+      "dependencies": [
+        "SPRINT-13-002",
+        "SPRINT-13-003",
+        "SPRINT-13-004",
+        "SPRINT-13-006",
+        "SPRINT-13-008",
+        "SPRINT-13-010"
+      ],
+      "acceptanceCriteria": [
+        "Notifications appear in real-time",
+        "Notification bell shows correct unread count",
+        "Mark as read works",
+        "Notification preferences save correctly",
+        "Do-not-disturb schedule enforced",
+        "Email digests send with correct content",
+        "Digests respect user timezone",
+        "Endorsements add/remove correctly",
+        "Endorsement count updates",
+        "Activity feed shows user actions",
+        "Following feed aggregates followed users' activity",
+        "Profile views track correctly",
+        "Premium users can see viewers",
+        "Anonymous views hide viewer identity",
+        "All features responsive on mobile",
+        "Performance: notifications load < 1s",
+        "No console errors"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tools": "Playwright E2E, Jest unit tests",
+        "scenarios": [
+          "Trigger various notifications and verify delivery",
+          "Configure notification preferences and verify enforcement",
+          "Endorse skills on profile",
+          "View activity feed for user and following",
+          "View profile viewers as premium user",
+          "Test email digest generation"
+        ]
+      }
+    }
+  ],
+  "deliverables": [
+    "Unified notification system (in-app, email, push)",
+    "Notification preferences and controls",
+    "Email digest system (daily, weekly)",
+    "Skill endorsements",
+    "Activity feed and timeline",
+    "Profile view tracking",
+    "Comprehensive test suite"
+  ],
+  "notes": "Sprint 13 adds critical engagement features. Notifications must be reliable and not overwhelming - smart bundling is essential. Email digests should provide value, not spam. Social features (endorsements, activity feed, profile views) build community and credibility.",
+  "risks": [
+    "Notification volume may become overwhelming - bundling and frequency control critical",
+    "Email deliverability may be challenging - ensure proper SPF/DKIM/DMARC",
+    "Real-time notifications may require WebSocket infrastructure - decide on polling vs WebSocket"
+  ]
+}

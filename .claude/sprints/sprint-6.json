@@ -1,0 +1,292 @@
+{
+  "sprintNumber": 6,
+  "sprintGoal": "Complete forum with badges, leaderboards, polls, and Prompt Library",
+  "duration": "2 weeks",
+  "status": "pending",
+  "priority": "medium",
+  "startDate": null,
+  "endDate": null,
+  "tasks": [
+    {
+      "taskId": "SPRINT-6-001",
+      "title": "Implement badges system backend",
+      "description": "Create badge framework with skill, activity, and special badges earned through achievements",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-4-010"],
+      "acceptanceCriteria": [
+        "badges table with types: skill, activity, special",
+        "Badge definitions: name, description, icon, criteria, rarity",
+        "user_badges table tracks earned badges",
+        "Achievement detection (e.g., 'First Post', '100 Upvotes', 'Streak Master')",
+        "GET /api/badges returns all available badges",
+        "GET /api/users/:id/badges returns user's badges",
+        "Automatic badge awarding via background job",
+        "Badge progress tracking (e.g., '50/100 replies for badge')",
+        "Notification on badge earned",
+        "Badges displayed on user profile and posts",
+        "Badge categories: Prompt Master, RAG Expert, Helpful, Popular, Beta Tester"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "tables": "badges (id, name, type, criteria_json, icon, rarity), user_badges (user_id, badge_id, earned_at, progress)",
+        "cron": "Bull queue checks badge criteria every hour",
+        "criteria": "JSON format: {type: 'reply_count', threshold: 100, timeframe: 'all_time'}",
+        "badges": "Seed: First Post, 100 Replies, Streak Master (7 days), 1000 Reputation, Accepted Answer, etc."
+      }
+    },
+    {
+      "taskId": "SPRINT-6-002",
+      "title": "Build badges UI and badge gallery",
+      "description": "Display badges on profiles and create badge showcase page",
+      "assignedTo": "frontend",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-6-001"],
+      "acceptanceCriteria": [
+        "Badge display on user profile (earned + locked)",
+        "Badge cards show: icon, name, description, earned date",
+        "Locked badges show progress bar",
+        "Badge rarity indicated by color (common, rare, epic, legendary)",
+        "Badges gallery at /badges shows all available badges",
+        "Filter badges by type and earned status",
+        "Badge notification toast when earned",
+        "Hover tooltip on badge icons",
+        "Responsive grid layout",
+        "Shareable badge achievements (social links)"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "routes": "/badges, /u/:username (profile)",
+        "components": "BadgeCard, BadgeGallery, BadgeProgress, BadgeNotification",
+        "toast": "Use react-hot-toast for badge earned notifications"
+      }
+    },
+    {
+      "taskId": "SPRINT-6-003",
+      "title": "Implement leaderboards backend",
+      "description": "Create leaderboards for top contributors weekly, monthly, and all-time",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-4-010"],
+      "acceptanceCriteria": [
+        "GET /api/leaderboards/weekly returns top 50 users this week",
+        "GET /api/leaderboards/monthly returns top 50 users this month",
+        "GET /api/leaderboards/all-time returns top 100 users ever",
+        "Ranking based on reputation earned in timeframe",
+        "Include: rank, user, reputation_gain, post_count, accepted_answers",
+        "Leaderboards cached and updated hourly",
+        "GET /api/leaderboards/me returns current user's rank",
+        "Hall of Fame for top monthly contributors (archived)",
+        "Performance: precomputed rankings, not realtime calculation"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "leaderboards (period, user_id, rank, reputation_gain, updated_at)",
+        "cron": "Bull queue recalculates rankings every hour",
+        "cache": "Redis: leaderboard:{period} TTL 1h",
+        "calculation": "Sum reputation_history WHERE created_at BETWEEN period_start AND period_end GROUP BY user_id ORDER BY sum DESC"
+      }
+    },
+    {
+      "taskId": "SPRINT-6-004",
+      "title": "Build leaderboards page",
+      "description": "Create leaderboard display with tabs for weekly, monthly, all-time",
+      "assignedTo": "frontend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-6-003"],
+      "acceptanceCriteria": [
+        "Leaderboards page at /forum/leaderboards",
+        "Tabs: Weekly, Monthly, All-Time, Hall of Fame",
+        "Each entry shows: rank, avatar, username, reputation, badges",
+        "Top 3 podium-style display",
+        "Current user's rank highlighted",
+        "Animated rank changes (up/down arrows)",
+        "Responsive table layout",
+        "Loading skeleton",
+        "Update timestamp displayed"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/forum/leaderboards",
+        "components": "Leaderboard, LeaderboardEntry, RankPodium",
+        "animation": "Framer Motion for rank changes"
+      }
+    },
+    {
+      "taskId": "SPRINT-6-005",
+      "title": "Implement polls system backend",
+      "description": "Create poll creation, voting, and results tracking for topics",
+      "assignedTo": "backend",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-4-003"],
+      "acceptanceCriteria": [
+        "polls table linked to topics (optional)",
+        "poll_options table with multiple choices",
+        "poll_votes table tracks user votes",
+        "POST /api/polls creates poll with options",
+        "POST /api/polls/:id/vote casts vote",
+        "GET /api/polls/:id/results returns vote tallies",
+        "Poll types: single_choice, multiple_choice",
+        "Optional: deadline (auto-close poll after date)",
+        "Optional: anonymous voting",
+        "Prevent multiple votes (unless multiple_choice)",
+        "Results shown after voting or after deadline",
+        "Vote counts and percentages calculated"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "tables": "polls (id, topic_id, question, type, deadline, anonymous), poll_options (id, poll_id, option_text, vote_count), poll_votes (user_id, poll_id, option_id)",
+        "unique": "UNIQUE(user_id, poll_id, option_id) for single_choice",
+        "results": "Calculate percentages: (option.vote_count / poll.total_votes) * 100"
+      }
+    },
+    {
+      "taskId": "SPRINT-6-006",
+      "title": "Build poll UI and voting interface",
+      "description": "Create poll creation widget and voting interface in topics",
+      "assignedTo": "frontend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-6-005"],
+      "acceptanceCriteria": [
+        "Poll builder in topic creation form",
+        "Add/remove poll options (min 2, max 10)",
+        "Poll type selector (single/multiple)",
+        "Deadline date picker (optional)",
+        "Anonymous voting checkbox",
+        "Poll display in topic view",
+        "Vote buttons (radio for single, checkbox for multiple)",
+        "Results shown as bar chart with percentages",
+        "Total votes displayed",
+        "Deadline countdown if applicable",
+        "Lock voting after deadline or after user votes (single_choice)",
+        "Responsive design"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "components": "PollBuilder, PollVoting, PollResults",
+        "charts": "Use recharts for results visualization",
+        "validation": "Min 2 options, all options non-empty"
+      }
+    },
+    {
+      "taskId": "SPRINT-6-007",
+      "title": "Implement Prompt Library backend",
+      "description": "Create community prompt repository with rating, forking, and categorization",
+      "assignedTo": "backend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-0-002"],
+      "acceptanceCriteria": [
+        "prompts table stores community prompts",
+        "Prompt fields: title, content, category, use_case, model, author_id",
+        "POST /api/prompts creates new prompt",
+        "GET /api/prompts returns prompt library with filters",
+        "GET /api/prompts/:id returns prompt details",
+        "PUT /api/prompts/:id updates prompt (author only)",
+        "POST /api/prompts/:id/fork creates variation",
+        "POST /api/prompts/:id/rate rates effectiveness (1-5 stars)",
+        "Categories: content_creation, code_generation, analysis, education, etc.",
+        "Template format with metadata (model, temperature, max_tokens)",
+        "Vote system (upvote/downvote prompts)",
+        "Search and filter by category, use_case, model, rating"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "tables": "prompts (id, user_id, parent_id, title, content, category, use_case, model, template_json, rating_avg, vote_score), prompt_ratings (user_id, prompt_id, rating)",
+        "fork": "Copy prompt, set parent_id to original, increment fork_count",
+        "template": "JSON: {model: 'gpt-4', temperature: 0.7, system_prompt: '...', user_prompt: '...'}"
+      }
+    },
+    {
+      "taskId": "SPRINT-6-008",
+      "title": "Build Prompt Library UI",
+      "description": "Create prompt browsing, creation, and forking interface",
+      "assignedTo": "frontend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-6-007"],
+      "acceptanceCriteria": [
+        "Prompt Library at /forum/prompts",
+        "Grid of prompt cards with title, excerpt, rating, votes",
+        "Filters: category, use_case, model, rating",
+        "Sort: top_rated, most_voted, newest, most_forked",
+        "Prompt detail page at /forum/prompts/:id",
+        "Shows: full prompt, metadata, template format, author, forks",
+        "Copy button (copies to clipboard)",
+        "Fork button (opens editor with pre-filled content)",
+        "Rate prompt (star rating)",
+        "Vote on prompt (upvote/downvote)",
+        "Comment on prompts (using reply system)",
+        "Create prompt form with template editor",
+        "Syntax highlighting for prompt text",
+        "Responsive design"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "routes": "/forum/prompts, /forum/prompts/new, /forum/prompts/:id",
+        "components": "PromptLibrary, PromptCard, PromptDetail, PromptEditor, PromptTemplate",
+        "copy": "navigator.clipboard.writeText() with success toast"
+      }
+    },
+    {
+      "taskId": "SPRINT-6-009",
+      "title": "Test forum advanced features (Sprint 6)",
+      "description": "Test badges, leaderboards, polls, and Prompt Library",
+      "assignedTo": "qa",
+      "estimatedHours": 12,
+      "dependencies": [
+        "SPRINT-6-002",
+        "SPRINT-6-004",
+        "SPRINT-6-006",
+        "SPRINT-6-008"
+      ],
+      "acceptanceCriteria": [
+        "Badges award correctly when criteria met",
+        "Badge progress updates accurately",
+        "Badge notifications appear",
+        "Leaderboards show correct rankings",
+        "Leaderboard updates hourly",
+        "Polls create with multiple options",
+        "Voting works for single and multiple choice",
+        "Poll results show accurate percentages",
+        "Deadline enforcement works",
+        "Prompt Library displays and filters correctly",
+        "Prompt forking creates accurate copies",
+        "Rating system calculates average correctly",
+        "All features responsive on mobile",
+        "Performance: prompts page loads < 2s",
+        "No console errors"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tools": "Playwright E2E, Jest unit tests",
+        "scenarios": [
+          "Earn badge by meeting criteria",
+          "Vote in poll and view results",
+          "Create, fork, and rate prompts",
+          "Check leaderboard rankings"
+        ]
+      }
+    }
+  ],
+  "deliverables": [
+    "Badges system with achievements",
+    "Leaderboards (weekly, monthly, all-time)",
+    "Polls with voting and results",
+    "Prompt Library with forking and rating",
+    "Comprehensive test suite"
+  ],
+  "notes": "Sprint 6 adds gamification and community tools. Badges and leaderboards drive engagement. Prompt Library is a unique feature that adds value for LLM practitioners. Consider adding prompt templates for common use cases.",
+  "risks": [
+    "Badge criteria detection may be computationally expensive",
+    "Leaderboard calculation may need optimization for scale",
+    "Prompt content moderation may be challenging"
+  ]
+}

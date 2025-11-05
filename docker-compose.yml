@@ -1,0 +1,143 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: neurmatic-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: neurmatic
+      POSTGRES_PASSWORD: neurmatic_dev_password
+      POSTGRES_DB: neurmatic
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - neurmatic-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U neurmatic']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    container_name: neurmatic-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - neurmatic-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: neurmatic-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://neurmatic:neurmatic_dev_password@postgres:5432/neurmatic
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev_jwt_secret_min_32_characters_long_change_this
+      JWT_EXPIRES_IN: 15m
+      REFRESH_TOKEN_EXPIRES_IN: 30d
+      JWT_REFRESH_SECRET: dev_refresh_token_secret_min_32_characters_long
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-your_google_client_id}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-your_google_client_secret}
+      GOOGLE_CALLBACK_URL: http://vps-1a707765.vps.ovh.net:3000/api/v1/auth/oauth/google/callback
+      LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID:-your_linkedin_client_id}
+      LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET:-your_linkedin_client_secret}
+      LINKEDIN_CALLBACK_URL: http://vps-1a707765.vps.ovh.net:3000/api/v1/auth/oauth/linkedin/callback
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-your_github_client_id}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-your_github_client_secret}
+      GITHUB_CALLBACK_URL: http://vps-1a707765.vps.ovh.net:3000/api/v1/auth/oauth/github/callback
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-your_sendgrid_api_key}
+      FROM_EMAIL: noreply@neurmatic.com
+      SUPPORT_EMAIL: support@neurmatic.com
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-your_aws_access_key_id}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-your_aws_secret_access_key}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-neurmatic-media}
+      AWS_REGION: ${AWS_REGION:-eu-west-1}
+      SENTRY_DSN: ${SENTRY_DSN:-https://af29fb7a716f6eed1dee5c1f64ec263c@o4510302689624064.ingest.de.sentry.io/4510302696833104}
+      SENTRY_ENVIRONMENT: development
+      SENTRY_TRACES_SAMPLE_RATE: 1.0
+      SENTRY_PROFILES_SAMPLE_RATE: 1.0
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 100
+      BCRYPT_ROUNDS: 12
+      SESSION_SECRET: dev_session_secret_min_32_characters_long
+      LOG_LEVEL: info
+      FRONTEND_URL: http://vps-1a707765.vps.ovh.net:5173
+      API_URL: http://vps-1a707765.vps.ovh.net:3000
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./backend/src:/app/src:cached
+      - ./backend/prisma:/app/prisma:cached
+      - backend_node_modules:/app/node_modules
+    networks:
+      - neurmatic-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3000/api/v1/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: neurmatic-frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://vps-1a707765.vps.ovh.net:3000/api/v1
+      VITE_WS_URL: ws://vps-1a707765.vps.ovh.net:3000
+      VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-https://your_frontend_sentry_dsn}
+      VITE_SENTRY_ENVIRONMENT: development
+    ports:
+      - '5173:5173'
+    volumes:
+      - ./frontend/src:/app/src:cached
+      - ./frontend/public:/app/public:cached
+      - frontend_node_modules:/app/node_modules
+    networks:
+      - neurmatic-network
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_node_modules:
+    driver: local
+  frontend_node_modules:
+    driver: local
+
+networks:
+  neurmatic-network:
+    driver: bridge

@@ -1,0 +1,319 @@
+{
+  "sprintNumber": 9,
+  "sprintGoal": "Build Applicant Tracking System (ATS) for companies and analytics dashboards",
+  "duration": "2 weeks",
+  "status": "pending",
+  "priority": "high",
+  "startDate": null,
+  "endDate": null,
+  "tasks": [
+    {
+      "taskId": "SPRINT-9-001",
+      "title": "Implement ATS backend for companies",
+      "description": "Create applicant management system with pipeline, filtering, and collaboration features",
+      "assignedTo": "backend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-8-003"],
+      "acceptanceCriteria": [
+        "GET /api/companies/applications returns all applications for company's jobs",
+        "Filter by: job, status, date_range, match_score, rating",
+        "Sort by: date_applied, match_score, rating",
+        "GET /api/companies/applications/:id returns full candidate profile + application",
+        "PUT /api/companies/applications/:id/status updates application status",
+        "POST /api/companies/applications/:id/notes adds team note",
+        "PUT /api/companies/applications/:id/rating sets rating (1-5 stars)",
+        "POST /api/companies/applications/:id/share shares with team member",
+        "GET /api/companies/applications/:id/activity returns activity log",
+        "Bulk operations: update status, archive multiple applications",
+        "Email templates for status updates",
+        "Interview scheduling integration (placeholder)",
+        "Candidate match score visible to recruiters",
+        "Forum reputation and badges visible in candidate view"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "endpoints": [
+          "GET /api/companies/applications",
+          "GET /api/companies/applications/:id",
+          "PUT /api/companies/applications/:id/status",
+          "POST /api/companies/applications/:id/notes",
+          "PUT /api/companies/applications/:id/rating",
+          "POST /api/companies/applications/:id/share"
+        ],
+        "tables": "application_notes (application_id, user_id, note, created_at), application_ratings (application_id, user_id, rating), application_shares (application_id, shared_by, shared_with)",
+        "activity": "Log all actions: status_change, note_added, rated, shared"
+      }
+    },
+    {
+      "taskId": "SPRINT-9-002",
+      "title": "Build ATS dashboard UI",
+      "description": "Create recruiter dashboard with Kanban pipeline and applicant management",
+      "assignedTo": "frontend",
+      "estimatedHours": 20,
+      "dependencies": ["SPRINT-9-001"],
+      "acceptanceCriteria": [
+        "ATS dashboard at /companies/dashboard/applications",
+        "Kanban board view with status columns (Submitted, Screening, Interview, Offer, Rejected)",
+        "Drag-drop applicants between columns (updates status)",
+        "List view toggle (table format)",
+        "Filters sidebar: job, date, match score, rating",
+        "Search applicants by name or email",
+        "Applicant cards show: name, photo, match %, rating, applied date",
+        "Click card opens detail panel",
+        "Detail panel: full profile, resume viewer, forum stats, application data, notes, activity log",
+        "Status dropdown to change status",
+        "Rating stars (click to rate)",
+        "Notes textarea with save button",
+        "Share with team button (user selector)",
+        "Bulk select and actions",
+        "Email candidate button (opens template)",
+        "Responsive design (stacked on mobile)",
+        "Real-time updates (polling every 60s)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/companies/dashboard/applications",
+        "components": "ATSDashboard, KanbanBoard, ApplicantCard, ApplicantDetail, NotesPanel",
+        "drag": "react-beautiful-dnd for Kanban drag-drop",
+        "resume": "PDF viewer (react-pdf) for resume display"
+      }
+    },
+    {
+      "taskId": "SPRINT-9-003",
+      "title": "Implement company analytics backend",
+      "description": "Create analytics for job performance, applicant quality, and hiring metrics",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-9-001"],
+      "acceptanceCriteria": [
+        "GET /api/companies/analytics returns company-wide metrics",
+        "GET /api/companies/analytics/jobs/:id returns job-specific metrics",
+        "Metrics: total_applications, views, conversion_rate (views → applications), avg_match_score, applicant_quality_score, time_to_hire, top_traffic_sources",
+        "Funnel visualization data: viewed → applied → screening → interview → offer → hired",
+        "Time series data: applications per day/week/month",
+        "Demographics: experience_level distribution, location distribution, models_expertise",
+        "Top performing jobs (by applications, quality score)",
+        "Comparison: current job vs company average",
+        "Export analytics (CSV, PDF report)",
+        "Cache analytics (recalculate hourly)",
+        "Performance: analytics query < 500ms"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "aggregation": "Precompute daily via cron job, store in job_analytics table",
+        "quality_score": "Calculate from: avg_match_score * 0.5 + avg_experience_match * 0.3 + forum_reputation * 0.2",
+        "time_to_hire": "Days from first_application to first_hired for each job",
+        "cache": "Redis: company_analytics:{companyId} TTL 1h"
+      }
+    },
+    {
+      "taskId": "SPRINT-9-004",
+      "title": "Build company analytics dashboard",
+      "description": "Create visual analytics dashboard with charts and metrics",
+      "assignedTo": "frontend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-9-003"],
+      "acceptanceCriteria": [
+        "Analytics dashboard at /companies/dashboard/analytics",
+        "Summary cards: total jobs, total applications, avg match score, time to hire",
+        "Applications over time chart (line chart)",
+        "Funnel visualization (viewed → applied → hired)",
+        "Job performance table (sortable by metrics)",
+        "Click job row shows detailed job analytics",
+        "Experience level distribution (pie chart)",
+        "Top traffic sources (bar chart)",
+        "Date range selector (last 7/30/90 days, custom)",
+        "Export reports button (PDF with charts)",
+        "Responsive design",
+        "Loading states and error handling",
+        "Tooltips explaining each metric"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/companies/dashboard/analytics",
+        "components": "AnalyticsDashboard, MetricCard, ApplicationsChart, FunnelChart",
+        "charts": "Recharts for all visualizations",
+        "export": "Generate PDF with jsPDF and chart images"
+      }
+    },
+    {
+      "taskId": "SPRINT-9-005",
+      "title": "Implement candidate search for recruiters",
+      "description": "Create talent pool search allowing recruiters to find candidates proactively",
+      "assignedTo": "backend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-7-006"],
+      "acceptanceCriteria": [
+        "GET /api/candidates/search returns matching candidates (company premium feature)",
+        "Search by: skills, experience, models, frameworks, location, availability",
+        "Boolean search operators (AND, OR, NOT)",
+        "Filter by: experience_level, remote_preference, salary_expectations, availability_status",
+        "Sort by: match_score, reputation, profile_views, recent_activity",
+        "Only returns candidates with visible_to_recruiters = true",
+        "Respects privacy settings (only show visible sections)",
+        "Search highlights matching skills and keywords",
+        "Save search functionality",
+        "Export candidate list (CSV with contact info)",
+        "Track recruiter views ('who viewed my profile')",
+        "Performance: search results < 500ms"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "search": "Elasticsearch or PostgreSQL full-text search on candidate profiles",
+        "privacy": "WHERE visible_to_recruiters = true AND profile_section_privacy <= 'recruiters'",
+        "views": "profile_views table (viewer_id, profile_id, viewed_at)",
+        "premium": "Feature flag: requires company premium subscription"
+      }
+    },
+    {
+      "taskId": "SPRINT-9-006",
+      "title": "Build candidate search UI for recruiters",
+      "description": "Create talent search interface with filters and candidate previews",
+      "assignedTo": "frontend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-9-005"],
+      "acceptanceCriteria": [
+        "Talent search page at /companies/dashboard/candidates (premium feature)",
+        "Search bar with autocomplete",
+        "Advanced filters sidebar (skills, experience, location, etc.)",
+        "Boolean search helper (AND/OR/NOT buttons)",
+        "Candidate cards show: name, photo, headline, top skills, reputation, match %",
+        "Click card opens profile preview panel",
+        "Profile preview: condensed profile view respecting privacy",
+        "Contact button (opens message composer)",
+        "Save candidate to list",
+        "Export selected candidates (CSV)",
+        "Saved searches dropdown",
+        "Empty state for no results",
+        "Premium gate (show upgrade prompt if not subscribed)",
+        "Responsive design"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/companies/dashboard/candidates",
+        "components": "CandidateSearch, SearchFilters, CandidateCard, ProfilePreview",
+        "premium": "Check company.subscription_tier >= 'premium', show paywall otherwise"
+      }
+    },
+    {
+      "taskId": "SPRINT-9-007",
+      "title": "Implement bulk messaging for recruiters",
+      "description": "Allow companies to message multiple candidates efficiently",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-5-007"],
+      "acceptanceCriteria": [
+        "POST /api/companies/messages/bulk sends messages to multiple candidates",
+        "Template system: predefined message templates",
+        "Personalization: use candidate name, skills, etc. in templates",
+        "Rate limiting: max 50 messages per day (prevent spam)",
+        "Track message sends and responses",
+        "Candidates can block companies from messaging",
+        "GET /api/companies/messages/templates returns saved templates",
+        "POST /api/companies/messages/templates saves template",
+        "Message tracking: sent, delivered, read, replied",
+        "Unsubscribe option in messages"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "message_templates (company_id, name, subject, body), bulk_messages (company_id, sent_at, recipient_count)",
+        "personalization": "Replace {{candidate_name}}, {{skills}}, etc. in template",
+        "rate_limit": "Redis: bulk_message_count:{companyId}:{date} TTL 24h, limit 50",
+        "block": "candidate_blocks table (candidate_id, company_id)"
+      }
+    },
+    {
+      "taskId": "SPRINT-9-008",
+      "title": "Build bulk messaging UI",
+      "description": "Create interface for sending templated messages to multiple candidates",
+      "assignedTo": "frontend",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-9-007"],
+      "acceptanceCriteria": [
+        "Bulk message composer at /companies/dashboard/messages",
+        "Select candidates from search results or lists",
+        "Template selector dropdown",
+        "Template editor with personalization tags",
+        "Preview with sample candidate data",
+        "Recipient list (with remove option)",
+        "Send confirmation dialog (shows count)",
+        "Success message after send",
+        "Message history (sent bulk messages)",
+        "Template management (create, edit, delete templates)",
+        "Rate limit warning (X/50 remaining today)",
+        "Responsive design"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/companies/dashboard/messages",
+        "components": "BulkMessageComposer, TemplateSelector, RecipientList, TemplateManager",
+        "preview": "Replace personalization tags with sample data for preview"
+      }
+    },
+    {
+      "taskId": "SPRINT-9-009",
+      "title": "Test ATS and analytics features",
+      "description": "Test ATS dashboard, analytics, candidate search, and bulk messaging",
+      "assignedTo": "qa",
+      "estimatedHours": 14,
+      "dependencies": [
+        "SPRINT-9-002",
+        "SPRINT-9-004",
+        "SPRINT-9-006",
+        "SPRINT-9-008"
+      ],
+      "acceptanceCriteria": [
+        "ATS dashboard displays applications correctly",
+        "Kanban drag-drop updates status",
+        "Filters and search work accurately",
+        "Application detail panel shows all data",
+        "Notes and ratings save correctly",
+        "Analytics dashboard displays all metrics",
+        "Charts render accurately with real data",
+        "Date range filtering works",
+        "Candidate search returns relevant results",
+        "Search filters apply correctly",
+        "Profile preview respects privacy settings",
+        "Bulk messaging sends to selected candidates",
+        "Templates save and load correctly",
+        "Rate limiting enforced (50/day)",
+        "All features responsive on mobile",
+        "Performance: ATS dashboard < 2s, analytics < 3s",
+        "No console errors"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tools": "Playwright E2E, Jest unit tests",
+        "scenarios": [
+          "Manage applications through ATS pipeline",
+          "View analytics for multiple jobs",
+          "Search candidates with various filters",
+          "Send bulk messages with template",
+          "Test rate limiting (send 50+ messages)"
+        ]
+      }
+    }
+  ],
+  "deliverables": [
+    "Applicant Tracking System (ATS) with Kanban",
+    "Company analytics dashboard",
+    "Candidate search for recruiters",
+    "Bulk messaging system",
+    "Comprehensive test suite"
+  ],
+  "notes": "Sprint 9 completes the Jobs Module with powerful tools for companies. ATS is critical for retention - make it intuitive and fast. Analytics should provide actionable insights. Ensure privacy controls are strictly enforced in candidate search.",
+  "risks": [
+    "ATS performance may degrade with many applications - optimize queries",
+    "Bulk messaging could be abused - strict rate limits essential",
+    "Candidate search privacy enforcement must be bulletproof"
+  ]
+}

@@ -1,0 +1,267 @@
+import { Router } from 'express';
+import UserController from './users.controller';
+import SessionsController from './sessions.controller';
+import EducationController from './education.controller';
+import SkillsController from './skills.controller';
+import WorkExperienceController from './workExperience.controller';
+import { authenticate, optionalAuth } from '@/middleware/auth.middleware';
+import { profileUpdateLimiter, apiLimiter } from '@/middleware/rateLimiter.middleware';
+import { asyncHandler } from '@/utils/asyncHandler';
+
+/**
+ * User routes
+ * All routes are prefixed with /api/v1/users
+ */
+const router = Router();
+const userController = new UserController();
+const sessionsController = new SessionsController();
+const educationController = new EducationController();
+const skillsController = new SkillsController();
+const workExperienceController = new WorkExperienceController();
+
+/**
+ * @route   GET /api/v1/users/me
+ * @desc    Get current authenticated user's profile
+ * @access  Private (requires authentication)
+ */
+router.get(
+  '/me',
+  authenticate,
+  apiLimiter,
+  asyncHandler(userController.getCurrentUser)
+);
+
+/**
+ * @route   PATCH /api/v1/users/me
+ * @desc    Update current user's profile
+ * @access  Private (requires authentication)
+ * @rate    10 requests per hour
+ */
+router.patch(
+  '/me',
+  authenticate,
+  profileUpdateLimiter,
+  asyncHandler(userController.updateCurrentUser)
+);
+
+/**
+ * SESSION MANAGEMENT ROUTES
+ */
+
+/**
+ * @route   GET /api/v1/users/me/sessions
+ * @desc    Get all active sessions for the current user
+ * @access  Private (requires authentication)
+ */
+router.get(
+  '/me/sessions',
+  authenticate,
+  apiLimiter,
+  asyncHandler(sessionsController.getUserSessions)
+);
+
+/**
+ * @route   DELETE /api/v1/users/me/sessions/:id
+ * @desc    Revoke a specific session
+ * @access  Private (requires authentication)
+ */
+router.delete(
+  '/me/sessions/:id',
+  authenticate,
+  apiLimiter,
+  asyncHandler(sessionsController.revokeSession)
+);
+
+/**
+ * @route   POST /api/v1/users/me/sessions/revoke-all
+ * @desc    Revoke all sessions except the current one
+ * @access  Private (requires authentication)
+ */
+router.post(
+  '/me/sessions/revoke-all',
+  authenticate,
+  apiLimiter,
+  asyncHandler(sessionsController.revokeAllSessions)
+);
+
+/**
+ * EDUCATION MANAGEMENT ROUTES
+ */
+
+/**
+ * @route   GET /api/v1/users/me/education
+ * @desc    Get all education entries for the current user
+ * @access  Private (requires authentication)
+ */
+router.get(
+  '/me/education',
+  authenticate,
+  apiLimiter,
+  asyncHandler(educationController.getEducationList)
+);
+
+/**
+ * @route   POST /api/v1/users/me/education
+ * @desc    Create a new education entry
+ * @access  Private (requires authentication)
+ */
+router.post(
+  '/me/education',
+  authenticate,
+  profileUpdateLimiter,
+  asyncHandler(educationController.createEducation)
+);
+
+/**
+ * @route   PUT /api/v1/users/me/education/:id
+ * @desc    Update an education entry
+ * @access  Private (requires authentication)
+ */
+router.put(
+  '/me/education/:id',
+  authenticate,
+  profileUpdateLimiter,
+  asyncHandler(educationController.updateEducation)
+);
+
+/**
+ * @route   DELETE /api/v1/users/me/education/:id
+ * @desc    Delete an education entry
+ * @access  Private (requires authentication)
+ */
+router.delete(
+  '/me/education/:id',
+  authenticate,
+  apiLimiter,
+  asyncHandler(educationController.deleteEducation)
+);
+
+/**
+ * SKILLS MANAGEMENT ROUTES
+ */
+
+/**
+ * @route   GET /api/v1/users/me/skills/autocomplete
+ * @desc    Get popular skills for autocomplete (must be before /:id route)
+ * @access  Private (requires authentication)
+ */
+router.get(
+  '/me/skills/autocomplete',
+  authenticate,
+  apiLimiter,
+  asyncHandler(skillsController.autocompleteSkills)
+);
+
+/**
+ * @route   GET /api/v1/users/me/skills
+ * @desc    Get all skills for the current user
+ * @access  Private (requires authentication)
+ */
+router.get(
+  '/me/skills',
+  authenticate,
+  apiLimiter,
+  asyncHandler(skillsController.getUserSkills)
+);
+
+/**
+ * @route   POST /api/v1/users/me/skills
+ * @desc    Create a new skill for the current user
+ * @access  Private (requires authentication)
+ */
+router.post(
+  '/me/skills',
+  authenticate,
+  profileUpdateLimiter,
+  asyncHandler(skillsController.createSkill)
+);
+
+/**
+ * @route   PATCH /api/v1/users/me/skills/:id
+ * @desc    Update skill proficiency
+ * @access  Private (requires authentication)
+ */
+router.patch(
+  '/me/skills/:id',
+  authenticate,
+  profileUpdateLimiter,
+  asyncHandler(skillsController.updateSkill)
+);
+
+/**
+ * @route   DELETE /api/v1/users/me/skills/:id
+ * @desc    Delete a skill
+ * @access  Private (requires authentication)
+ */
+router.delete(
+  '/me/skills/:id',
+  authenticate,
+  apiLimiter,
+  asyncHandler(skillsController.deleteSkill)
+);
+
+/**
+ * WORK EXPERIENCE MANAGEMENT ROUTES
+ */
+
+/**
+ * @route   GET /api/v1/users/me/work-experience
+ * @desc    Get all work experience entries for the current user
+ * @access  Private (requires authentication)
+ */
+router.get(
+  '/me/work-experience',
+  authenticate,
+  apiLimiter,
+  asyncHandler(workExperienceController.getWorkExperiences)
+);
+
+/**
+ * @route   POST /api/v1/users/me/work-experience
+ * @desc    Create a new work experience entry
+ * @access  Private (requires authentication)
+ */
+router.post(
+  '/me/work-experience',
+  authenticate,
+  profileUpdateLimiter,
+  asyncHandler(workExperienceController.createWorkExperience)
+);
+
+/**
+ * @route   PUT /api/v1/users/me/work-experience/:id
+ * @desc    Update a work experience entry
+ * @access  Private (requires authentication)
+ */
+router.put(
+  '/me/work-experience/:id',
+  authenticate,
+  profileUpdateLimiter,
+  asyncHandler(workExperienceController.updateWorkExperience)
+);
+
+/**
+ * @route   DELETE /api/v1/users/me/work-experience/:id
+ * @desc    Delete a work experience entry
+ * @access  Private (requires authentication)
+ */
+router.delete(
+  '/me/work-experience/:id',
+  authenticate,
+  apiLimiter,
+  asyncHandler(workExperienceController.deleteWorkExperience)
+);
+
+/**
+ * @route   GET /api/v1/users/:username
+ * @desc    Get public user profile by username
+ * @access  Public (optional authentication for privacy settings)
+ */
+router.get(
+  '/:username',
+  optionalAuth,
+  apiLimiter,
+  asyncHandler(userController.getUserByUsername)
+);
+
+export default router;

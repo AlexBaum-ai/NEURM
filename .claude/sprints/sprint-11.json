@@ -1,0 +1,270 @@
+{
+  "sprintNumber": 11,
+  "sprintGoal": "Build LLM Guide with model reference, use cases library, glossary, and model comparison",
+  "duration": "2 weeks",
+  "status": "pending",
+  "priority": "medium",
+  "startDate": null,
+  "endDate": null,
+  "tasks": [
+    {
+      "taskId": "SPRINT-11-001",
+      "title": "Expand model reference backend",
+      "description": "Enhance model tracker with version history, benchmarks, and detailed specs (builds on SPRINT-3-007)",
+      "assignedTo": "backend",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-3-007"],
+      "acceptanceCriteria": [
+        "Model versions table tracks all releases (GPT-4, GPT-4-turbo, GPT-4o, etc.)",
+        "GET /api/models/:slug/versions returns version history",
+        "Benchmarks table: model_id, benchmark_name, score, date",
+        "Common benchmarks: MMLU, HumanEval, GSM8K, HellaSwag, etc.",
+        "GET /api/models/:slug/benchmarks returns all benchmark scores",
+        "API quickstart code snippets per model (multiple languages)",
+        "Model comparison: GET /api/models/compare?ids=1,2,3 returns side-by-side data",
+        "Browse by provider: GET /api/models?provider=openai",
+        "Browse by category: GET /api/models?category=best_overall",
+        "Categories: Best Overall, Cost-Effective, Fastest, Largest Context, Multimodal",
+        "Update model data via admin panel or API",
+        "Track model popularity (views, follows)"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "tables": "model_versions (model_id, version, released_at, changelog), model_benchmarks (model_id, benchmark_name, score, source_url, date)",
+        "endpoints": ["GET /api/models/:slug/versions", "GET /api/models/:slug/benchmarks", "GET /api/models/compare"],
+        "snippets": "Store code snippets in JSON: {python: '...', javascript: '...', curl: '...'}"
+      }
+    },
+    {
+      "taskId": "SPRINT-11-002",
+      "title": "Enhance model reference UI",
+      "description": "Add version selector, benchmark charts, and enhanced model pages",
+      "assignedTo": "frontend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-11-001"],
+      "acceptanceCriteria": [
+        "Version selector dropdown on model pages",
+        "Version history timeline showing all releases",
+        "Benchmark scores displayed as bar chart",
+        "Benchmark comparison: overlay multiple models on same chart",
+        "API quickstart with language tabs (Python, JS, cURL)",
+        "Copy code button with success toast",
+        "Related models section (similar models)",
+        "Model status badge (active, deprecated, beta)",
+        "Enhanced specifications table",
+        "Official documentation links",
+        "Community resources (tutorials, use cases)",
+        "Responsive design"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "components": "ModelVersions, BenchmarkChart, CodeSnippet, ModelSpecs",
+        "charts": "Recharts for benchmark visualizations",
+        "code": "react-syntax-highlighter with copy-to-clipboard"
+      }
+    },
+    {
+      "taskId": "SPRINT-11-003",
+      "title": "Implement model comparison tool",
+      "description": "Create side-by-side model comparison feature",
+      "assignedTo": "frontend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-11-001"],
+      "acceptanceCriteria": [
+        "Model comparison page at /models/compare",
+        "Select 2-5 models to compare",
+        "Side-by-side comparison table",
+        "Compare: specs, pricing, benchmarks, features, best for/not ideal for",
+        "Highlight differences (green for better, red for worse)",
+        "Sticky header (model names always visible)",
+        "Export comparison (PDF, PNG, shareable link)",
+        "Save comparison for later",
+        "Popular comparisons suggested (e.g., 'GPT-4 vs Claude 3')",
+        "Mobile: horizontal scroll or stacked cards",
+        "Share comparison button (generates unique URL)"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/models/compare?ids=1,2,3",
+        "components": "ModelComparison, ComparisonTable, ComparisonSelector",
+        "export": "Use html2canvas for PNG export, jsPDF for PDF",
+        "share": "Generate unique ID, store comparison config, create shareable link"
+      }
+    },
+    {
+      "taskId": "SPRINT-11-004",
+      "title": "Implement use cases library backend",
+      "description": "Create system for submitting, reviewing, and publishing real-world LLM use cases",
+      "assignedTo": "backend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-0-002"],
+      "acceptanceCriteria": [
+        "use_cases table with comprehensive fields",
+        "Fields: title, summary, problem, solution, architecture, implementation, results, metrics, challenges, learnings, tips, tech_stack, company_id, author_id, status",
+        "POST /api/use-cases/submit allows community submissions",
+        "GET /api/use-cases returns published use cases",
+        "GET /api/use-cases/:slug returns detailed use case",
+        "Admin review workflow: pending → approved → published",
+        "Filter by: category (Customer Support, Code Gen, Analysis, etc.), industry (SaaS, Healthcare, etc.), model, company_size, implementation_type (RAG, Fine-tuning, Agent)",
+        "has_code, has_roi_data filters",
+        "Sort: recent, popular, most_discussed",
+        "Featured use cases (admin selected)",
+        "Comments on use cases (forum-style)",
+        "Related models, jobs auto-linked",
+        "View count tracking"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "use_cases (id, slug, title, summary, content_json, tech_stack, category, industry, status, featured, published_at)",
+        "status": "ENUM: pending, approved, published, rejected",
+        "content": "JSON structure: {problem, solution, architecture, implementation, results, challenges, learnings, tips, resources}",
+        "endpoints": ["POST /api/use-cases/submit", "GET /api/use-cases", "GET /api/use-cases/:slug", "PUT /api/use-cases/:id/review (admin)"]
+      }
+    },
+    {
+      "taskId": "SPRINT-11-005",
+      "title": "Build use cases library UI",
+      "description": "Create use case browsing, submission, and detail pages",
+      "assignedTo": "frontend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-11-004"],
+      "acceptanceCriteria": [
+        "Use cases library at /guide/use-cases",
+        "Grid view with use case cards",
+        "Cards show: title, summary, tech stack badges, company, results metrics",
+        "Filters sidebar: category, industry, model, implementation type, has_code, has_ROI",
+        "Sort dropdown: recent, popular, most_discussed",
+        "Featured use cases section at top",
+        "Use case detail page at /guide/use-cases/:slug",
+        "Detail structured: Quick summary, TOC, The Problem, Solution, Architecture, Implementation, Results, Challenges, Learnings, Tips, Resources",
+        "Tech stack badges (clickable → filter)",
+        "Related models links",
+        "Related jobs links",
+        "Comments section below",
+        "Submit use case button → submission form",
+        "Submission form: all fields with rich text editor",
+        "Preview before submit",
+        "Admin review dashboard at /admin/use-cases",
+        "Responsive design"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "routes": "/guide/use-cases, /guide/use-cases/:slug, /guide/use-cases/submit, /admin/use-cases",
+        "components": "UseCasesLibrary, UseCaseCard, UseCaseDetail, UseCaseSubmission, AdminUseCaseReview",
+        "toc": "Auto-generate table of contents from content headings"
+      }
+    },
+    {
+      "taskId": "SPRINT-11-006",
+      "title": "Implement glossary backend",
+      "description": "Create LLM terminology glossary with search and categorization",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-0-002"],
+      "acceptanceCriteria": [
+        "glossary_terms table: term, definition, examples, related_terms, category",
+        "GET /api/glossary returns all terms (A-Z)",
+        "GET /api/glossary/:slug returns term details",
+        "GET /api/glossary/search?q=... searches terms and definitions",
+        "Categories: Models, Techniques, Metrics, Tools, Concepts",
+        "Related terms linking (e.g., 'RAG' links to 'Vector Database', 'Embeddings')",
+        "Examples field with code snippets or use cases",
+        "Admin can add/edit/delete terms",
+        "Popular terms tracking (views)",
+        "Alphabetical navigation (A-Z)"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "glossary_terms (id, slug, term, definition, examples, category, related_term_ids, view_count)",
+        "search": "Full-text search on term and definition",
+        "endpoints": ["GET /api/glossary", "GET /api/glossary/:slug", "POST /api/glossary (admin)", "PUT /api/glossary/:id (admin)"]
+      }
+    },
+    {
+      "taskId": "SPRINT-11-007",
+      "title": "Build glossary UI",
+      "description": "Create glossary browsing interface with A-Z navigation",
+      "assignedTo": "frontend",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-11-006"],
+      "acceptanceCriteria": [
+        "Glossary page at /guide/glossary",
+        "A-Z navigation bar (sticky)",
+        "Terms listed alphabetically",
+        "Each term shows: term, brief definition, category badge",
+        "Click term opens detail panel or navigates to /guide/glossary/:slug",
+        "Detail page: full definition, examples (with code blocks), related terms (clickable)",
+        "Search box with autocomplete",
+        "Filter by category",
+        "Popular terms section",
+        "Responsive design",
+        "Copy term link button"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/guide/glossary, /guide/glossary/:slug",
+        "components": "Glossary, AlphabetNav, GlossaryTerm, TermDetail",
+        "scroll": "Smooth scroll to letter section on A-Z click"
+      }
+    },
+    {
+      "taskId": "SPRINT-11-008",
+      "title": "Test LLM Guide features",
+      "description": "Test model reference, comparison, use cases, and glossary",
+      "assignedTo": "qa",
+      "estimatedHours": 12,
+      "dependencies": [
+        "SPRINT-11-002",
+        "SPRINT-11-003",
+        "SPRINT-11-005",
+        "SPRINT-11-007"
+      ],
+      "acceptanceCriteria": [
+        "Model pages display versions and benchmarks correctly",
+        "Code snippets copy to clipboard",
+        "Model comparison table shows accurate data",
+        "Comparison export (PDF, PNG) works",
+        "Use cases library displays and filters correctly",
+        "Use case submission form validates and submits",
+        "Admin review workflow functions",
+        "Glossary displays terms alphabetically",
+        "Glossary search finds relevant terms",
+        "Related terms link correctly",
+        "All features responsive on mobile",
+        "Performance: model pages < 2s, comparison < 1s",
+        "No console errors"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tools": "Playwright E2E, Jest unit tests",
+        "scenarios": [
+          "Browse models, view benchmarks, copy API code",
+          "Compare 3 models side-by-side",
+          "Submit use case and approve as admin",
+          "Search glossary and view term details"
+        ]
+      }
+    }
+  ],
+  "deliverables": [
+    "Enhanced model reference with versions and benchmarks",
+    "Model comparison tool",
+    "Use cases library with submission workflow",
+    "LLM terminology glossary",
+    "Comprehensive test suite"
+  ],
+  "notes": "Sprint 11 builds the LLM Guide - a valuable resource for the community. Focus on making information easily accessible and actionable. Use cases should showcase real implementations to inspire others. The glossary helps newcomers learn terminology.",
+  "risks": [
+    "Model data maintenance may be ongoing - need process for updates",
+    "Use case submissions may require significant moderation",
+    "Benchmark data sources need verification for accuracy"
+  ]
+}

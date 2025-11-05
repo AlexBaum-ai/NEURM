@@ -1,0 +1,425 @@
+{
+  "sprintNumber": 4,
+  "sprintGoal": "Build forum module foundation with categories, topics, replies, and basic voting system",
+  "duration": "2 weeks",
+  "status": "pending",
+  "priority": "high",
+  "startDate": null,
+  "endDate": null,
+  "tasks": [
+    {
+      "taskId": "SPRINT-4-001",
+      "title": "Implement forum categories backend API",
+      "description": "Create hierarchical category system with subcategories (max 2 levels) and moderator assignments",
+      "assignedTo": "backend",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-0-002"],
+      "acceptanceCriteria": [
+        "forum_categories table with parent_id for hierarchy",
+        "Max 2 levels: main categories and subcategories",
+        "GET /api/forum/categories returns category tree",
+        "POST /api/forum/categories creates new category (admin only)",
+        "PUT /api/forum/categories/:id updates category",
+        "DELETE /api/forum/categories/:id soft deletes category",
+        "Each category has: name, slug, description, icon, order, guidelines",
+        "Moderator assignment per category (many-to-many)",
+        "Category statistics: topic_count, post_count, last_activity_at",
+        "Visibility settings (public, private, moderator-only)",
+        "Reordering categories (drag-drop order)",
+        "Seed with 12 predefined categories from spec"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tables": "forum_categories, category_moderators",
+        "endpoints": [
+          "GET /api/forum/categories",
+          "GET /api/forum/categories/:slug",
+          "POST /api/forum/categories (admin)",
+          "PUT /api/forum/categories/:id (admin)",
+          "DELETE /api/forum/categories/:id (admin)",
+          "PUT /api/forum/categories/reorder (admin)"
+        ],
+        "hierarchy": "Use parent_id with CHECK constraint (depth <= 2)",
+        "seed": "General Discussion, Getting Started, Prompt Engineering, Development, Model-Specific, etc."
+      }
+    },
+    {
+      "taskId": "SPRINT-4-002",
+      "title": "Build forum categories UI",
+      "description": "Create category listing page with hierarchical display and navigation",
+      "assignedTo": "frontend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-4-001"],
+      "acceptanceCriteria": [
+        "Forum homepage at /forum shows all categories",
+        "Hierarchical display (main categories with subcategories indented)",
+        "Each category card shows: icon, name, description, topic count, post count",
+        "Last activity timestamp and user",
+        "Click category navigates to /forum/c/:slug",
+        "Responsive grid layout (1 col mobile, 2-3 cols desktop)",
+        "Loading skeletons while fetching",
+        "Empty state if no categories",
+        "Category guidelines visible on hover/tooltip",
+        "Follow category button (with count)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "routes": "/forum, /forum/c/:slug",
+        "components": "ForumHome, CategoryCard, CategoryList",
+        "state": "Zustand store for category tree",
+        "layout": "Grid with category hierarchy visualization"
+      }
+    },
+    {
+      "taskId": "SPRINT-4-003",
+      "title": "Implement forum topics backend API",
+      "description": "Create topic CRUD with multiple types (Question, Discussion, Showcase, Tutorial, Announcement, Paper Discussion)",
+      "assignedTo": "backend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-4-001"],
+      "acceptanceCriteria": [
+        "forum_topics table with all required fields",
+        "Topic types: question, discussion, showcase, tutorial, announcement, paper",
+        "POST /api/forum/topics creates topic",
+        "GET /api/forum/topics returns paginated topics with filters",
+        "GET /api/forum/topics/:id returns single topic with replies",
+        "PUT /api/forum/topics/:id updates topic (author or mod)",
+        "DELETE /api/forum/topics/:id soft deletes (author or mod)",
+        "Rich text content with markdown support",
+        "Image attachments (max 5 per topic, 5MB each)",
+        "Tags (max 5 per topic)",
+        "Poll creation (optional)",
+        "Draft save functionality",
+        "Spam detection using basic keyword filter",
+        "Rate limiting: 10 topics per hour per user",
+        "Link preview generation for external URLs"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tables": "forum_topics, topic_attachments, topic_tags",
+        "endpoints": [
+          "GET /api/forum/topics",
+          "POST /api/forum/topics",
+          "GET /api/forum/topics/:id",
+          "PUT /api/forum/topics/:id",
+          "DELETE /api/forum/topics/:id",
+          "POST /api/forum/topics/:id/pin (mod)",
+          "POST /api/forum/topics/:id/lock (mod)"
+        ],
+        "content": "Store as markdown, sanitize HTML on render",
+        "spam": "Check against spam_keywords table, flag for review if matches"
+      }
+    },
+    {
+      "taskId": "SPRINT-4-004",
+      "title": "Build topic creation form",
+      "description": "Create rich topic composer with markdown editor, image upload, tags, and polls",
+      "assignedTo": "frontend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-4-003"],
+      "acceptanceCriteria": [
+        "Topic creation page at /forum/new",
+        "Topic type selector (radio buttons for 6 types)",
+        "Category dropdown (hierarchical)",
+        "Title input (required, max 200 chars)",
+        "Rich text editor (Tiptap) with markdown toolbar",
+        "Code block support with syntax highlighting",
+        "Image upload (drag-drop or button, max 5)",
+        "Tag input with autocomplete (max 5)",
+        "Poll builder (optional, single/multiple choice)",
+        "Save as draft button",
+        "Preview mode toggle",
+        "Submit validation with error messages",
+        "Auto-save draft to localStorage every 30s",
+        "Character count for title",
+        "Responsive design (mobile-friendly)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/forum/new",
+        "components": "TopicComposer, TopicTypeSelector, MarkdownEditor, PollBuilder",
+        "editor": "Tiptap with extensions: Bold, Italic, Code, Link, Image, CodeBlock",
+        "validation": "Zod schema on client and server",
+        "draft": "localStorage key: 'topic_draft_{userId}'"
+      }
+    },
+    {
+      "taskId": "SPRINT-4-005",
+      "title": "Build topic listing and detail pages",
+      "description": "Create topic list view with filters and topic detail page with replies",
+      "assignedTo": "frontend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-4-003"],
+      "acceptanceCriteria": [
+        "Topic list at /forum/c/:category shows topics in category",
+        "Filters: type, status (open/closed/solved), date, has_code",
+        "Sort: newest, popular, most_active, unanswered",
+        "Each topic card shows: title, excerpt, author, date, reply count, view count, vote score",
+        "Tags displayed and clickable",
+        "Topic type icon/badge",
+        "Pinned topics at top",
+        "Pagination (20 per page)",
+        "Topic detail page at /forum/t/:slug/:id",
+        "Breadcrumbs navigation",
+        "Responsive design",
+        "Loading states and error handling"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "routes": "/forum/c/:slug, /forum/t/:slug/:id",
+        "components": "TopicList, TopicCard, TopicDetail, TopicHeader",
+        "filters": "URL query params for filter persistence",
+        "seo": "Dynamic meta tags for topic pages"
+      }
+    },
+    {
+      "taskId": "SPRINT-4-006",
+      "title": "Implement threaded replies backend",
+      "description": "Create reply system with max 3 levels of threading and nested structure",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-4-003"],
+      "acceptanceCriteria": [
+        "forum_replies table with parent_reply_id for threading",
+        "Max 3 levels deep (topic → reply → reply → reply)",
+        "POST /api/forum/topics/:topicId/replies creates reply",
+        "GET /api/forum/topics/:topicId/replies returns nested reply tree",
+        "PUT /api/forum/replies/:id updates reply (author, within 15 min)",
+        "DELETE /api/forum/replies/:id soft deletes (author or mod)",
+        "Quote functionality (reference to parent reply)",
+        "@mentions trigger notifications",
+        "Rich text content with markdown",
+        "Edit history tracking (visible to mods)",
+        "Mark as 'Accepted Answer' (topic author only, for Questions)",
+        "Reply count updates on topic",
+        "Sort replies: oldest, newest, most_voted"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "forum_replies (id, topic_id, parent_reply_id, user_id, content, created_at, updated_at, edited_at, depth)",
+        "depth": "CHECK depth <= 3, calculated from parent chain",
+        "tree": "Return as nested JSON structure using recursive CTE",
+        "mentions": "Parse @username and create notifications",
+        "accepted": "topic.accepted_answer_id FK to replies.id"
+      }
+    },
+    {
+      "taskId": "SPRINT-4-007",
+      "title": "Build threaded reply UI",
+      "description": "Create nested reply interface with quote, edit, and accepted answer features",
+      "assignedTo": "frontend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-4-006"],
+      "acceptanceCriteria": [
+        "Threaded reply display below topic content",
+        "Visual indentation for nested replies (max 3 levels)",
+        "Reply composer at bottom (markdown editor)",
+        "Reply button on each reply (opens nested composer)",
+        "Quote button copies parent content to composer",
+        "@mention autocomplete in composer",
+        "Edit reply button (shows for 15 min window)",
+        "Delete reply button (with confirmation)",
+        "Edited badge if reply was modified",
+        "Accept answer button (for topic author on Questions)",
+        "Accepted answer highlighted with green border/checkmark",
+        "Collapse/expand threads",
+        "Sort dropdown (oldest, newest, most_voted)",
+        "Responsive: flatten on mobile if >2 levels deep",
+        "Real-time updates for new replies (polling or websocket)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "components": "ReplyTree, ReplyCard, ReplyComposer, QuoteBlock",
+        "nesting": "Recursive component rendering for threads",
+        "realtime": "TanStack Query with refetchInterval: 30000 (30s polling)",
+        "mentions": "Use @tiptap/extension-mention for autocomplete"
+      }
+    },
+    {
+      "taskId": "SPRINT-4-008",
+      "title": "Implement voting system backend",
+      "description": "Create upvote/downvote system for topics and replies with score calculation",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-4-003", "SPRINT-4-006"],
+      "acceptanceCriteria": [
+        "forum_votes table tracks votes on topics and replies",
+        "POST /api/forum/topics/:id/vote upvotes/downvotes topic",
+        "POST /api/forum/replies/:id/vote upvotes/downvotes reply",
+        "Vote types: upvote (+1), downvote (-1), or remove (0)",
+        "One vote per user per item (upsert behavior)",
+        "Score calculation: upvotes - downvotes",
+        "Posts with score <= -5 auto-hidden (soft hide)",
+        "Daily vote limit: 50 per user",
+        "Minimum reputation 50 to downvote",
+        "Votes affect author reputation (+10 upvote, -5 downvote)",
+        "GET /api/forum/votes/me returns user's votes",
+        "Prevent self-voting"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "forum_votes (user_id, voteable_type, voteable_id, vote_type, created_at)",
+        "unique": "UNIQUE(user_id, voteable_type, voteable_id)",
+        "score": "Calculated field: (SELECT COUNT(*) WHERE vote_type = 1) - (SELECT COUNT(*) WHERE vote_type = -1)",
+        "trigger": "Update user reputation on vote insert/delete",
+        "rate_limit": "Redis: vote_count:{userId}:{date} with TTL 24h"
+      }
+    },
+    {
+      "taskId": "SPRINT-4-009",
+      "title": "Build voting UI components",
+      "description": "Create upvote/downvote buttons with score display and animations",
+      "assignedTo": "frontend",
+      "estimatedHours": 8,
+      "dependencies": ["SPRINT-4-008"],
+      "acceptanceCriteria": [
+        "Voting widget on topics and replies (left sidebar)",
+        "Upvote arrow button (gray inactive, green active)",
+        "Downvote arrow button (gray inactive, red active)",
+        "Score display between arrows",
+        "Click upvote toggles vote (vote/unvote)",
+        "Click downvote toggles downvote (if reputation >= 50)",
+        "Smooth animation on vote (score number change)",
+        "Disabled state for insufficient reputation",
+        "Tooltip explaining vote requirements",
+        "Optimistic updates (immediate UI change)",
+        "Error rollback if vote fails",
+        "Vote count formatting (1.2k, 5.5k, etc.)",
+        "Keyboard shortcuts (U for upvote, D for downvote)",
+        "Accessible (ARIA labels)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "components": "VotingWidget, VoteButton",
+        "animation": "Framer Motion for score change animation",
+        "optimistic": "TanStack Query optimistic updates",
+        "state": "Track user votes in Zustand store"
+      }
+    },
+    {
+      "taskId": "SPRINT-4-010",
+      "title": "Implement basic reputation system",
+      "description": "Calculate and display user reputation based on forum activity",
+      "assignedTo": "backend",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-4-008"],
+      "acceptanceCriteria": [
+        "user_reputation table tracks total reputation",
+        "Reputation earned from: topic (+5), reply (+2), upvote received (+10), downvote received (-5), accepted answer (+25)",
+        "GET /api/users/:id/reputation returns reputation and breakdown",
+        "Reputation levels: Newcomer (0-99), Contributor (100-499), Expert (500-999), Master (1000-2499), Legend (2500+)",
+        "Level calculation updates on reputation change",
+        "Reputation history log (for transparency)",
+        "Display reputation on user profile and forum posts",
+        "Reputation affects permissions (downvote requires 50+)",
+        "Prevent negative reputation (floor at 0)",
+        "Recalculate reputation on vote changes"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "user_reputation (user_id, total_reputation, level, updated_at)",
+        "log": "reputation_history (user_id, change, reason, source_id, created_at)",
+        "triggers": "Database triggers or event listeners to update reputation",
+        "calculation": "Sum all reputation_history entries for user",
+        "levels": "Enum: newcomer, contributor, expert, master, legend"
+      }
+    },
+    {
+      "taskId": "SPRINT-4-011",
+      "title": "Display reputation on user profiles and posts",
+      "description": "Show reputation points, level, and badges on user interface elements",
+      "assignedTo": "frontend",
+      "estimatedHours": 6,
+      "dependencies": ["SPRINT-4-010"],
+      "acceptanceCriteria": [
+        "Reputation score displayed next to username on posts",
+        "Reputation level badge with color coding",
+        "Reputation breakdown on user profile (/u/:username)",
+        "Show reputation history timeline",
+        "Visual indicators for reputation levels (icons, colors)",
+        "Hover tooltip showing level requirements",
+        "Responsive display (condense on mobile)",
+        "Progress bar to next level",
+        "Reputation change notifications (e.g., '+10 reputation')",
+        "Accessible labels for screen readers"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "components": "ReputationBadge, ReputationWidget, ReputationHistory",
+        "colors": "Newcomer: gray, Contributor: blue, Expert: purple, Master: gold, Legend: red",
+        "profile": "Add reputation section to user profile page"
+      }
+    },
+    {
+      "taskId": "SPRINT-4-012",
+      "title": "Test forum foundation features",
+      "description": "Comprehensive testing of categories, topics, replies, voting, and reputation",
+      "assignedTo": "qa",
+      "estimatedHours": 12,
+      "dependencies": [
+        "SPRINT-4-002",
+        "SPRINT-4-005",
+        "SPRINT-4-007",
+        "SPRINT-4-009",
+        "SPRINT-4-011"
+      ],
+      "acceptanceCriteria": [
+        "Categories display correctly with hierarchy",
+        "Topic creation works for all 6 types",
+        "Rich text editor formats content properly",
+        "Image uploads work (drag-drop and button)",
+        "Tags autocomplete functions",
+        "Threaded replies nest correctly (max 3 levels)",
+        "Quote function copies parent content",
+        "@mentions trigger notifications",
+        "Edit window (15 min) enforced correctly",
+        "Voting system: upvote/downvote/toggle works",
+        "Vote limits enforced (50/day, reputation 50 for downvote)",
+        "Reputation updates correctly on votes",
+        "Reputation levels display with correct badges",
+        "All features responsive on mobile",
+        "Performance: topic list loads < 2s",
+        "No console errors or warnings"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tools": "Playwright for E2E, Jest for unit tests",
+        "scenarios": [
+          "Create topic with all fields",
+          "Reply to topic 3 levels deep",
+          "Vote on 50 posts to hit limit",
+          "Edit reply after 15 min (should fail)",
+          "Test reputation calculation accuracy"
+        ],
+        "coverage": "Aim for >80% code coverage"
+      }
+    }
+  ],
+  "deliverables": [
+    "Forum category system with hierarchy",
+    "Topic creation with 6 types",
+    "Rich text editor with markdown",
+    "Threaded replies (max 3 levels)",
+    "Voting system (upvote/downvote)",
+    "Basic reputation system with levels",
+    "Comprehensive test suite"
+  ],
+  "notes": "Sprint 4 establishes the core forum functionality. Focus on making the threaded reply UI intuitive and performant. The reputation system is simplified for MVP - advanced gamification comes later. Ensure voting system prevents abuse with rate limits and reputation requirements.",
+  "risks": [
+    "Threaded replies may have performance issues with deep nesting",
+    "Reputation calculation may need optimization for high-activity users",
+    "Spam detection may generate false positives - needs monitoring"
+  ]
+}

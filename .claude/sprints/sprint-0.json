@@ -1,0 +1,742 @@
+{
+  "sprintNumber": 0,
+  "sprintGoal": "Foundation infrastructure and authentication system ready for feature development",
+  "duration": "2 weeks",
+  "status": "pending",
+  "tasks": [
+    {
+      "taskId": "SPRINT-0-001",
+      "title": "Initialize backend project structure",
+      "description": "Set up Node.js + TypeScript + Express project with proper folder structure, configuration files, and development tooling",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": [],
+      "acceptanceCriteria": [
+        "Node.js 20 LTS project initialized with TypeScript 5+",
+        "Express server structure with modular routing",
+        "ESLint and Prettier configured with consistent rules",
+        "Environment configuration using dotenv with validation",
+        "Folder structure follows feature-based organization",
+        "package.json includes all required dependencies",
+        "TypeScript compiles without errors",
+        "Development server starts successfully"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "structure": "src/modules/{auth,users,news,forum,jobs,platform}/",
+        "config": "Use zod for environment validation",
+        "scripts": "dev, build, start, lint, format, test",
+        "dependencies": "express, typescript, zod, dotenv, winston, helmet, cors"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-002",
+      "title": "Configure Prisma ORM and PostgreSQL connection",
+      "description": "Set up Prisma with PostgreSQL database, configure connection pooling, and prepare for schema migration",
+      "assignedTo": "backend",
+      "estimatedHours": 6,
+      "dependencies": [
+        "SPRINT-0-001"
+      ],
+      "acceptanceCriteria": [
+        "Prisma CLI installed and configured",
+        "PostgreSQL database created (local and cloud)",
+        "Database connection string configured in .env",
+        "Prisma schema file created with basic structure",
+        "Connection pooling configured (PgBouncer or Prisma)",
+        "Prisma Client generated successfully",
+        "Database connection verified",
+        "Migration workflow documented"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "database": "PostgreSQL 15+",
+        "schema": "prisma/schema.prisma",
+        "provider": "Railway, AWS RDS, or DigitalOcean",
+        "pooling": "connection_limit=10, pool_timeout=20s",
+        "extensions": "uuid-ossp, pg_trgm, pg_stat_statements"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-003",
+      "title": "Implement complete database schema with Prisma",
+      "description": "Create comprehensive Prisma schema covering all 50+ tables across Users, News, Forum, Jobs, LLM Guide, and Platform domains",
+      "assignedTo": "backend",
+      "estimatedHours": 16,
+      "dependencies": [
+        "SPRINT-0-002"
+      ],
+      "acceptanceCriteria": [
+        "Users domain: 10 tables (users, profiles, oauth, sessions, skills, etc.)",
+        "News domain: 8 tables (articles, categories, tags, bookmarks, etc.)",
+        "Forum domain: 15 tables (topics, replies, votes, reputation, badges, etc.)",
+        "Jobs domain: 10 tables (jobs, companies, applications, matches, etc.)",
+        "LLM Guide domain: 4 tables (models, use cases, glossary)",
+        "Platform domain: 7 tables (notifications, follows, messages, analytics, etc.)",
+        "All relationships (FK) defined correctly",
+        "Indexes defined for performance",
+        "Enums defined for status fields",
+        "Default values set appropriately",
+        "Constraints (unique, check) implemented",
+        "Initial migration created successfully"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "schema": "Based on 02-DATABASE_SCHEMA.md documentation",
+        "naming": "snake_case for database, camelCase for Prisma models",
+        "timestamps": "createdAt, updatedAt on all tables",
+        "uuids": "Use @default(uuid()) for all IDs",
+        "migration": "prisma migrate dev --name init"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-004",
+      "title": "Create database seed script with initial data",
+      "description": "Implement seed script to populate database with essential data for development: LLM models, categories, admin user, sample content",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": [
+        "SPRINT-0-003"
+      ],
+      "acceptanceCriteria": [
+        "Seed script in prisma/seed.ts",
+        "Admin user created (email: admin@neurmatic.com)",
+        "47+ LLM models seeded with complete data",
+        "News categories (hierarchical, 3 levels)",
+        "Forum categories (hierarchical, 2 levels)",
+        "Sample tags (news and forum)",
+        "Glossary terms (50+ LLM terminology)",
+        "Sample articles (5-10) with realistic content",
+        "Sample forum topics (10+) and replies",
+        "Badge definitions created",
+        "Seed script is idempotent (can run multiple times)",
+        "Command: npm run seed executes successfully"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "script": "prisma/seed.ts",
+        "models": "GPT-4 Turbo, Claude 3 Opus, Gemini Pro, Llama 3, Mistral, etc.",
+        "data": "Use realistic data, not Lorem Ipsum",
+        "idempotent": "Check existence before creating",
+        "admin": "Default password: Admin123! (hashed)"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-005",
+      "title": "Set up Redis for caching and sessions",
+      "description": "Configure Redis for session management, rate limiting, and caching with local and cloud setup",
+      "assignedTo": "backend",
+      "estimatedHours": 4,
+      "dependencies": [
+        "SPRINT-0-001"
+      ],
+      "acceptanceCriteria": [
+        "Redis 7+ installed locally (Docker)",
+        "Redis cloud instance configured (Railway/Upstash)",
+        "Redis client configured (ioredis)",
+        "Connection verified and tested",
+        "Session store configured for express-session",
+        "Rate limiting store configured",
+        "Cache wrapper functions created (get, set, del, expire)",
+        "Error handling for Redis failures (graceful degradation)",
+        "Redis connection documented in README"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "client": "ioredis library",
+        "config": "maxRetriesPerRequest: 3, retryStrategy",
+        "session": "connect-redis for express-session",
+        "rateLimiting": "express-rate-limit with Redis store",
+        "docker": "redis:7-alpine image"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-006",
+      "title": "Implement core middleware stack",
+      "description": "Create and configure essential Express middleware: error handling, validation, logging, CORS, security headers, rate limiting",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": [
+        "SPRINT-0-001",
+        "SPRINT-0-005"
+      ],
+      "acceptanceCriteria": [
+        "Global error handler middleware with consistent format",
+        "Validation middleware using Zod schemas",
+        "Request logging with Winston (console + file)",
+        "CORS configured for frontend origin",
+        "Security headers (helmet): CSP, HSTS, X-Frame-Options",
+        "Rate limiting per route group (auth: 5/15min, api: 100/min)",
+        "Request ID middleware for tracing",
+        "404 handler for undefined routes",
+        "Async error handling wrapper",
+        "Development vs production error responses"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "errorHandler": "src/middleware/errorHandler.ts",
+        "validation": "src/middleware/validate.ts with Zod",
+        "logging": "Winston with daily rotate file transport",
+        "security": "helmet, express-rate-limit, cors",
+        "structure": "src/middleware/"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-007",
+      "title": "Implement JWT authentication system",
+      "description": "Build complete JWT-based authentication with access tokens, refresh tokens, and session management",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": [
+        "SPRINT-0-003",
+        "SPRINT-0-005",
+        "SPRINT-0-006"
+      ],
+      "acceptanceCriteria": [
+        "POST /api/v1/auth/register endpoint (email + password)",
+        "POST /api/v1/auth/login endpoint (returns access + refresh tokens)",
+        "POST /api/v1/auth/refresh endpoint (refresh access token)",
+        "POST /api/v1/auth/logout endpoint (invalidate tokens)",
+        "Passwords hashed with bcrypt (cost factor 12)",
+        "Access tokens: 15min expiry, signed with RS256",
+        "Refresh tokens: 30 days expiry, stored in HTTPOnly cookie",
+        "Session records stored in database",
+        "JWT verification middleware",
+        "Rate limiting: 5 login attempts per 15min per IP",
+        "Proper error messages (401, 403)",
+        "Input validation with Zod schemas"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "library": "jsonwebtoken, bcrypt",
+        "algorithm": "RS256 (asymmetric keys)",
+        "tokens": "Access: JWT in header, Refresh: HTTPOnly cookie",
+        "service": "src/modules/auth/auth.service.ts",
+        "routes": "src/modules/auth/auth.routes.ts",
+        "schemas": "src/modules/auth/auth.validation.ts"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-008",
+      "title": "Implement email verification flow",
+      "description": "Build email verification system with token generation, email sending, and verification endpoint",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": [
+        "SPRINT-0-007"
+      ],
+      "acceptanceCriteria": [
+        "Email service configured (SendGrid or AWS SES)",
+        "Email templates for verification (HTML + text)",
+        "POST /api/v1/auth/verify-email endpoint",
+        "POST /api/v1/auth/resend-verification endpoint",
+        "Verification tokens: UUID, 24hr expiry",
+        "Tokens stored in database with expiration",
+        "Email sent asynchronously (Bull queue)",
+        "Verified users can access protected routes",
+        "Unverified users redirected to verification page",
+        "Rate limit: 3 resend requests per hour",
+        "Clear error messages for expired/invalid tokens"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "email": "SendGrid or AWS SES",
+        "templates": "src/templates/email/verify-email.html",
+        "queue": "Bull for async email sending",
+        "tokens": "Stored in sessions table with type='email_verification'",
+        "url": "https://neurmatic.com/verify?token={token}"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-009",
+      "title": "Implement password reset flow",
+      "description": "Build complete password reset system with email flow, token validation, and password update",
+      "assignedTo": "backend",
+      "estimatedHours": 6,
+      "dependencies": [
+        "SPRINT-0-007",
+        "SPRINT-0-008"
+      ],
+      "acceptanceCriteria": [
+        "POST /api/v1/auth/forgot-password endpoint",
+        "POST /api/v1/auth/reset-password endpoint",
+        "Email template for password reset",
+        "Reset tokens: UUID, 1hr expiry, single-use",
+        "Tokens invalidated after use",
+        "Rate limit: 3 requests per hour per email",
+        "New password validation (min 8 chars, complexity)",
+        "Success email sent after password change",
+        "All active sessions invalidated after password reset",
+        "Consistent response for existing/non-existing emails (security)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "security": "Don't reveal if email exists",
+        "tokens": "Single-use, expire after 1 hour",
+        "invalidation": "Delete all user sessions on password change",
+        "validation": "Min 8 chars, 1 uppercase, 1 number, 1 special"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-010",
+      "title": "Implement OAuth authentication (Google, LinkedIn, GitHub)",
+      "description": "Add OAuth 2.0 authentication flow for Google, LinkedIn, and GitHub providers using Passport.js",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": [
+        "SPRINT-0-007"
+      ],
+      "acceptanceCriteria": [
+        "Passport.js configured with OAuth strategies",
+        "Google OAuth strategy implemented",
+        "LinkedIn OAuth strategy implemented",
+        "GitHub OAuth strategy implemented",
+        "POST /api/v1/auth/oauth/{provider} endpoint",
+        "OAuth callback handler",
+        "User creation/linking with OAuth accounts",
+        "OAuth provider data stored in oauth_providers table",
+        "Access/refresh token handling per provider",
+        "Account linking for existing email users",
+        "Email verified automatically for OAuth users",
+        "Profile data synced from OAuth provider"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "library": "passport, passport-google-oauth20, passport-linkedin-oauth2, passport-github2",
+        "credentials": "Store client ID/secret in environment variables",
+        "callback": "/api/v1/auth/oauth/{provider}/callback",
+        "linking": "Link by email if user exists",
+        "sync": "Sync avatar, name from OAuth profile"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-011",
+      "title": "Implement 2FA with TOTP",
+      "description": "Add two-factor authentication support using Time-based One-Time Passwords (TOTP)",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": [
+        "SPRINT-0-007"
+      ],
+      "acceptanceCriteria": [
+        "POST /api/v1/auth/2fa/setup endpoint (returns QR code)",
+        "POST /api/v1/auth/2fa/verify endpoint (confirm setup)",
+        "POST /api/v1/auth/2fa/disable endpoint",
+        "TOTP secret generation (base32)",
+        "QR code generation for authenticator apps",
+        "Backup codes generated (8 codes)",
+        "Backup codes stored hashed in database",
+        "2FA check during login flow",
+        "2FA status visible in user profile",
+        "Rate limit: 5 verification attempts per 15min"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "library": "speakeasy for TOTP, qrcode for QR generation",
+        "secret": "32-character base32 secret",
+        "backup": "Generate 8 random 8-character codes",
+        "storage": "Store encrypted secret in users.two_factor_secret",
+        "apps": "Compatible with Google Authenticator, Authy, 1Password"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-012",
+      "title": "Set up Bull queue for background jobs",
+      "description": "Configure Bull (Redis-based queue) for handling background jobs: emails, notifications, calculations",
+      "assignedTo": "backend",
+      "estimatedHours": 6,
+      "dependencies": [
+        "SPRINT-0-005"
+      ],
+      "acceptanceCriteria": [
+        "Bull queue configured with Redis",
+        "Email queue created for async email sending",
+        "Worker process for queue processing",
+        "Job retry logic (3 attempts with backoff)",
+        "Failed job handling and logging",
+        "Queue monitoring dashboard (Bull Board)",
+        "Graceful shutdown handling",
+        "Job processors: sendEmail, calculateMatch, aggregateAnalytics",
+        "Development: single process, Production: separate workers"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "library": "bull, @bull-board/express",
+        "queues": "email, notifications, matching, analytics",
+        "retry": "attempts: 3, backoff: exponential",
+        "monitoring": "Bull Board at /admin/queues",
+        "workers": "src/workers/email.worker.ts"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-013",
+      "title": "Initialize frontend project with React and Vite",
+      "description": "Set up React 18+ with TypeScript, Vite build tool, folder structure, and essential configurations",
+      "assignedTo": "frontend",
+      "estimatedHours": 6,
+      "dependencies": [],
+      "acceptanceCriteria": [
+        "Vite project initialized with React 18+ and TypeScript",
+        "Folder structure: src/features/, src/components/, src/lib/",
+        "Path aliases configured (@/, @/components, @/features)",
+        "ESLint and Prettier configured",
+        "Environment variables configured (.env)",
+        "React Router v6 installed and configured",
+        "Dev server starts on localhost:5173",
+        "Hot module replacement (HMR) working",
+        "TypeScript strict mode enabled"
+      ],
+      "priority": "high",
+      "status": "completed",
+      "technicalNotes": {
+        "command": "npm create vite@latest neurmatic-frontend -- --template react-ts",
+        "structure": "Feature-based folders, shared components",
+        "router": "react-router-dom v6",
+        "aliases": "Configure in vite.config.ts and tsconfig.json",
+        "port": "5173 (Vite default)"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-014",
+      "title": "Configure Tailwind CSS and UI component library",
+      "description": "Set up Tailwind CSS for styling and install UI component library (Radix UI or MUI)",
+      "assignedTo": "frontend",
+      "estimatedHours": 6,
+      "dependencies": [
+        "SPRINT-0-013"
+      ],
+      "acceptanceCriteria": [
+        "Tailwind CSS installed and configured",
+        "PostCSS configured for Tailwind",
+        "Custom Tailwind theme with brand colors",
+        "Dark mode configuration (class-based)",
+        "UI library installed (Radix UI or MUI v5)",
+        "Base components: Button, Input, Card, Modal",
+        "Typography scale defined",
+        "Spacing and breakpoint system configured",
+        "CSS reset/normalize applied",
+        "Tailwind IntelliSense working in VS Code"
+      ],
+      "priority": "high",
+      "status": "completed",
+      "technicalNotes": {
+        "uiLibrary": "shadcn/ui (Radix UI) or MUI v5",
+        "config": "tailwind.config.js with custom theme",
+        "darkMode": "class strategy for dark mode",
+        "colors": "Define primary, secondary, accent colors",
+        "fonts": "Inter for sans-serif, JetBrains Mono for code"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-015",
+      "title": "Set up TanStack Query for data fetching",
+      "description": "Configure TanStack Query (React Query) for server state management, caching, and data fetching",
+      "assignedTo": "frontend",
+      "estimatedHours": 4,
+      "dependencies": [
+        "SPRINT-0-013"
+      ],
+      "acceptanceCriteria": [
+        "TanStack Query v5 installed",
+        "QueryClientProvider configured in App root",
+        "Default query options set (staleTime, cacheTime, retry)",
+        "API client created (axios or fetch wrapper)",
+        "Query client configured with sensible defaults",
+        "Error handling configured",
+        "DevTools enabled in development",
+        "Example query hook created and tested"
+      ],
+      "priority": "high",
+      "status": "completed",
+      "technicalNotes": {
+        "library": "@tanstack/react-query v5",
+        "client": "axios for HTTP client",
+        "config": "staleTime: 5min, cacheTime: 10min, retry: 3",
+        "devtools": "@tanstack/react-query-devtools",
+        "structure": "src/lib/api.ts for API client"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-016",
+      "title": "Set up Zustand for client state management",
+      "description": "Configure Zustand for managing client-side application state (UI state, user preferences)",
+      "assignedTo": "frontend",
+      "estimatedHours": 3,
+      "dependencies": [
+        "SPRINT-0-013"
+      ],
+      "acceptanceCriteria": [
+        "Zustand installed",
+        "Auth store created for user session",
+        "UI store created for theme, sidebar state",
+        "Persistence middleware configured (localStorage)",
+        "TypeScript types defined for stores",
+        "DevTools middleware configured (development only)",
+        "Store slices pattern implemented",
+        "Example usage in component demonstrated"
+      ],
+      "priority": "medium",
+      "status": "completed",
+      "technicalNotes": {
+        "library": "zustand",
+        "stores": "authStore, uiStore, notificationStore",
+        "persistence": "zustand/middleware for localStorage",
+        "devtools": "zustand/middleware/devtools",
+        "structure": "src/stores/"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-017",
+      "title": "Configure internationalization (i18n)",
+      "description": "Set up react-i18next for multi-language support (Dutch and English)",
+      "assignedTo": "frontend",
+      "estimatedHours": 4,
+      "dependencies": [
+        "SPRINT-0-013"
+      ],
+      "acceptanceCriteria": [
+        "react-i18next installed and configured",
+        "Translation files for English and Dutch",
+        "i18n initialized in App root",
+        "Language switcher component created",
+        "Browser language detection configured",
+        "Language preference persisted (localStorage)",
+        "Translation namespaces organized by feature",
+        "Pluralization support configured",
+        "Date/number formatting per locale"
+      ],
+      "priority": "medium",
+      "status": "completed",
+      "technicalNotes": {
+        "library": "react-i18next, i18next",
+        "files": "public/locales/{en,nl}/translation.json",
+        "detection": "i18next-browser-languagedetector",
+        "namespaces": "common, auth, news, forum, jobs",
+        "fallback": "English as fallback language"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-018",
+      "title": "Create base layout components and navigation",
+      "description": "Build foundational layout components: Header, Footer, Sidebar, Navigation, and responsive layouts",
+      "assignedTo": "frontend",
+      "estimatedHours": 10,
+      "dependencies": [
+        "SPRINT-0-014",
+        "SPRINT-0-016"
+      ],
+      "acceptanceCriteria": [
+        "Header component with logo, navigation, user menu",
+        "Footer component with links and social",
+        "Main layout component with responsive grid",
+        "Navigation menu with active state highlighting",
+        "Mobile menu (hamburger) with slide-out drawer",
+        "User dropdown menu (login/logout, profile, settings)",
+        "Dark mode toggle button",
+        "Responsive breakpoints: mobile, tablet, desktop",
+        "Sticky header on scroll",
+        "Layout persists across route changes"
+      ],
+      "priority": "high",
+      "status": "completed",
+      "technicalNotes": {
+        "components": "Header, Footer, Sidebar, Layout, MobileNav",
+        "responsive": "Mobile-first approach, breakpoints: 640px, 768px, 1024px",
+        "navigation": "React Router NavLink for active states",
+        "menu": "Radix UI Dialog or MUI Drawer for mobile menu",
+        "structure": "src/components/layout/"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-019",
+      "title": "Set up Docker Compose for local development",
+      "description": "Create Docker Compose configuration for running PostgreSQL, Redis, and application services locally",
+      "assignedTo": "backend",
+      "estimatedHours": 4,
+      "dependencies": [
+        "SPRINT-0-002",
+        "SPRINT-0-005"
+      ],
+      "acceptanceCriteria": [
+        "docker-compose.yml with all services defined",
+        "PostgreSQL service (postgres:15-alpine)",
+        "Redis service (redis:7-alpine)",
+        "Backend service with hot reload",
+        "Frontend service with hot reload",
+        "Environment variables passed to containers",
+        "Volumes configured for data persistence",
+        "Health checks defined for services",
+        "Network configuration for service communication",
+        "README documentation for Docker setup",
+        "Commands: docker-compose up, down, logs"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "services": "postgres, redis, backend, frontend",
+        "volumes": "postgres_data, redis_data",
+        "networks": "neurmatic-network",
+        "ports": "PostgreSQL: 5432, Redis: 6379, Backend: 3000, Frontend: 5173",
+        "restart": "restart: unless-stopped"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-020",
+      "title": "Configure CI/CD pipeline with GitHub Actions",
+      "description": "Set up automated testing, linting, and deployment pipeline using GitHub Actions",
+      "assignedTo": "backend",
+      "estimatedHours": 6,
+      "dependencies": [
+        "SPRINT-0-001",
+        "SPRINT-0-013"
+      ],
+      "acceptanceCriteria": [
+        "GitHub Actions workflow file created (.github/workflows/ci.yml)",
+        "Workflow runs on push to main and pull requests",
+        "Backend: lint, type-check, test, build steps",
+        "Frontend: lint, type-check, test, build steps",
+        "Environment secrets configured (DATABASE_URL, etc.)",
+        "Deployment workflow for staging (auto-deploy on main)",
+        "Deployment workflow for production (manual approval)",
+        "Status badges in README",
+        "Parallel job execution for speed",
+        "Failed build notifications"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "workflows": "ci.yml, deploy-staging.yml, deploy-production.yml",
+        "actions": "actions/checkout, actions/setup-node, actions/cache",
+        "secrets": "Store in GitHub Secrets",
+        "deployment": "Railway, AWS, or Vercel",
+        "caching": "Cache node_modules for faster builds"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-021",
+      "title": "Set up Sentry for error tracking",
+      "description": "Configure Sentry for error and performance monitoring on both backend and frontend",
+      "assignedTo": "backend",
+      "estimatedHours": 4,
+      "dependencies": [
+        "SPRINT-0-001",
+        "SPRINT-0-013"
+      ],
+      "acceptanceCriteria": [
+        "Sentry account created and project configured",
+        "Backend: @sentry/node installed and initialized",
+        "Frontend: @sentry/react installed and initialized",
+        "Error boundary components for React",
+        "Source maps uploaded for better stack traces",
+        "User context attached to errors (when authenticated)",
+        "Environment tags (development, staging, production)",
+        "Performance monitoring enabled",
+        "Release tracking configured",
+        "Test error triggers verified in Sentry dashboard"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "library": "@sentry/node (backend), @sentry/react (frontend)",
+        "init": "Initialize in app entry points",
+        "dsn": "Store DSN in environment variables",
+        "sourcemaps": "Upload with @sentry/webpack-plugin or sentry-cli",
+        "filtering": "Filter out 4xx errors, keep 5xx"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-022",
+      "title": "Write comprehensive README and setup documentation",
+      "description": "Create detailed documentation for project setup, development workflow, and deployment",
+      "assignedTo": "qa",
+      "estimatedHours": 6,
+      "dependencies": [
+        "SPRINT-0-019",
+        "SPRINT-0-020"
+      ],
+      "acceptanceCriteria": [
+        "README.md with project overview and features",
+        "Prerequisites section (Node.js, PostgreSQL, Redis)",
+        "Installation instructions (step-by-step)",
+        "Environment variables documentation",
+        "Development workflow (running locally, Docker)",
+        "Testing instructions",
+        "Deployment guide (staging and production)",
+        "Contributing guidelines (CONTRIBUTING.md)",
+        "Code of conduct",
+        "License information",
+        "Architecture diagrams",
+        "API documentation links"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "files": "README.md, CONTRIBUTING.md, docs/SETUP.md",
+        "format": "Clear markdown with code blocks",
+        "diagrams": "Use Mermaid for architecture diagrams",
+        "links": "Link to API docs, database schema docs"
+      }
+    },
+    {
+      "taskId": "SPRINT-0-023",
+      "title": "Test end-to-end foundation setup",
+      "description": "Verify complete foundation setup by testing all systems: database, auth, frontend, deployment",
+      "assignedTo": "qa",
+      "estimatedHours": 8,
+      "dependencies": [
+        "SPRINT-0-011",
+        "SPRINT-0-018",
+        "SPRINT-0-019",
+        "SPRINT-0-020"
+      ],
+      "acceptanceCriteria": [
+        "Local development environment starts successfully",
+        "Docker Compose brings up all services",
+        "Database migrations run without errors",
+        "Seed script populates database correctly",
+        "Backend server starts and responds to health check",
+        "Frontend dev server starts and loads",
+        "Registration creates user in database",
+        "Login returns valid JWT tokens",
+        "Email verification flow works end-to-end",
+        "Password reset flow works end-to-end",
+        "OAuth flows work for all providers",
+        "2FA setup and verification works",
+        "CI/CD pipeline runs successfully",
+        "Sentry captures test errors",
+        "Documentation is accurate and complete"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "testing": "Manual testing + automated smoke tests",
+        "checklist": "Use acceptance criteria as test checklist",
+        "issues": "Document any issues found",
+        "verification": "Test on clean machine/environment"
+      }
+    }
+  ],
+  "deliverables": [
+    "Running local development environment (Docker Compose)",
+    "Complete database schema with 50+ tables",
+    "Seeded database with LLM models and sample data",
+    "Full authentication system (email, OAuth, 2FA)",
+    "Frontend project with routing, styling, state management",
+    "CI/CD pipeline configured",
+    "Error tracking with Sentry",
+    "Comprehensive setup documentation"
+  ],
+  "dependencies": []
+}

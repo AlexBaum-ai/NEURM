@@ -1,0 +1,310 @@
+{
+  "sprintNumber": 10,
+  "sprintGoal": "Platform integration with universal search, following system, and dashboard personalization",
+  "duration": "2 weeks",
+  "status": "pending",
+  "priority": "high",
+  "startDate": null,
+  "endDate": null,
+  "tasks": [
+    {
+      "taskId": "SPRINT-10-001",
+      "title": "Implement universal search backend",
+      "description": "Create unified search across news, forum, jobs, users, and companies",
+      "assignedTo": "backend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-2-001", "SPRINT-4-003", "SPRINT-7-001"],
+      "acceptanceCriteria": [
+        "GET /api/search returns results from all content types",
+        "Content types: articles, forum_topics, forum_replies, jobs, users, companies",
+        "Query parameter: ?q=search_term",
+        "Filter by content_type: ?type=articles,jobs",
+        "Sort: relevance (default), date, popularity",
+        "Autocomplete: GET /api/search/suggest returns suggestions",
+        "Search highlights matching terms in results",
+        "Pagination: 20 results per page",
+        "Performance: <500ms for typical queries",
+        "Track search queries and popular searches",
+        "Saved searches per user",
+        "Search history (last 10 per user)",
+        "Advanced syntax: quotes for exact match, - for exclusion"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "implementation": "Elasticsearch for unified search or PostgreSQL multi-table full-text search",
+        "relevance": "Boost: articles (title 3x, content 1x), topics (title 2x, content 1x), jobs (title 2x)",
+        "suggest": "Use trigram similarity (pg_trgm) or Elasticsearch completion suggester",
+        "tracking": "search_queries table (user_id, query, results_count, clicked_result_id, created_at)"
+      }
+    },
+    {
+      "taskId": "SPRINT-10-002",
+      "title": "Build universal search UI",
+      "description": "Create global search interface with autocomplete and multi-content results",
+      "assignedTo": "frontend",
+      "estimatedHours": 14,
+      "dependencies": ["SPRINT-10-001"],
+      "acceptanceCriteria": [
+        "Global search bar in header (always visible)",
+        "Keyboard shortcut: / to focus search",
+        "Autocomplete dropdown with suggestions grouped by type",
+        "Search results page at /search?q=...",
+        "Results grouped by type: Articles, Forum, Jobs, People, Companies",
+        "Each group shows top 3-5 results with 'See all' link",
+        "Result cards show: title, excerpt, type badge, date/metadata",
+        "Highlighted search terms in results",
+        "Filters: content type checkboxes",
+        "Advanced search link (opens advanced filters)",
+        "Search history dropdown (last 10)",
+        "Saved searches with star icon",
+        "Empty state with search tips",
+        "Voice search button (mobile)",
+        "Responsive design",
+        "Loading skeleton while searching"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/search",
+        "components": "GlobalSearch, SearchBar, SearchResults, SearchAutocomplete, SearchFilters",
+        "shortcut": "Listen for '/' keypress, focus search input",
+        "highlight": "Use mark.js for highlighting matched terms in results",
+        "voice": "Web Speech API for voice search on mobile"
+      }
+    },
+    {
+      "taskId": "SPRINT-10-003",
+      "title": "Implement following system backend",
+      "description": "Create follow functionality for users, companies, tags, categories, and models",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-0-002"],
+      "acceptanceCriteria": [
+        "follows table with polymorphic followable (users, companies, tags, categories, models)",
+        "POST /api/follows creates follow relationship",
+        "DELETE /api/follows/:id unfollows",
+        "GET /api/users/:id/following returns who user follows",
+        "GET /api/users/:id/followers returns user's followers",
+        "GET /api/following/feed returns activity from followed entities",
+        "Feed includes: new articles in followed categories, new topics with followed tags, new jobs from followed companies, new content from followed users",
+        "Privacy: users can make followers/following list private",
+        "Notifications on new follower",
+        "Follow counts on entities",
+        "Prevent self-following",
+        "Following feed sorted by recency"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "follows (follower_id, followable_type, followable_id, created_at), UNIQUE(follower_id, followable_type, followable_id)",
+        "types": "ENUM: user, company, tag, category, model",
+        "feed": "Union query across content types WHERE created_by IN (SELECT followable_id FROM follows WHERE follower_id = ? AND followable_type = 'user') OR ...",
+        "cache": "Redis: following_feed:{userId} TTL 15min"
+      }
+    },
+    {
+      "taskId": "SPRINT-10-004",
+      "title": "Build following system UI",
+      "description": "Create follow buttons, following feed, and follower management",
+      "assignedTo": "frontend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-10-003"],
+      "acceptanceCriteria": [
+        "Follow button on user profiles, company pages, category headers",
+        "Follow toggle (Follow/Following) with count",
+        "Following feed page at /following",
+        "Feed shows: recent activity from followed entities, grouped by type",
+        "Filter feed by: articles, forum posts, jobs",
+        "Following page at /u/:username/following (list of who they follow)",
+        "Followers page at /u/:username/followers (list of followers)",
+        "Unfollow button on lists",
+        "Follow suggestions (based on interests)",
+        "Empty state: 'Follow topics you're interested in'",
+        "Privacy toggle for followers/following visibility",
+        "Notification on new follower",
+        "Responsive design"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "routes": "/following, /u/:username/following, /u/:username/followers",
+        "components": "FollowButton, FollowingFeed, FollowersList, FollowSuggestions",
+        "optimistic": "Optimistic UI updates for follow/unfollow"
+      }
+    },
+    {
+      "taskId": "SPRINT-10-005",
+      "title": "Implement personalized dashboard backend",
+      "description": "Create unified dashboard with personalized widgets and activity feed",
+      "assignedTo": "backend",
+      "estimatedHours": 12,
+      "dependencies": ["SPRINT-10-003"],
+      "acceptanceCriteria": [
+        "GET /api/dashboard returns personalized dashboard data",
+        "Widgets: top_stories_today, trending_discussions, job_matches, your_stats, following_activity, trending_tags",
+        "For You feed: personalized content based on interests, follows, and activity",
+        "Configurable widgets (user can show/hide)",
+        "Activity feed: recent activity from user (posts, comments, applications)",
+        "Stats widget: forum reputation, articles read, jobs saved, applications sent",
+        "Quick actions: New Post, Search Jobs, Browse Forum",
+        "Dashboard configuration stored per user",
+        "Cache dashboard data (5 min TTL)",
+        "Performance: dashboard loads < 1s"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "endpoint": "GET /api/dashboard",
+        "widgets": "Modular widget system, each widget has its own data fetcher",
+        "config": "user_dashboard_config table (user_id, widget_config_json)",
+        "cache": "Redis: dashboard:{userId} TTL 300s",
+        "for_you": "Combine: followed categories articles, trending topics, high-match jobs"
+      }
+    },
+    {
+      "taskId": "SPRINT-10-006",
+      "title": "Build personalized dashboard UI",
+      "description": "Create customizable dashboard with drag-drop widgets",
+      "assignedTo": "frontend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-10-005"],
+      "acceptanceCriteria": [
+        "Dashboard at / (home page when logged in)",
+        "Tabs: For You, News, Forum, Jobs",
+        "For You tab: personalized feed with mixed content",
+        "Widget grid: Top Stories, Trending Discussions, Job Matches, Your Stats, Following Activity, Trending Tags, Events (placeholder)",
+        "Drag-drop to reorder widgets",
+        "Toggle widgets on/off (settings cog icon)",
+        "Quick actions toolbar (New Post, Search Jobs, Browse Forum)",
+        "Stats widget shows: reputation, articles read, saved jobs, applications",
+        "Each widget links to full page (e.g., 'See all jobs')",
+        "Responsive: stacked on mobile, grid on desktop",
+        "Loading skeleton for each widget",
+        "Empty state for new users (onboarding guide)",
+        "Customize dashboard modal"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/",
+        "components": "Dashboard, WidgetGrid, Widget, QuickActions, StatsWidget",
+        "drag": "react-grid-layout for drag-drop widget positioning",
+        "tabs": "Tabs component with tab content lazy-loaded"
+      }
+    },
+    {
+      "taskId": "SPRINT-10-007",
+      "title": "Implement AI recommendation engine",
+      "description": "Create content recommendation system using collaborative and content-based filtering",
+      "assignedTo": "backend",
+      "estimatedHours": 16,
+      "dependencies": ["SPRINT-10-005"],
+      "acceptanceCriteria": [
+        "GET /api/recommendations returns personalized recommendations",
+        "Types: articles, forum_topics, jobs, users_to_follow",
+        "Inputs: explicit (follows, bookmarks, upvotes, applications), implicit (views, time_on_page, scroll_depth, searches), profile (skills, experience, preferences), context (time, trending topics)",
+        "Algorithms: collaborative filtering (users similar to you liked X), content-based (based on your interests), hybrid approach",
+        "Relevance score 0-100 per recommendation",
+        "Explanation: 'Because you...' (read similar articles, follow X, etc.)",
+        "Diversity boost (avoid filter bubble - include some varied content)",
+        "Feedback: POST /api/recommendations/:id/feedback (more/less like this)",
+        "Update recommendations based on feedback",
+        "Cache recommendations (refresh every 6 hours)",
+        "Performance: recommendations < 200ms"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "algorithm": "Hybrid: 50% collaborative filtering + 30% content-based + 20% trending/diversity",
+        "collaborative": "Find similar users based on activity overlap, recommend what they liked",
+        "content": "TF-IDF or embeddings for article/topic similarity",
+        "table": "recommendation_feedback (user_id, item_type, item_id, feedback, created_at)",
+        "cache": "Redis: recommendations:{userId} TTL 6h"
+      }
+    },
+    {
+      "taskId": "SPRINT-10-008",
+      "title": "Display AI recommendations throughout platform",
+      "description": "Integrate recommendations into dashboard, article pages, and job pages",
+      "assignedTo": "frontend",
+      "estimatedHours": 10,
+      "dependencies": ["SPRINT-10-007"],
+      "acceptanceCriteria": [
+        "Recommendations widget on dashboard",
+        "Shows 5-10 recommended items with title, excerpt, thumbnail",
+        "Each recommendation has explanation badge ('Because you...')",
+        "More/Less buttons for feedback",
+        "Recommendations update after feedback",
+        "Recommended articles sidebar on article pages",
+        "Recommended jobs section on job detail pages",
+        "Suggested users to follow on profile pages",
+        "Hover tooltip showing why recommended",
+        "Click tracking for recommendation effectiveness",
+        "Loading skeleton while fetching",
+        "Responsive design"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "components": "RecommendationsWidget, RecommendationCard, FeedbackButtons",
+        "tracking": "Track clicks on recommendations for effectiveness measurement",
+        "refresh": "Refetch recommendations after feedback submitted"
+      }
+    },
+    {
+      "taskId": "SPRINT-10-009",
+      "title": "Test platform integration features",
+      "description": "Test universal search, following system, dashboard, and recommendations",
+      "assignedTo": "qa",
+      "estimatedHours": 14,
+      "dependencies": [
+        "SPRINT-10-002",
+        "SPRINT-10-004",
+        "SPRINT-10-006",
+        "SPRINT-10-008"
+      ],
+      "acceptanceCriteria": [
+        "Universal search returns results from all content types",
+        "Autocomplete suggests relevant queries",
+        "Search filters work correctly",
+        "Search highlights matched terms",
+        "Follow/unfollow works for all entity types",
+        "Following feed shows activity from followed entities",
+        "Followers/following lists display correctly",
+        "Dashboard loads personalized content",
+        "Widgets can be reordered and toggled",
+        "Quick actions function correctly",
+        "Recommendations display with explanations",
+        "Recommendation feedback updates suggestions",
+        "All features responsive on mobile",
+        "Performance: search < 500ms, dashboard < 1s, recommendations < 200ms",
+        "No console errors"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tools": "Playwright E2E, Jest unit tests",
+        "scenarios": [
+          "Search across all content types",
+          "Follow users, companies, tags and view feed",
+          "Customize dashboard widgets",
+          "Interact with recommendations and give feedback"
+        ]
+      }
+    }
+  ],
+  "deliverables": [
+    "Universal search across all content",
+    "Following system for users, companies, tags, etc.",
+    "Personalized dashboard with widgets",
+    "AI recommendation engine",
+    "Comprehensive test suite"
+  ],
+  "notes": "Sprint 10 integrates all platform modules into a cohesive experience. Universal search is critical for discoverability. The personalized dashboard is the user's home - make it valuable. Recommendations should feel smart and helpful, not creepy.",
+  "risks": [
+    "Universal search complexity may impact performance - consider Elasticsearch",
+    "Recommendation algorithm may need tuning with real user data",
+    "Dashboard customization could be overwhelming - start with sensible defaults"
+  ]
+}

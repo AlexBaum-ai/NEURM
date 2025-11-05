@@ -1,0 +1,214 @@
+{
+  "$schema": "./schemas/agent-mcp-config-schema.json",
+  "version": "1.0.0",
+  "description": "Directe MCP toegang configuratie voor alle agents - agents krijgen directe toegang tot MCP tools zonder tussenkomst van skills",
+  "agents": {
+    "backend-developer": {
+      "description": "Backend development met database, API, en server logic",
+      "mcpServers": ["postgres", "sentry", "git", "docker", "memory", "sequential-thinking"],
+      "mcpTools": [
+        "mcp__postgres__*",
+        "mcp__sentry__*",
+        "mcp__git__*",
+        "mcp__docker__*",
+        "mcp__memory__*",
+        "mcp__sequential-thinking__*"
+      ],
+      "directAccessEnabled": true
+    },
+    "frontend-developer": {
+      "description": "Frontend development met React, UI components en E2E testing",
+      "mcpServers": ["playwright", "git", "memory", "sequential-thinking"],
+      "mcpTools": [
+        "mcp__playwright__*",
+        "mcp__git__*",
+        "mcp__memory__*",
+        "mcp__sequential-thinking__*"
+      ],
+      "directAccessEnabled": true
+    },
+    "qa-software-tester": {
+      "description": "Testing, validation en quality assurance",
+      "mcpServers": ["playwright", "sentry", "sequential-thinking", "memory"],
+      "mcpTools": [
+        "mcp__playwright__*",
+        "mcp__sentry__*",
+        "mcp__sequential-thinking__*",
+        "mcp__memory__*"
+      ],
+      "directAccessEnabled": true
+    },
+    "team-coordinator": {
+      "description": "Team coördinatie en project management",
+      "mcpServers": ["memory", "git", "sequential-thinking"],
+      "mcpTools": [
+        "mcp__memory__*",
+        "mcp__git__*",
+        "mcp__sequential-thinking__*"
+      ],
+      "directAccessEnabled": true
+    },
+    "sprint-orchestrator": {
+      "description": "Sprint planning en task orchestration",
+      "mcpServers": ["memory", "git", "sequential-thinking"],
+      "mcpTools": [
+        "mcp__memory__*",
+        "mcp__git__*",
+        "mcp__sequential-thinking__*"
+      ],
+      "directAccessEnabled": true
+    },
+    "project-architect": {
+      "description": "Architectuur design en system planning",
+      "mcpServers": ["memory", "git", "sequential-thinking"],
+      "mcpTools": [
+        "mcp__memory__*",
+        "mcp__git__*",
+        "mcp__sequential-thinking__*"
+      ],
+      "directAccessEnabled": true
+    },
+    "code-architecture-reviewer": {
+      "description": "Code architectuur review en analyse",
+      "mcpServers": ["git", "memory", "sequential-thinking"],
+      "mcpTools": [
+        "mcp__git__*",
+        "mcp__memory__*",
+        "mcp__sequential-thinking__*"
+      ],
+      "directAccessEnabled": true
+    },
+    "code-refactor-master": {
+      "description": "Code refactoring en optimization",
+      "mcpServers": ["git", "memory", "sequential-thinking"],
+      "mcpTools": [
+        "mcp__git__*",
+        "mcp__memory__*",
+        "mcp__sequential-thinking__*"
+      ],
+      "directAccessEnabled": true
+    },
+    "documentation-architect": {
+      "description": "Documentatie creatie en maintenance",
+      "mcpServers": ["memory", "git", "sequential-thinking"],
+      "mcpTools": [
+        "mcp__memory__*",
+        "mcp__git__*",
+        "mcp__sequential-thinking__*"
+      ],
+      "directAccessEnabled": true
+    },
+    "web-research-specialist": {
+      "description": "Web research en informatie gathering",
+      "mcpServers": ["brave-search", "memory", "sequential-thinking"],
+      "mcpTools": [
+        "mcp__brave-search__*",
+        "mcp__memory__*",
+        "mcp__sequential-thinking__*"
+      ],
+      "directAccessEnabled": true
+    },
+    "auto-error-resolver": {
+      "description": "Automatische error detection en resolution",
+      "mcpServers": ["sentry", "git", "sequential-thinking", "memory"],
+      "mcpTools": [
+        "mcp__sentry__*",
+        "mcp__git__*",
+        "mcp__sequential-thinking__*",
+        "mcp__memory__*"
+      ],
+      "directAccessEnabled": true
+    },
+    "auth-route-tester": {
+      "description": "Authentication route testing",
+      "mcpServers": ["postgres", "sequential-thinking", "memory"],
+      "mcpTools": [
+        "mcp__postgres__*",
+        "mcp__sequential-thinking__*",
+        "mcp__memory__*"
+      ],
+      "directAccessEnabled": true
+    },
+    "auth-route-debugger": {
+      "description": "Authentication debugging en troubleshooting",
+      "mcpServers": ["postgres", "sentry", "sequential-thinking", "memory"],
+      "mcpTools": [
+        "mcp__postgres__*",
+        "mcp__sentry__*",
+        "mcp__sequential-thinking__*",
+        "mcp__memory__*"
+      ],
+      "directAccessEnabled": true
+    },
+    "plan-reviewer": {
+      "description": "Plan review en validation",
+      "mcpServers": ["memory", "sequential-thinking"],
+      "mcpTools": [
+        "mcp__memory__*",
+        "mcp__sequential-thinking__*"
+      ],
+      "directAccessEnabled": true
+    },
+    "refactor-planner": {
+      "description": "Refactoring planning en strategy",
+      "mcpServers": ["git", "memory", "sequential-thinking"],
+      "mcpTools": [
+        "mcp__git__*",
+        "mcp__memory__*",
+        "mcp__sequential-thinking__*"
+      ],
+      "directAccessEnabled": true
+    },
+    "frontend-error-fixer": {
+      "description": "Frontend error fixing en debugging",
+      "mcpServers": ["playwright", "git", "sentry", "sequential-thinking", "memory"],
+      "mcpTools": [
+        "mcp__playwright__*",
+        "mcp__git__*",
+        "mcp__sentry__*",
+        "mcp__sequential-thinking__*",
+        "mcp__memory__*"
+      ],
+      "directAccessEnabled": true
+    }
+  },
+  "globalSettings": {
+    "inheritFromMainSession": false,
+    "allowSkillBasedAccess": false,
+    "requireExplicitMcpDeclaration": true
+  },
+  "mcpServerDefinitions": {
+    "postgres": {
+      "displayName": "PostgreSQL Database",
+      "description": "Direct database access voor queries, schema inspection en migrations"
+    },
+    "sentry": {
+      "displayName": "Sentry Error Tracking",
+      "description": "Error monitoring, tracking en analysis"
+    },
+    "git": {
+      "displayName": "Git Operations",
+      "description": "Git repository management, history analysis en operations"
+    },
+    "docker": {
+      "displayName": "Docker Management",
+      "description": "Container management, logs, health checks"
+    },
+    "memory": {
+      "displayName": "Persistent Memory",
+      "description": "Cross-session memory en knowledge persistence"
+    },
+    "sequential-thinking": {
+      "displayName": "Sequential Thinking",
+      "description": "Complex reasoning en problem decomposition"
+    },
+    "playwright": {
+      "displayName": "Playwright E2E",
+      "description": "End-to-end testing, screenshots, UI validation"
+    },
+    "brave-search": {
+      "displayName": "Brave Web Search",
+      "description": "Web search en research capabilities"
+    }
+  }
+}

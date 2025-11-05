@@ -1,0 +1,516 @@
+{
+  "sprintNumber": 1,
+  "sprintGoal": "Complete user profile management with avatar uploads, privacy settings, and account management",
+  "duration": "2 weeks",
+  "status": "pending",
+  "tasks": [
+    {
+      "taskId": "SPRINT-1-001",
+      "title": "Implement user profile API endpoints",
+      "description": "Create REST API endpoints for viewing and updating user profiles with all profile fields",
+      "assignedTo": "backend",
+      "estimatedHours": 10,
+      "dependencies": [
+        "SPRINT-0-007"
+      ],
+      "acceptanceCriteria": [
+        "GET /api/v1/users/me returns current user with profile",
+        "GET /api/v1/users/:username returns public profile",
+        "PATCH /api/v1/users/me updates profile fields",
+        "Profile fields: displayName, headline, bio, location, website, social links",
+        "Response includes stats: reputation, badges, contributions",
+        "Privacy settings respected for public profiles",
+        "Input validation with Zod",
+        "Rate limit: 10 updates per hour",
+        "Proper error handling (404, 403, 400)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "routes": "src/modules/users/users.routes.ts",
+        "controller": "src/modules/users/users.controller.ts",
+        "service": "src/modules/users/users.service.ts",
+        "validation": "src/modules/users/users.validation.ts"
+      }
+    },
+    {
+      "taskId": "SPRINT-1-002",
+      "title": "Implement file upload service for avatars",
+      "description": "Create file upload system with S3/CloudFlare R2 integration for user avatars and cover images",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": [
+        "SPRINT-1-001"
+      ],
+      "acceptanceCriteria": [
+        "POST /api/v1/users/me/avatar endpoint for avatar upload",
+        "POST /api/v1/users/me/cover endpoint for cover image",
+        "Multer configured for multipart/form-data",
+        "Image validation: JPEG, PNG, WebP only",
+        "Max file size: 5MB for avatars, 10MB for covers",
+        "Images uploaded to S3/CloudFlare R2",
+        "Image optimization (Sharp): resize, compress",
+        "Thumbnail generation (multiple sizes)",
+        "Old images deleted on new upload",
+        "CDN URLs returned in response",
+        "Rate limit: 5 uploads per hour"
+      ],
+      "priority": "high",
+      "status": "completed",
+      "technicalNotes": {
+        "library": "multer, sharp, aws-sdk or @cloudflare/workers-sdk",
+        "storage": "AWS S3 or CloudFlare R2",
+        "sizes": "Avatar: 32x32, 64x64, 128x128, 256x256",
+        "format": "Convert to WebP for optimization",
+        "cdn": "CloudFlare CDN for delivery"
+      },
+      "completedAt": "2025-11-04T23:45:00Z"
+    },
+    {
+      "taskId": "SPRINT-1-003",
+      "title": "Implement skills management API",
+      "description": "Create endpoints for adding, updating, and removing user skills with proficiency levels",
+      "assignedTo": "backend",
+      "estimatedHours": 6,
+      "dependencies": [
+        "SPRINT-1-001"
+      ],
+      "acceptanceCriteria": [
+        "POST /api/v1/users/me/skills creates new skill",
+        "GET /api/v1/users/me/skills lists user skills",
+        "PATCH /api/v1/users/me/skills/:id updates skill proficiency",
+        "DELETE /api/v1/users/me/skills/:id removes skill",
+        "Skill types: prompt_engineering, fine_tuning, rag, deployment, etc.",
+        "Proficiency: 1-5 stars",
+        "Autocomplete for skill names",
+        "Max 50 skills per user",
+        "Endorsement count tracking (future)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "user_skills",
+        "validation": "proficiency BETWEEN 1 AND 5",
+        "autocomplete": "Return popular skills from database",
+        "unique": "Unique constraint on (user_id, skill_name)"
+      }
+    },
+    {
+      "taskId": "SPRINT-1-004",
+      "title": "Implement work experience management API",
+      "description": "Create CRUD endpoints for managing work experience entries on user profiles",
+      "assignedTo": "backend",
+      "estimatedHours": 6,
+      "dependencies": [
+        "SPRINT-1-001"
+      ],
+      "acceptanceCriteria": [
+        "POST /api/v1/users/me/work-experience creates entry",
+        "GET /api/v1/users/me/work-experience lists experiences",
+        "PUT /api/v1/users/me/work-experience/:id updates entry",
+        "DELETE /api/v1/users/me/work-experience/:id removes entry",
+        "Fields: title, company, location, employmentType, startDate, endDate, description",
+        "Tech stack stored as JSONB",
+        "Display order field for sorting",
+        "Current role: endDate = null",
+        "Date validation (start before end)"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "work_experiences",
+        "sorting": "ORDER BY display_order, start_date DESC",
+        "validation": "Zod schema for dates and required fields",
+        "techStack": "JSONB field for flexible data"
+      }
+    },
+    {
+      "taskId": "SPRINT-1-005",
+      "title": "Implement education management API",
+      "description": "Create CRUD endpoints for managing education history on user profiles",
+      "assignedTo": "backend",
+      "estimatedHours": 4,
+      "dependencies": [
+        "SPRINT-1-001"
+      ],
+      "acceptanceCriteria": [
+        "POST /api/v1/users/me/education creates entry",
+        "GET /api/v1/users/me/education lists education",
+        "PUT /api/v1/users/me/education/:id updates entry",
+        "DELETE /api/v1/users/me/education/:id removes entry",
+        "Fields: institution, degree, fieldOfStudy, startDate, endDate, description",
+        "Display order field for sorting",
+        "Date validation"
+      ],
+      "priority": "low",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "educations",
+        "sorting": "ORDER BY display_order, end_date DESC NULLS FIRST"
+      }
+    },
+    {
+      "taskId": "SPRINT-1-006",
+      "title": "Implement portfolio projects management API",
+      "description": "Create endpoints for managing portfolio projects with images and links",
+      "assignedTo": "backend",
+      "estimatedHours": 6,
+      "dependencies": [
+        "SPRINT-1-002"
+      ],
+      "acceptanceCriteria": [
+        "POST /api/v1/users/me/portfolio creates project",
+        "GET /api/v1/users/me/portfolio lists projects",
+        "PUT /api/v1/users/me/portfolio/:id updates project",
+        "DELETE /api/v1/users/me/portfolio/:id removes project",
+        "Fields: title, description, techStack, projectUrl, githubUrl, demoUrl",
+        "Image uploads for thumbnail and screenshots",
+        "Featured flag (max 5 featured projects)",
+        "Display order for sorting",
+        "Tech stack stored as JSONB"
+      ],
+      "priority": "medium",
+      "status": "completed",
+      "technicalNotes": {
+        "table": "portfolio_projects",
+        "constraint": "Max 5 projects with is_featured = true",
+        "images": "Use file upload service from SPRINT-1-002"
+      },
+      "completedAt": "2025-11-05T00:02:00Z"
+    },
+    {
+      "taskId": "SPRINT-1-007",
+      "title": "Implement privacy settings API",
+      "description": "Create endpoints for managing granular privacy controls per profile section",
+      "assignedTo": "backend",
+      "estimatedHours": 6,
+      "dependencies": [
+        "SPRINT-1-001"
+      ],
+      "acceptanceCriteria": [
+        "GET /api/v1/users/me/privacy returns all privacy settings",
+        "PATCH /api/v1/users/me/privacy updates settings",
+        "Settings per section: bio, work_experience, education, portfolio, skills, salary, contact",
+        "Visibility options: public, community, recruiters, private",
+        "Default settings for new users",
+        "Privacy respected in GET /api/v1/users/:username",
+        "Recruiters see more data than regular users"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "profile_privacy_settings",
+        "visibility": "ENUM: public, community, recruiters, private",
+        "logic": "Filter profile data based on requesting user role",
+        "defaults": "All sections public except salary (recruiters only)"
+      }
+    },
+    {
+      "taskId": "SPRINT-1-008",
+      "title": "Implement account settings API",
+      "description": "Create endpoints for changing email, password, and account deletion (GDPR)",
+      "assignedTo": "backend",
+      "estimatedHours": 8,
+      "dependencies": [
+        "SPRINT-1-001"
+      ],
+      "acceptanceCriteria": [
+        "PATCH /api/v1/users/me/email changes email (requires verification)",
+        "PATCH /api/v1/users/me/password changes password",
+        "DELETE /api/v1/users/me deletes account",
+        "Email change: sends verification to new email",
+        "Password change: requires current password",
+        "Account deletion: soft delete with 30-day grace period",
+        "Deleted accounts: anonymize content, schedule hard delete",
+        "GET /api/v1/users/me/data-export for GDPR data export",
+        "Rate limits applied"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "emailChange": "Create pending email change record, verify new email",
+        "deletion": "Set status=deleted, schedule cleanup job",
+        "export": "Generate JSON/ZIP with all user data",
+        "gdpr": "GDPR compliance for EU users"
+      }
+    },
+    {
+      "taskId": "SPRINT-1-009",
+      "title": "Implement session management API",
+      "description": "Create endpoints for viewing and managing active user sessions",
+      "assignedTo": "backend",
+      "estimatedHours": 4,
+      "dependencies": [
+        "SPRINT-0-007"
+      ],
+      "acceptanceCriteria": [
+        "GET /api/v1/users/me/sessions lists all active sessions",
+        "DELETE /api/v1/users/me/sessions/:id revokes specific session",
+        "POST /api/v1/users/me/sessions/revoke-all revokes all except current",
+        "Session data: device, browser, IP, location, lastActive",
+        "Current session marked with flag",
+        "Old sessions auto-expired (30 days)"
+      ],
+      "priority": "medium",
+      "status": "pending",
+      "technicalNotes": {
+        "table": "sessions",
+        "detection": "Parse user-agent for device/browser info",
+        "location": "GeoIP lookup from IP (optional)",
+        "cleanup": "Scheduled job to delete expired sessions"
+      }
+    },
+    {
+      "taskId": "SPRINT-1-010",
+      "title": "Build profile page UI",
+      "description": "Create comprehensive user profile page showing all profile sections with edit capabilities",
+      "assignedTo": "frontend",
+      "estimatedHours": 12,
+      "dependencies": [
+        "SPRINT-1-001",
+        "SPRINT-0-018"
+      ],
+      "acceptanceCriteria": [
+        "Profile page at /profile/:username",
+        "Sections: About, Skills, Experience, Education, Portfolio",
+        "Avatar and cover image display",
+        "Stats display: reputation, badges, contributions",
+        "Edit mode toggle (own profile only)",
+        "Responsive layout (mobile, tablet, desktop)",
+        "Loading states for data fetching",
+        "Error states with retry option",
+        "Privacy indicators for hidden sections",
+        "Social links clickable"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/profile/:username",
+        "query": "useQuery to fetch profile data",
+        "components": "ProfileHeader, AboutSection, SkillsSection, ExperienceSection",
+        "edit": "Toggle between view and edit mode",
+        "responsive": "Stack sections on mobile"
+      }
+    },
+    {
+      "taskId": "SPRINT-1-011",
+      "title": "Build profile edit forms",
+      "description": "Create forms for editing all profile sections: basic info, skills, experience, education, portfolio",
+      "assignedTo": "frontend",
+      "estimatedHours": 16,
+      "dependencies": [
+        "SPRINT-1-010"
+      ],
+      "acceptanceCriteria": [
+        "Edit profile modal with tabs for each section",
+        "Basic info form: displayName, headline, bio, location, website, socials",
+        "Skills form: add/edit/remove skills with proficiency slider",
+        "Work experience form: add/edit/remove entries",
+        "Education form: add/edit/remove entries",
+        "Portfolio form: add/edit/remove projects with image upload",
+        "Form validation (React Hook Form + Zod)",
+        "Rich text editor for bio and descriptions (Tiptap)",
+        "Autosave draft functionality",
+        "Cancel confirmation if unsaved changes",
+        "Success/error toast notifications",
+        "Loading states on submit"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "forms": "react-hook-form with zodResolver",
+        "editor": "Tiptap for rich text (bio, descriptions)",
+        "upload": "File upload component for images",
+        "mutations": "useMutation for API calls",
+        "validation": "Client-side validation mirrors backend Zod schemas"
+      }
+    },
+    {
+      "taskId": "SPRINT-1-012",
+      "title": "Build avatar and cover image upload UI",
+      "description": "Create image upload components with crop, preview, and upload functionality",
+      "assignedTo": "frontend",
+      "estimatedHours": 8,
+      "dependencies": [
+        "SPRINT-1-002",
+        "SPRINT-1-010"
+      ],
+      "acceptanceCriteria": [
+        "Avatar upload button with file picker",
+        "Cover image upload button",
+        "Image preview before upload",
+        "Crop modal (react-image-crop or similar)",
+        "Aspect ratio enforcement (1:1 for avatar, 16:9 for cover)",
+        "File size validation (max 5MB/10MB)",
+        "Format validation (JPEG, PNG, WebP only)",
+        "Upload progress indicator",
+        "Error handling (file too large, wrong format)",
+        "Immediate preview after successful upload",
+        "Delete image option"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "library": "react-image-crop or react-easy-crop",
+        "upload": "FormData with multipart/form-data",
+        "preview": "URL.createObjectURL for local preview",
+        "progress": "Axios onUploadProgress callback"
+      }
+    },
+    {
+      "taskId": "SPRINT-1-013",
+      "title": "Build settings page UI",
+      "description": "Create settings page for account management: email, password, privacy, sessions, deletion",
+      "assignedTo": "frontend",
+      "estimatedHours": 10,
+      "dependencies": [
+        "SPRINT-1-007",
+        "SPRINT-1-008",
+        "SPRINT-1-009"
+      ],
+      "acceptanceCriteria": [
+        "Settings page at /settings with tabs",
+        "Account tab: change email, change password",
+        "Privacy tab: visibility controls per section",
+        "Sessions tab: active sessions list with revoke buttons",
+        "Danger zone: delete account with confirmation",
+        "Email change: verification flow UI",
+        "Password change: current + new password form",
+        "Privacy toggles with clear explanations",
+        "Session cards showing device, location, last active",
+        "Delete confirmation modal with CAPTCHA",
+        "Data export button",
+        "All forms with validation"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "route": "/settings",
+        "tabs": "Account, Privacy, Security, Sessions, Danger Zone",
+        "confirmation": "Modal with 'DELETE' confirmation text",
+        "export": "Trigger data export, show email notification",
+        "sessions": "Real-time data with auto-refresh"
+      }
+    },
+    {
+      "taskId": "SPRINT-1-014",
+      "title": "Build login and registration UI",
+      "description": "Create login and registration modals/pages with email and OAuth options",
+      "assignedTo": "frontend",
+      "estimatedHours": 10,
+      "dependencies": [
+        "SPRINT-0-007",
+        "SPRINT-0-010",
+        "SPRINT-0-018"
+      ],
+      "acceptanceCriteria": [
+        "Login modal with email/password form",
+        "Registration modal with email/password/username form",
+        "OAuth buttons for Google, LinkedIn, GitHub",
+        "Password visibility toggle",
+        "Remember me checkbox (optional)",
+        "Forgot password link",
+        "Switch between login/register",
+        "Form validation with error messages",
+        "Loading states during submission",
+        "Success redirect to intended page or dashboard",
+        "Error handling (invalid credentials, duplicate email)",
+        "Accessibility (keyboard navigation, ARIA labels)"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "component": "AuthModal with login/register views",
+        "oauth": "OAuth flow handled by popup or redirect",
+        "storage": "Store JWT in memory, refresh token in cookie",
+        "redirect": "Return to intended page after login",
+        "validation": "Real-time validation feedback"
+      }
+    },
+    {
+      "taskId": "SPRINT-1-015",
+      "title": "Build email verification and password reset UI",
+      "description": "Create pages for email verification and password reset flows",
+      "assignedTo": "frontend",
+      "estimatedHours": 6,
+      "dependencies": [
+        "SPRINT-0-008",
+        "SPRINT-0-009"
+      ],
+      "acceptanceCriteria": [
+        "Email verification page at /verify?token={token}",
+        "Forgot password page at /forgot-password",
+        "Reset password page at /reset-password?token={token}",
+        "Email verification: auto-verify on page load",
+        "Forgot password: email input form",
+        "Reset password: new password form",
+        "Success/error states for all flows",
+        "Expired/invalid token handling",
+        "Resend verification email button",
+        "Clear instructions and feedback"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "routes": "/verify, /forgot-password, /reset-password",
+        "autoVerify": "Call API on mount with token from URL",
+        "feedback": "Toast notifications for success/error",
+        "redirect": "Redirect to login after successful reset"
+      }
+    },
+    {
+      "taskId": "SPRINT-1-016",
+      "title": "Test user management features end-to-end",
+      "description": "Comprehensive testing of all user profile and account management features",
+      "assignedTo": "qa",
+      "estimatedHours": 12,
+      "dependencies": [
+        "SPRINT-1-015"
+      ],
+      "acceptanceCriteria": [
+        "Registration flow works (email + OAuth)",
+        "Email verification works",
+        "Login works with valid credentials",
+        "Password reset flow works",
+        "Profile page displays correctly",
+        "Profile editing works for all sections",
+        "Avatar and cover upload works",
+        "Skills CRUD operations work",
+        "Work experience CRUD operations work",
+        "Education CRUD operations work",
+        "Portfolio CRUD operations work",
+        "Privacy settings work and respected",
+        "Email change flow works",
+        "Password change works",
+        "Session management works",
+        "Account deletion works",
+        "Data export triggers email",
+        "Responsive design works on all devices",
+        "Accessibility: keyboard navigation, screen readers",
+        "Performance: profile loads < 2s"
+      ],
+      "priority": "high",
+      "status": "pending",
+      "technicalNotes": {
+        "tools": "Playwright for E2E, Lighthouse for performance",
+        "tests": "User registration, profile CRUD, settings",
+        "devices": "Mobile, tablet, desktop",
+        "browsers": "Chrome, Firefox, Safari",
+        "accessibility": "WCAG 2.1 AA compliance"
+      }
+    }
+  ],
+  "deliverables": [
+    "Complete user profile system (view and edit)",
+    "Avatar and cover image upload",
+    "Skills, experience, education, portfolio management",
+    "Privacy settings per profile section",
+    "Account settings (email, password, sessions)",
+    "GDPR-compliant account deletion and data export",
+    "Login and registration UI with OAuth",
+    "Email verification and password reset flows"
+  ],
+  "dependencies": [
+    "SPRINT-0"
+  ]
+}

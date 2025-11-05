@@ -1,0 +1,39 @@
+{
+  "appName": "Neurmatic",
+  "nav": {
+    "home": "Home",
+    "news": "Nieuws",
+    "forum": "Forum",
+    "jobs": "Vacatures",
+    "guide": "LLM Gids",
+    "about": "Over",
+    "contact": "Contact"
+  },
+  "actions": {
+    "submit": "Verzenden",
+    "cancel": "Annuleren",
+    "save": "Opslaan",
+    "delete": "Verwijderen",
+    "edit": "Bewerken",
+    "close": "Sluiten",
+    "back": "Terug",
+    "next": "Volgende",
+    "search": "Zoeken",
+    "filter": "Filteren",
+    "sort": "Sorteren",
+    "loadMore": "Meer Laden"
+  },
+  "common": {
+    "loading": "Laden...",
+    "error": "Er is een fout opgetreden",
+    "success": "Succes",
+    "noResults": "Geen resultaten gevonden",
+    "comingSoon": "Binnenkort Beschikbaar"
+  },
+  "footer": {
+    "copyright": "© 2025 Neurmatic. Alle rechten voorbehouden.",
+    "privacy": "Privacybeleid",
+    "terms": "Servicevoorwaarden",
+    "followUs": "Volg Ons"
+  }
+}
