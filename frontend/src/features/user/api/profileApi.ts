@@ -230,3 +230,55 @@ export const getUserBadges = async (username: string): Promise<Badge[]> => {
   const response = await apiClient.get<{ data: Badge[] }>(`/users/${username}/badges`);
   return response.data;
 };
+
+// ============================================================================
+// Candidate Profile API (Jobs Module - SPRINT-7-007)
+// ============================================================================
+
+import type {
+  LLMExperience,
+  LLMExperienceFormData,
+  JobPreferences,
+  JobPreferencesFormData,
+  CommunityStats,
+} from '../types';
+
+// LLM Experience Management
+export const getLLMExperience = async (): Promise<LLMExperience> => {
+  const response = await apiClient.get<{ data: LLMExperience }>('/users/me/llm-experience');
+  return response.data;
+};
+
+export const updateLLMExperience = async (
+  data: LLMExperienceFormData
+): Promise<LLMExperience> => {
+  const response = await apiClient.put<{ data: LLMExperience }>(
+    '/users/me/llm-experience',
+    data
+  );
+  return response.data;
+};
+
+// Job Preferences Management
+export const getJobPreferences = async (): Promise<JobPreferences> => {
+  const response = await apiClient.get<{ data: JobPreferences }>('/users/me/job-preferences');
+  return response.data;
+};
+
+export const updateJobPreferences = async (
+  data: JobPreferencesFormData
+): Promise<JobPreferences> => {
+  const response = await apiClient.put<{ data: JobPreferences }>(
+    '/users/me/job-preferences',
+    data
+  );
+  return response.data;
+};
+
+// Community Stats (Read-only, calculated by backend)
+export const getCommunityStats = async (username: string): Promise<CommunityStats> => {
+  const response = await apiClient.get<{ data: CommunityStats }>(
+    `/users/${username}/community-stats`
+  );
+  return response.data;
+};
