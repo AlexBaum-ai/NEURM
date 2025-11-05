@@ -30,6 +30,13 @@ const ForumHome = lazy(() => import('@/features/forum/pages/ForumHome'));
 const CategoryDetail = lazy(() => import('@/features/forum/pages/CategoryDetail'));
 const TopicDetail = lazy(() => import('@/features/forum/pages/TopicDetail'));
 const NewTopicPage = lazy(() => import('@/features/forum/pages/NewTopicPage'));
+const SearchResults = lazy(() => import('@/features/forum/pages/SearchResults'));
+const UnansweredQuestionsPage = lazy(() => import('@/features/forum/pages/UnansweredQuestionsPage'));
+const ModerationDashboard = lazy(() => import('@/features/forum/pages/ModerationDashboard'));
+const ModerationQueue = lazy(() => import('@/features/forum/pages/ModerationQueue'));
+
+// Lazy load messaging pages
+const MessagesPage = lazy(() => import('@/features/messages/pages/MessagesPage'));
 
 // Loading fallback
 const PageLoader = () => (
@@ -233,6 +240,38 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'forum/search',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <SearchResults />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'forum/unanswered',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <UnansweredQuestionsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'forum/mod',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ModerationDashboard />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'forum/mod/reports',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ModerationQueue />
+          </Suspense>
+        ),
+      },
+      {
         path: 'forum/c/:slug',
         element: (
           <Suspense fallback={<PageLoader />}>
@@ -269,6 +308,22 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <SettingsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'messages',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <MessagesPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'messages/:conversationId',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <MessagesPage />
           </Suspense>
         ),
       },

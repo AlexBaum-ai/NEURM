@@ -13,7 +13,9 @@
       "description": "Create comprehensive moderation API for editing, moving, locking, pinning topics and managing users",
       "assignedTo": "backend",
       "estimatedHours": 12,
-      "dependencies": ["SPRINT-4-003"],
+      "dependencies": [
+        "SPRINT-4-003"
+      ],
       "acceptanceCriteria": [
         "POST /api/forum/topics/:id/pin pins/unpins topic (moderator)",
         "POST /api/forum/topics/:id/lock locks/unlocks topic (moderator)",
@@ -29,7 +31,7 @@
         "Pinned topics appear at top of category"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "table": "moderation_log (id, moderator_id, action, target_type, target_id, reason, created_at)",
         "permissions": "Check user.role IN ('moderator', 'admin') AND category_moderators.category_id",
@@ -50,7 +52,9 @@
       "description": "Create moderator interface with action buttons and moderation dashboard",
       "assignedTo": "frontend",
       "estimatedHours": 14,
-      "dependencies": ["SPRINT-5-001"],
+      "dependencies": [
+        "SPRINT-5-001"
+      ],
       "acceptanceCriteria": [
         "Moderator action menu on topics (pin, lock, move, delete)",
         "Moderator action menu on replies (edit, hide, delete)",
@@ -66,7 +70,7 @@
         "Accessible (keyboard navigation, screen reader support)"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "routes": "/forum/mod, /forum/mod/log",
         "components": "ModeratorMenu, ModActionModal, ModerationDashboard, ModLog",
@@ -79,7 +83,9 @@
       "description": "Create reporting mechanism for spam, harassment, and policy violations",
       "assignedTo": "backend",
       "estimatedHours": 10,
-      "dependencies": ["SPRINT-4-003"],
+      "dependencies": [
+        "SPRINT-4-003"
+      ],
       "acceptanceCriteria": [
         "POST /api/forum/reports creates new report",
         "Report reasons: spam, harassment, off_topic, misinformation, copyright",
@@ -94,7 +100,7 @@
         "Reports include: reporter_id, target, reason, description, created_at, status"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "table": "reports (id, reporter_id, reportable_type, reportable_id, reason, description, status, resolved_by, resolved_at)",
         "status": "ENUM: pending, reviewing, resolved_violation, resolved_no_action, dismissed",
@@ -112,7 +118,9 @@
       "description": "Create report button, report modal, and moderation review interface",
       "assignedTo": "frontend",
       "estimatedHours": 12,
-      "dependencies": ["SPRINT-5-003"],
+      "dependencies": [
+        "SPRINT-5-003"
+      ],
       "acceptanceCriteria": [
         "Report button on every topic and reply (flag icon)",
         "Report modal with reason selector and description field",
@@ -128,7 +136,7 @@
         "Responsive design"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "components": "ReportButton, ReportModal, ModerationQueue, ReportReviewPanel",
         "route": "/forum/mod/reports",
@@ -141,7 +149,9 @@
       "description": "Create full-text search for topics and replies with advanced filtering",
       "assignedTo": "backend",
       "estimatedHours": 12,
-      "dependencies": ["SPRINT-4-003"],
+      "dependencies": [
+        "SPRINT-4-003"
+      ],
       "acceptanceCriteria": [
         "GET /api/forum/search returns search results",
         "Full-text search on topic titles and content",
@@ -157,7 +167,7 @@
         "Exact phrase search with quotes"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "search": "PostgreSQL full-text search with tsvector columns or Elasticsearch",
         "indexing": "CREATE INDEX idx_topics_fts ON forum_topics USING gin(to_tsvector('english', title || ' ' || content))",
@@ -172,7 +182,9 @@
       "description": "Create search interface with autocomplete, filters, and results page",
       "assignedTo": "frontend",
       "estimatedHours": 14,
-      "dependencies": ["SPRINT-5-005"],
+      "dependencies": [
+        "SPRINT-5-005"
+      ],
       "acceptanceCriteria": [
         "Search bar in forum header (always visible)",
         "Autocomplete dropdown with suggestions",
@@ -190,7 +202,7 @@
         "Mobile-responsive"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "route": "/forum/search",
         "components": "SearchBar, SearchResults, SearchFilters, SearchAutocomplete",
@@ -204,7 +216,9 @@
       "description": "Create one-on-one messaging system with conversations and message history",
       "assignedTo": "backend",
       "estimatedHours": 14,
-      "dependencies": ["SPRINT-0-002"],
+      "dependencies": [
+        "SPRINT-0-002"
+      ],
       "acceptanceCriteria": [
         "conversations table for message threads",
         "messages table for individual messages",
@@ -222,7 +236,7 @@
         "Search conversations by participant name or content"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "tables": "conversations (id, participant_1_id, participant_2_id, last_message_at), messages (id, conversation_id, sender_id, content, read_at, created_at)",
         "endpoints": [
@@ -242,7 +256,9 @@
       "description": "Create messaging interface with conversation list and chat view",
       "assignedTo": "frontend",
       "estimatedHours": 16,
-      "dependencies": ["SPRINT-5-007"],
+      "dependencies": [
+        "SPRINT-5-007"
+      ],
       "acceptanceCriteria": [
         "Messages page at /messages",
         "Conversation list sidebar (left)",
@@ -261,7 +277,7 @@
         "Real-time message delivery (polling every 5s or websocket)"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "route": "/messages, /messages/:conversationId",
         "components": "MessagesPage, ConversationList, ChatView, MessageComposer",
@@ -275,7 +291,9 @@
       "description": "Create filtered view showing questions without accepted answers",
       "assignedTo": "backend",
       "estimatedHours": 6,
-      "dependencies": ["SPRINT-4-003"],
+      "dependencies": [
+        "SPRINT-4-003"
+      ],
       "acceptanceCriteria": [
         "GET /api/forum/unanswered returns questions without accepted_answer_id",
         "Filter by category, tags, date",
@@ -287,7 +305,7 @@
         "Cache results for 5 minutes"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "query": "SELECT * FROM forum_topics WHERE type = 'question' AND accepted_answer_id IS NULL AND locked = false",
         "index": "CREATE INDEX idx_unanswered ON forum_topics(type, accepted_answer_id) WHERE accepted_answer_id IS NULL",
@@ -300,7 +318,9 @@
       "description": "Create dedicated page for browsing unanswered questions",
       "assignedTo": "frontend",
       "estimatedHours": 8,
-      "dependencies": ["SPRINT-5-009"],
+      "dependencies": [
+        "SPRINT-5-009"
+      ],
       "acceptanceCriteria": [
         "Unanswered page at /forum/unanswered",
         "Show count of unanswered questions",
@@ -314,7 +334,7 @@
         "Prominent link in forum navigation"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "route": "/forum/unanswered",
         "component": "UnansweredQuestionsPage",
@@ -351,7 +371,7 @@
         "No console errors"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "tools": "Playwright E2E, Jest unit tests",
         "scenarios": [

@@ -193,6 +193,22 @@ enum MessageStatus {
   read
 }
 
+enum ReportReason {
+  spam
+  harassment
+  off_topic
+  misinformation
+  copyright
+}
+
+enum ReportStatus {
+  pending
+  reviewing
+  resolved_violation
+  resolved_no_action
+  dismissed
+}
+
 // ============================================================================
 // USERS & AUTHENTICATION DOMAIN
 // ============================================================================
@@ -247,6 +263,9 @@ model User {
   savedPrompts            SavedPrompt[]
   pollVotes               PollVote[]
   moderatedCategories     CategoryModerator[] @relation("CategoryModerators")
+  moderationLogs          ModerationLog[]     @relation("ModeratorLogs")
+  savedSearches           SavedSearch[]
+  searchHistory           SearchHistory[]
 
   // Jobs
   company         Company?         @relation("CompanyOwner")
@@ -254,15 +273,22 @@ model User {
   jobMatches      JobMatch[]
 
   // Platform
-  notifications    Notification[]
-  followers        Follow[]         @relation("UserFollowers")
-  following        Follow[]         @relation("UserFollowing")
-  sentMessages     Message[]        @relation("MessageSender")
-  receivedMessages Message[]        @relation("MessageRecipient")
-  analyticsEvents  AnalyticsEvent[]
-  articleViews     ArticleView[]
-  modelFollows     ModelFollow[]    @relation("UserModelFollows")
-  uploadedMedia    MediaFile[]      @relation("MediaUploader")
+  notifications           Notification[]
+  followers               Follow[]               @relation("UserFollowers")
+  following               Follow[]               @relation("UserFollowing")
+  sentMessages            Message[]              @relation("MessageSender")
+  receivedMessages        Message[]              @relation("MessageRecipient")
+  conversationsAsParty1   Conversation[]         @relation("ConversationParticipant1")
+  conversationsAsParty2   Conversation[]         @relation("ConversationParticipant2")
+  conversationMessages    ConversationMessage[]  @relation("ConversationMessageSender")
+  blockedUsers            UserBlock[]            @relation("UserBlocker")
+  blockedBy               UserBlock[]            @relation("UserBlocked")
+  analyticsEvents         AnalyticsEvent[]
+  articleViews            ArticleView[]
+  modelFollows            ModelFollow[]          @relation("UserModelFollows")
+  uploadedMedia           MediaFile[]            @relation("MediaUploader")
+  reports                 Report[]               @relation("UserReports")
+  resolvedReports         Report[]               @relation("UserResolutions")
 
   @@index([email])
   @@index([username])
@@ -802,6 +828,7 @@ model Topic {
   isFlagged       Boolean     @default(false) @map("is_flagged")
   isPinned        Boolean     @default(false) @map("is_pinned")
   isLocked        Boolean     @default(false) @map("is_locked")
+  isHidden        Boolean     @default(false) @map("is_hidden")
   pollId          String?     @map("poll_id")
   viewCount       Int         @default(0) @map("view_count")
   replyCount      Int         @default(0) @map("reply_count")
@@ -872,6 +899,7 @@ model Reply {
   downvoteCount  Int       @default(0) @map("downvote_count")
   isAccepted     Boolean   @default(false) @map("is_accepted")
   isDeleted      Boolean   @default(false) @map("is_deleted")
+  isHidden       Boolean   @default(false) @map("is_hidden")
   editedAt       DateTime? @map("edited_at") @db.Timestamptz(3)
   deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -1090,6 +1118,38 @@ model Poll {
   @@map("polls")
 }
 
+model SavedSearch {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String   @db.VarChar(100)
+  query     String   @db.VarChar(500)
+  filters   Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@map("saved_searches")
+}
+
+model SearchHistory {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  query       String   @db.VarChar(500)
+  filters     Json     @default("{}")
+  resultCount Int      @default(0) @map("result_count")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("search_history")
+}
+
 model SpamKeyword {
   id        String   @id @default(uuid())
   keyword   String   @unique @db.VarChar(100)
@@ -1101,6 +1161,25 @@ model SpamKeyword {
   @@index([keyword])
   @@index([isActive])
   @@map("spam_keywords")
+}
+
+model ModerationLog {
+  id           String   @id @default(uuid())
+  moderatorId  String   @map("moderator_id")
+  action       String   @db.VarChar(100)
+  targetType   String   @map("target_type") @db.VarChar(50)
+  targetId     String   @map("target_id")
+  reason       String?  @db.Text
+  metadata     Json?
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  moderator User @relation("ModeratorLogs", fields: [moderatorId], references: [id], onDelete: Cascade)
+
+  @@index([moderatorId])
+  @@index([targetType, targetId])
+  @@index([action])
+  @@index([createdAt(sort: Desc)])
+  @@map("moderation_logs")
 }
 
 model PollVote {
@@ -1116,6 +1195,31 @@ model PollVote {
   @@unique([pollId, userId])
   @@index([pollId])
   @@map("poll_votes")
+}
+
+model Report {
+  id             String       @id @default(uuid())
+  reporterId     String       @map("reporter_id")
+  reportableType String       @map("reportable_type") @db.VarChar(50)
+  reportableId   String       @map("reportable_id")
+  reason         ReportReason
+  description    String?      @db.Text
+  status         ReportStatus @default(pending)
+  resolvedBy     String?      @map("resolved_by")
+  resolvedAt     DateTime?    @map("resolved_at") @db.Timestamptz(3)
+  resolutionNote String?      @map("resolution_note") @db.Text
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  reporter User  @relation("UserReports", fields: [reporterId], references: [id], onDelete: Cascade)
+  resolver User? @relation("UserResolutions", fields: [resolvedBy], references: [id], onDelete: SetNull)
+
+  @@unique([reporterId, reportableType, reportableId])
+  @@index([reporterId])
+  @@index([reportableType, reportableId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("reports")
 }
 
 // ============================================================================
@@ -1296,6 +1400,92 @@ model Message {
   @@index([status])
   @@index([createdAt(sort: Desc)])
   @@map("messages")
+}
+
+// ============================================================================
+// CONVERSATIONS & MESSAGING SYSTEM
+// ============================================================================
+
+model Conversation {
+  id              String    @id @default(uuid())
+  participant1Id  String    @map("participant_1_id")
+  participant2Id  String    @map("participant_2_id")
+  lastMessageAt   DateTime? @map("last_message_at") @db.Timestamptz(3)
+  lastMessageText String?   @map("last_message_text") @db.VarChar(500)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  participant1 User                 @relation("ConversationParticipant1", fields: [participant1Id], references: [id], onDelete: Cascade)
+  participant2 User                 @relation("ConversationParticipant2", fields: [participant2Id], references: [id], onDelete: Cascade)
+  messages     ConversationMessage[]
+
+  @@unique([participant1Id, participant2Id])
+  @@index([participant1Id])
+  @@index([participant2Id])
+  @@index([lastMessageAt(sort: Desc)])
+  @@index([participant1Id, lastMessageAt(sort: Desc)])
+  @@index([participant2Id, lastMessageAt(sort: Desc)])
+  @@map("conversations")
+}
+
+model ConversationMessage {
+  id             String    @id @default(uuid())
+  conversationId String    @map("conversation_id")
+  senderId       String    @map("sender_id")
+  content        String    @db.Text
+  contentFormat  String    @default("markdown") @map("content_format") @db.VarChar(20)
+  readAt         DateTime? @map("read_at") @db.Timestamptz(3)
+  isEdited       Boolean   @default(false) @map("is_edited")
+  editedAt       DateTime? @map("edited_at") @db.Timestamptz(3)
+  isDeleted      Boolean   @default(false) @map("is_deleted")
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  conversation Conversation          @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User                  @relation("ConversationMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  attachments  MessageAttachment[]
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([conversationId, createdAt(sort: Asc)])
+  @@index([readAt])
+  @@map("conversation_messages")
+}
+
+model MessageAttachment {
+  id               String   @id @default(uuid())
+  messageId        String   @map("message_id")
+  filename         String   @db.VarChar(255)
+  originalFilename String   @map("original_filename") @db.VarChar(255)
+  mimeType         String   @map("mime_type") @db.VarChar(100)
+  fileSize         Int      @map("file_size")
+  url              String   @db.VarChar(500)
+  storageKey       String   @map("storage_key") @db.VarChar(500)
+  width            Int?
+  height           Int?
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  message ConversationMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("message_attachments")
+}
+
+model UserBlock {
+  id         String   @id @default(uuid())
+  blockerId  String   @map("blocker_id")
+  blockedId  String   @map("blocked_id")
+  reason     String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  blocker User @relation("UserBlocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("UserBlocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+  @@map("user_blocks")
 }
 
 model AnalyticsEvent {

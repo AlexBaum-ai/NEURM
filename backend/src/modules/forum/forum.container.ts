@@ -15,6 +15,17 @@ import { VoteController } from './controllers/VoteController';
 import { ReputationRepository } from './repositories/ReputationRepository';
 import { ReputationService } from './services/reputationService';
 import { ReputationController } from './controllers/ReputationController';
+import { ModerationRepository } from './repositories/ModerationRepository';
+import { ModerationService } from './services/moderationService';
+import { ModerationController } from './controllers/ModerationController';
+import { SearchRepository } from './repositories/SearchRepository';
+import { SavedSearchRepository } from './repositories/SavedSearchRepository';
+import { SearchHistoryRepository } from './repositories/SearchHistoryRepository';
+import { SearchService } from './services/searchService';
+import { SearchController } from './controllers/SearchController';
+import { ReportRepository } from './repositories/ReportRepository';
+import { ReportService } from './services/reportService';
+import { ReportController } from './controllers/ReportController';
 
 /**
  * Forum Module Dependency Injection Container
@@ -43,6 +54,21 @@ export function registerForumDependencies(prisma: PrismaClient): void {
   container.register(ReputationRepository, {
     useClass: ReputationRepository,
   });
+  container.register('ModerationRepository', {
+    useClass: ModerationRepository,
+  });
+  container.register('SearchRepository', {
+    useFactory: () => new SearchRepository(prisma),
+  });
+  container.register('SavedSearchRepository', {
+    useFactory: () => new SavedSearchRepository(prisma),
+  });
+  container.register('SearchHistoryRepository', {
+    useFactory: () => new SearchHistoryRepository(prisma),
+  });
+  container.register('ReportRepository', {
+    useFactory: () => new ReportRepository(prisma),
+  });
 
   // Register services
   container.register('ForumCategoryService', {
@@ -60,6 +86,15 @@ export function registerForumDependencies(prisma: PrismaClient): void {
   container.register('ReputationService', {
     useClass: ReputationService,
   });
+  container.register('ModerationService', {
+    useClass: ModerationService,
+  });
+  container.register('SearchService', {
+    useClass: SearchService,
+  });
+  container.register('ReportService', {
+    useClass: ReportService,
+  });
 
   // Register controllers
   container.register(ForumCategoryController, {
@@ -76,6 +111,15 @@ export function registerForumDependencies(prisma: PrismaClient): void {
   });
   container.register(ReputationController, {
     useClass: ReputationController,
+  });
+  container.register(ModerationController, {
+    useClass: ModerationController,
+  });
+  container.register(SearchController, {
+    useClass: SearchController,
+  });
+  container.register(ReportController, {
+    useClass: ReportController,
   });
 }
 

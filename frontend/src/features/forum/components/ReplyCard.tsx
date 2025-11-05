@@ -20,6 +20,7 @@ import { QuoteBlock } from './QuoteBlock';
 import ReputationBadge from './ReputationBadge';
 import type { ForumReply, QuotedReply, TopicType } from '../types';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { ReportButton } from './ReportButton';
 
 interface ReplyCardProps {
   reply: ForumReply;
@@ -296,6 +297,13 @@ export const ReplyCard: React.FC<ReplyCardProps> = ({
                 <CheckCircle className="h-4 w-4" />
                 Accept Answer
               </button>
+            )}
+
+            {/* Report Button */}
+            {user && !canAccept && (
+              <div className="ml-auto">
+                <ReportButton reportableType="reply" reportableId={reply.id} size="small" />
+              </div>
             )}
           </div>
         )}

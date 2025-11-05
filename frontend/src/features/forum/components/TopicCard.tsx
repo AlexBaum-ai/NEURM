@@ -33,6 +33,8 @@ import {
 import type { ForumTopic, TopicType } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 import ReputationBadge from './ReputationBadge';
+import { ReportButton } from './ReportButton';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 interface TopicCardProps {
   topic: ForumTopic;
@@ -75,6 +77,7 @@ const topicTypeConfig: Record<
 };
 
 const TopicCard: React.FC<TopicCardProps> = ({ topic }) => {
+  const { user } = useAuth();
   const typeConfig = topicTypeConfig[topic.type];
   const TypeIcon = typeConfig.icon;
 
@@ -297,6 +300,13 @@ const TopicCard: React.FC<TopicCardProps> = ({ topic }) => {
                     : topic.viewCount}
                 </Typography>
               </Stack>
+
+              {/* Report Button - Only show for authenticated users */}
+              {user && (
+                <Box sx={{ ml: 'auto' }}>
+                  <ReportButton reportableType="topic" reportableId={topic.id} size="small" />
+                </Box>
+              )}
             </Stack>
           </Stack>
         </Stack>

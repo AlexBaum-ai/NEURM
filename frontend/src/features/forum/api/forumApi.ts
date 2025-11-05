@@ -23,6 +23,14 @@ import type {
   UpdateReplyInput,
   AcceptAnswerResponse,
   ReputationResponse,
+  SearchQuery,
+  SearchResponse,
+  SearchSuggestionsResponse,
+  PopularSearchesResponse,
+  SavedSearchInput,
+  SavedSearch,
+  SavedSearchesResponse,
+  SearchHistoryResponse,
 } from '../types';
 
 const FORUM_BASE = '/forum';
@@ -188,6 +196,29 @@ export const forumApi = {
 
     const queryString = params.toString();
     const url = queryString ? `${FORUM_BASE}/topics?${queryString}` : `${FORUM_BASE}/topics`;
+
+    const response = await apiClient.get<TopicListResponse>(url);
+    return response.data;
+  },
+
+  /**
+   * Get unanswered questions (questions without accepted answers)
+   * GET /api/forum/topics/unanswered
+   */
+  getUnansweredTopics: async (query?: Omit<TopicListQuery, 'type' | 'status'>) => {
+    const params = new URLSearchParams();
+
+    if (query) {
+      if (query.page) params.append('page', query.page.toString());
+      if (query.limit) params.append('limit', query.limit.toString());
+      if (query.categoryId) params.append('categoryId', query.categoryId);
+      if (query.tag) params.append('tag', query.tag);
+      if (query.sortBy) params.append('sortBy', query.sortBy);
+      if (query.sortOrder) params.append('sortOrder', query.sortOrder);
+    }
+
+    const queryString = params.toString();
+    const url = queryString ? `${FORUM_BASE}/topics/unanswered?${queryString}` : `${FORUM_BASE}/topics/unanswered`;
 
     const response = await apiClient.get<TopicListResponse>(url);
     return response.data;
@@ -396,6 +427,340 @@ export const forumApi = {
   getUserReputation: async (userId: string) => {
     const response = await apiClient.get<ReputationResponse>(`/users/${userId}/reputation`);
     return response.data;
+  },
+
+  // ========================================
+  // REPORT ENDPOINTS
+  // ========================================
+
+  /**
+   * Create a new report
+   * POST /api/forum/reports
+   */
+  createReport: async (data: {
+    reportableType: 'topic' | 'reply';
+    reportableId: string;
+    reason: string;
+    description: string;
+  }) => {
+    const response = await apiClient.post<{
+      success: boolean;
+      data: { report: any };
+    }>(`${FORUM_BASE}/reports`, data);
+    return response.data;
+  },
+
+  /**
+   * Get all reports (moderator only)
+   * GET /api/forum/reports
+   */
+  getReports: async (filters?: {
+    reason?: string;
+    status?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters) {
+      if (filters.reason) params.append('reason', filters.reason);
+      if (filters.status) params.append('status', filters.status);
+      if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
+      if (filters.dateTo) params.append('dateTo', filters.dateTo);
+      if (filters.page) params.append('page', filters.page.toString());
+      if (filters.limit) params.append('limit', filters.limit.toString());
+    }
+
+    const queryString = params.toString();
+    const url = queryString ? `${FORUM_BASE}/reports?${queryString}` : `${FORUM_BASE}/reports`;
+
+    const response = await apiClient.get<{
+      success: boolean;
+      data: {
+        reports: any[];
+        pagination: {
+          page: number;
+          limit: number;
+          totalCount: number;
+          totalPages: number;
+          hasNextPage: boolean;
+          hasPreviousPage: boolean;
+        };
+      };
+    }>(url);
+    return response.data;
+  },
+
+  /**
+   * Get report statistics (moderator only)
+   * GET /api/forum/reports/statistics
+   */
+  getReportStatistics: async () => {
+    const response = await apiClient.get<{
+      success: boolean;
+      data: {
+        statistics: any;
+      };
+    }>(`${FORUM_BASE}/reports/statistics`);
+    return response.data;
+  },
+
+  /**
+   * Get single report by ID (moderator only)
+   * GET /api/forum/reports/:id
+   */
+  getReportById: async (reportId: string) => {
+    const response = await apiClient.get<{
+      success: boolean;
+      data: { report: any };
+    }>(`${FORUM_BASE}/reports/${reportId}`);
+    return response.data;
+  },
+
+  /**
+   * Resolve a report (moderator only)
+   * PUT /api/forum/reports/:id/resolve
+   */
+  resolveReport: async (reportId: string, data: { action: string; notes?: string }) => {
+    const response = await apiClient.put<{
+      success: boolean;
+      data: { report: any };
+    }>(`${FORUM_BASE}/reports/${reportId}/resolve`, data);
+    return response.data;
+  },
+
+  /**
+   * Batch resolve reports (moderator only)
+   * POST /api/forum/reports/batch-resolve
+   */
+  batchResolveReports: async (data: {
+    reportIds: string[];
+    action: string;
+    notes?: string;
+  }) => {
+    const response = await apiClient.post<{
+      success: boolean;
+      data: { resolved: number };
+    }>(`${FORUM_BASE}/reports/batch-resolve`, data);
+    return response.data;
+  },
+
+  // ========================================
+  // MODERATION ENDPOINTS
+  // ========================================
+
+  /**
+   * Move topic to different category (moderator only)
+   * PUT /api/forum/topics/:id/move
+   */
+  moveTopic: async (topicId: string, categoryId: string, reason?: string) => {
+    const response = await apiClient.put<TopicResponse>(
+      `${FORUM_BASE}/topics/${topicId}/move`,
+      { categoryId, reason }
+    );
+    return response.data.topic;
+  },
+
+  /**
+   * Merge duplicate topics (moderator only)
+   * POST /api/forum/topics/:id/merge
+   */
+  mergeTopics: async (sourceTopicId: string, targetTopicId: string, reason?: string) => {
+    const response = await apiClient.post<{ success: boolean; message: string }>(
+      `${FORUM_BASE}/topics/${sourceTopicId}/merge`,
+      { targetTopicId, reason }
+    );
+    return response;
+  },
+
+  /**
+   * Hard delete topic (admin only)
+   * DELETE /api/forum/topics/:id/hard
+   */
+  hardDeleteTopic: async (topicId: string, reason?: string) => {
+    const response = await apiClient.delete<{ success: boolean; message: string }>(
+      `${FORUM_BASE}/topics/${topicId}/hard`,
+      { data: { reason } }
+    );
+    return response;
+  },
+
+  /**
+   * Hide reply (moderator only)
+   * POST /api/forum/replies/:id/hide
+   */
+  hideReply: async (replyId: string, isHidden: boolean, reason?: string) => {
+    const response = await apiClient.post<ReplyResponse>(
+      `${FORUM_BASE}/replies/${replyId}/hide`,
+      { isHidden, reason }
+    );
+    return response.data.reply;
+  },
+
+  /**
+   * Edit reply as moderator
+   * PUT /api/forum/replies/:id/moderate
+   */
+  moderateReply: async (replyId: string, content: string, reason?: string) => {
+    const response = await apiClient.put<ReplyResponse>(
+      `${FORUM_BASE}/replies/${replyId}/moderate`,
+      { content, reason }
+    );
+    return response.data.reply;
+  },
+
+  /**
+   * Warn user (moderator only)
+   * POST /api/forum/users/:id/warn
+   */
+  warnUser: async (userId: string, reason: string) => {
+    const response = await apiClient.post<{ success: boolean; message: string }>(
+      `${FORUM_BASE}/users/${userId}/warn`,
+      { reason }
+    );
+    return response;
+  },
+
+  /**
+   * Suspend user temporarily (moderator only)
+   * POST /api/forum/users/:id/suspend
+   */
+  suspendUser: async (userId: string, reason: string, durationDays: number) => {
+    const response = await apiClient.post<{ success: boolean; message: string }>(
+      `${FORUM_BASE}/users/${userId}/suspend`,
+      { reason, durationDays }
+    );
+    return response;
+  },
+
+  /**
+   * Ban user permanently (admin only)
+   * POST /api/forum/users/:id/ban
+   */
+  banUser: async (userId: string, reason: string, isPermanent: boolean) => {
+    const response = await apiClient.post<{ success: boolean; message: string }>(
+      `${FORUM_BASE}/users/${userId}/ban`,
+      { reason, isPermanent }
+    );
+    return response;
+  },
+
+  /**
+   * Get moderation logs
+   * GET /api/forum/moderation/logs
+   */
+  getModerationLogs: async (page = 1, limit = 20) => {
+    const response = await apiClient.get<any>(
+      `${FORUM_BASE}/moderation/logs?page=${page}&limit=${limit}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Get moderation statistics
+   * GET /api/forum/moderation/stats
+   */
+  getModerationStats: async () => {
+    const response = await apiClient.get<any>(`${FORUM_BASE}/moderation/stats`);
+    return response.data;
+  },
+
+  // ========================================
+  // SEARCH ENDPOINTS
+  // ========================================
+
+  /**
+   * Search forum topics and replies
+   * GET /api/forum/search
+   */
+  search: async (query: SearchQuery) => {
+    const params = new URLSearchParams();
+
+    params.append('q', query.q);
+    if (query.page) params.append('page', query.page.toString());
+    if (query.limit) params.append('limit', query.limit.toString());
+    if (query.sortBy) params.append('sortBy', query.sortBy);
+    if (query.categoryId) params.append('categoryId', query.categoryId);
+    if (query.type) params.append('type', query.type);
+    if (query.status) params.append('status', query.status);
+    if (query.dateFrom) params.append('dateFrom', query.dateFrom);
+    if (query.dateTo) params.append('dateTo', query.dateTo);
+    if (query.hasCode !== undefined) params.append('hasCode', query.hasCode.toString());
+    if (query.minUpvotes) params.append('minUpvotes', query.minUpvotes.toString());
+    if (query.tag) params.append('tag', query.tag);
+
+    const response = await apiClient.get<SearchResponse>(
+      `${FORUM_BASE}/search?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Get autocomplete suggestions
+   * GET /api/forum/search/suggest
+   */
+  searchSuggestions: async (query: string) => {
+    const response = await apiClient.get<SearchSuggestionsResponse>(
+      `${FORUM_BASE}/search/suggest?q=${encodeURIComponent(query)}`
+    );
+    return response.data.suggestions;
+  },
+
+  /**
+   * Get popular searches
+   * GET /api/forum/search/popular
+   */
+  getPopularSearches: async () => {
+    const response = await apiClient.get<PopularSearchesResponse>(
+      `${FORUM_BASE}/search/popular`
+    );
+    return response.data.searches;
+  },
+
+  /**
+   * Save a search
+   * POST /api/forum/search/saved
+   */
+  saveSearch: async (data: SavedSearchInput) => {
+    const response = await apiClient.post<{ success: boolean; data: { search: SavedSearch } }>(
+      `${FORUM_BASE}/search/saved`,
+      data
+    );
+    return response.data.search;
+  },
+
+  /**
+   * Get saved searches
+   * GET /api/forum/search/saved
+   */
+  getSavedSearches: async () => {
+    const response = await apiClient.get<SavedSearchesResponse>(
+      `${FORUM_BASE}/search/saved`
+    );
+    return response.data.searches;
+  },
+
+  /**
+   * Delete a saved search
+   * DELETE /api/forum/search/saved/:id
+   */
+  deleteSavedSearch: async (searchId: string) => {
+    const response = await apiClient.delete<{ success: boolean; message: string }>(
+      `${FORUM_BASE}/search/saved/${searchId}`
+    );
+    return response;
+  },
+
+  /**
+   * Get search history
+   * GET /api/forum/search/history
+   */
+  getSearchHistory: async () => {
+    const response = await apiClient.get<SearchHistoryResponse>(
+      `${FORUM_BASE}/search/history`
+    );
+    return response.data.history;
   },
 };
 

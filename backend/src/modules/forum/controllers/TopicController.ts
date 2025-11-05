@@ -10,6 +10,7 @@ import {
   topicIdParamSchema,
   pinTopicSchema,
   lockTopicSchema,
+  unansweredQuestionsQuerySchema,
 } from '../validators/topicValidators';
 
 /**
@@ -223,6 +224,39 @@ export class TopicController extends BaseController {
         error.message.includes('moderators')
       ) {
         return this.forbidden(res, error.message);
+      }
+      return this.handleError(res, error);
+    }
+  });
+
+  /**
+   * GET /api/forum/unanswered
+   * Get unanswered questions with filters and pagination
+   */
+  public getUnansweredQuestions = this.asyncHandler(async (req: Request, res: Response) => {
+    try {
+      const query = unansweredQuestionsQuerySchema.parse(req.query);
+
+      const filters = {
+        categoryId: query.categoryId,
+        tag: query.tag,
+        dateFrom: query.dateFrom,
+        dateTo: query.dateTo,
+      };
+
+      const pagination = {
+        page: query.page,
+        limit: query.limit,
+        sortBy: query.sortBy,
+        sortOrder: query.sortOrder,
+      };
+
+      const result = await this.topicService.getUnansweredQuestions(filters, pagination);
+
+      return this.success(res, result);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return this.validationError(res, error);
       }
       return this.handleError(res, error);
     }

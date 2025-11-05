@@ -38,3 +38,20 @@ export { default as ReputationBadge } from './ReputationBadge';
 export { default as ReputationWidget } from './ReputationWidget';
 export { default as ReputationHistory } from './ReputationHistory';
 export { default as ReputationNotification, useReputationNotification } from './ReputationNotification';
+
+// Search Components
+export { SearchBar } from './SearchBar';
+export { SearchFilters } from './SearchFilters';
+
+// Report Components
+export { ReportButton } from './ReportButton';
+export { ReportModal } from './ReportModal';
+export { ReportReviewPanel } from './ReportReviewPanel';
+
+// Moderation Components
+export { ModeratorMenu } from './ModeratorMenu';
+export { MoveTopicModal } from './MoveTopicModal';
+export { MergeTopicsModal } from './MergeTopicsModal';
+export { UserModerationPanel } from './UserModerationPanel';
+export { ModerationLog } from './ModerationLog';
+export { TopicStatusIndicators, ReplyStatusIndicators } from './TopicStatusIndicators';
