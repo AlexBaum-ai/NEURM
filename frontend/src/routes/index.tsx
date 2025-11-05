@@ -48,10 +48,16 @@ const JobListingsPage = lazy(() => import('@/features/jobs/pages/JobListingsPage
 const JobDetailPage = lazy(() => import('@/features/jobs/pages/JobDetailPage').then(m => ({ default: m.JobDetailPage })));
 const SavedJobsPage = lazy(() => import('@/features/jobs/pages/SavedJobsPage').then(m => ({ default: m.SavedJobsPage })));
 const JobAlertsPage = lazy(() => import('@/features/jobs/pages/JobAlertsPage').then(m => ({ default: m.JobAlertsPage })));
+const ApplicationsPage = lazy(() => import('@/features/jobs/pages/ApplicationsPage').then(m => ({ default: m.ApplicationsPage })));
+const JobPostingForm = lazy(() => import('@/features/jobs/pages/JobPostingForm'));
+const ATSDashboard = lazy(() => import('@/features/jobs/pages/ATSDashboard').then(m => ({ default: m.ATSDashboard })));
+const CandidateSearchPage = lazy(() => import('@/features/jobs/pages/CandidateSearchPage').then(m => ({ default: m.CandidateSearchPage })));
+const AnalyticsDashboardPage = lazy(() => import('@/features/jobs/pages/AnalyticsDashboardPage').then(m => ({ default: m.AnalyticsDashboardPage })));
 
 // Lazy load company pages
 const CompanyProfilePage = lazy(() => import('@/features/companies/pages/CompanyProfilePage'));
 const CompanySettingsPage = lazy(() => import('@/features/companies/pages/CompanySettingsPage'));
+const BulkMessagesPage = lazy(() => import('@/features/companies/pages').then(m => ({ default: m.BulkMessagesPage })));
 
 // Loading fallback
 const PageLoader = () => (
@@ -375,6 +381,14 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'applications',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ApplicationsPage />
+          </Suspense>
+        ),
+      },
+      {
         path: 'jobs/new',
         element: (
           <Suspense fallback={<PageLoader />}>
@@ -403,6 +417,38 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <CompanySettingsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'companies/dashboard/messages',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <BulkMessagesPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'companies/dashboard/applications',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ATSDashboard />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'companies/dashboard/candidates',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <CandidateSearchPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'companies/dashboard/analytics',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <AnalyticsDashboardPage />
           </Suspense>
         ),
       },

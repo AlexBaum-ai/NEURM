@@ -241,3 +241,124 @@ export interface SavedJob {
   savedAt: string;
   job: JobListItem;
 }
+
+// ATS (Applicant Tracking System) types for company recruiters
+export type ATSStatus =
+  | 'submitted'
+  | 'screening'
+  | 'interview'
+  | 'offer'
+  | 'rejected'
+  | 'hired'
+  | 'withdrawn';
+
+export interface ATSApplicant {
+  id: string;
+  applicationId: string;
+  candidateId: string;
+  candidate: {
+    id: string;
+    name: string;
+    email: string;
+    photoUrl: string | null;
+    headline: string | null;
+    location: string | null;
+    profileUrl: string;
+    forumStats?: {
+      reputation: number;
+      topicsCount: number;
+      repliesCount: number;
+      badges: Array<{
+        id: string;
+        name: string;
+        icon: string;
+      }>;
+    };
+  };
+  job: {
+    id: string;
+    title: string;
+    slug: string;
+  };
+  status: ATSStatus;
+  matchScore: number;
+  rating: number | null; // 1-5 stars
+  appliedAt: string;
+  updatedAt: string;
+  coverLetter: string;
+  resumeUrl: string | null;
+  screeningAnswers?: Array<{ question: string; answer: string }>;
+}
+
+export interface ATSApplicantDetail extends ATSApplicant {
+  notes: Array<{
+    id: string;
+    userId: string;
+    userName: string;
+    note: string;
+    createdAt: string;
+  }>;
+  activityLog: Array<{
+    id: string;
+    action: string;
+    description: string;
+    performedBy: string;
+    performedAt: string;
+  }>;
+  sharedWith: Array<{
+    id: string;
+    userId: string;
+    userName: string;
+    sharedAt: string;
+  }>;
+}
+
+export interface ATSFilters {
+  jobId?: string;
+  status?: ATSStatus[];
+  dateFrom?: string;
+  dateTo?: string;
+  minMatchScore?: number;
+  maxMatchScore?: number;
+  rating?: number[];
+  search?: string;
+}
+
+export interface ATSStats {
+  total: number;
+  submitted: number;
+  screening: number;
+  interview: number;
+  offer: number;
+  rejected: number;
+  hired: number;
+}
+
+export interface CompanyApplicationsResponse {
+  applicants: ATSApplicant[];
+  stats: ATSStats;
+  total: number;
+}
+
+export interface AddNoteRequest {
+  note: string;
+}
+
+export interface UpdateRatingRequest {
+  rating: number; // 1-5
+}
+
+export interface ShareApplicationRequest {
+  userIds: string[];
+}
+
+export interface UpdateATSStatusRequest {
+  status: ATSStatus;
+  note?: string;
+}
+
+// Re-export candidate types
+export * from './candidates';
+
+// Re-export analytics types
+export * from './analytics';

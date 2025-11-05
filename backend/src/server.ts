@@ -8,6 +8,7 @@ import redisClient from '@/config/redisClient';
 import prisma from '@/config/database';
 import { setupSessionCleanupScheduler } from '@/jobs/schedulers/sessionCleanup.scheduler';
 import { setupArticleScheduler } from '@/jobs/schedulers/articleScheduler.scheduler';
+import { initJobAnalyticsScheduler } from '@/jobs/schedulers/jobAnalytics.scheduler';
 import { analyticsQueue, shutdownAnalyticsQueue } from '@/jobs/queues/analyticsQueue';
 import { articleSchedulerQueue, shutdownArticleSchedulerQueue } from '@/jobs/queues/articleSchedulerQueue';
 import processAnalyticsEvent from '@/jobs/workers/analyticsWorker';
@@ -92,6 +93,7 @@ const server = app.listen(PORT, async () => {
   // Initialize scheduled jobs
   setupSessionCleanupScheduler();
   setupArticleScheduler();
+  initJobAnalyticsScheduler();
 });
 
 // Handle unhandled promise rejections

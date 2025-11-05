@@ -14,6 +14,16 @@ import type {
   JobAlert,
   CreateAlertRequest,
   UpdateAlertRequest,
+  CompanyApplicationsResponse,
+  ATSApplicantDetail,
+  ATSFilters,
+  UpdateATSStatusRequest,
+  AddNoteRequest,
+  UpdateRatingRequest,
+  ShareApplicationRequest,
+  CompanyAnalytics,
+  JobAnalytics,
+  DateRangeFilter,
 } from '../types';
 
 export const jobsApi = {
@@ -269,5 +279,221 @@ export const jobsApi = {
       `/jobs/alerts/${id}/test`,
       {}
     );
+  },
+
+  // ========== ATS (Applicant Tracking System) APIs for Companies ==========
+
+  /**
+   * Get all applications for company's jobs with filters (ATS dashboard)
+   */
+  getCompanyApplications: async (filters?: ATSFilters): Promise<CompanyApplicationsResponse> => {
+    const queryParams = new URLSearchParams();
+
+    if (filters) {
+      if (filters.jobId) queryParams.append('jobId', filters.jobId);
+      if (filters.status && filters.status.length > 0) {
+        filters.status.forEach((status) => queryParams.append('status', status));
+      }
+      if (filters.dateFrom) queryParams.append('dateFrom', filters.dateFrom);
+      if (filters.dateTo) queryParams.append('dateTo', filters.dateTo);
+      if (filters.minMatchScore !== undefined) {
+        queryParams.append('minMatchScore', filters.minMatchScore.toString());
+      }
+      if (filters.maxMatchScore !== undefined) {
+        queryParams.append('maxMatchScore', filters.maxMatchScore.toString());
+      }
+      if (filters.rating && filters.rating.length > 0) {
+        filters.rating.forEach((rating) => queryParams.append('rating', rating.toString()));
+      }
+      if (filters.search) queryParams.append('search', filters.search);
+    }
+
+    const queryString = queryParams.toString();
+    const response = await apiClient.get<{
+      success: boolean;
+      data: CompanyApplicationsResponse;
+    }>(`/companies/applications${queryString ? '?' + queryString : ''}`);
+    return response.data;
+  },
+
+  /**
+   * Get full application details for ATS (includes notes, activity, etc.)
+   */
+  getCompanyApplicationById: async (id: string): Promise<ATSApplicantDetail> => {
+    const response = await apiClient.get<{
+      success: boolean;
+      data: ATSApplicantDetail;
+    }>(`/companies/applications/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Update application status in ATS
+   */
+  updateApplicationStatus: async (
+    id: string,
+    data: UpdateATSStatusRequest
+  ): Promise<{ success: boolean; message: string }> => {
+    return apiClient.put<{ success: boolean; message: string }>(
+      `/companies/applications/${id}/status`,
+      data
+    );
+  },
+
+  /**
+   * Add a note to an application
+   */
+  addApplicationNote: async (
+    id: string,
+    data: AddNoteRequest
+  ): Promise<{ success: boolean; message: string }> => {
+    return apiClient.post<{ success: boolean; message: string }>(
+      `/companies/applications/${id}/notes`,
+      data
+    );
+  },
+
+  /**
+   * Rate an applicant (1-5 stars)
+   */
+  rateApplicant: async (
+    id: string,
+    data: UpdateRatingRequest
+  ): Promise<{ success: boolean; message: string }> => {
+    return apiClient.put<{ success: boolean; message: string }>(
+      `/companies/applications/${id}/rating`,
+      data
+    );
+  },
+
+  /**
+   * Share application with team members
+   */
+  shareApplication: async (
+    id: string,
+    data: ShareApplicationRequest
+  ): Promise<{ success: boolean; message: string }> => {
+    return apiClient.post<{ success: boolean; message: string }>(
+      `/companies/applications/${id}/share`,
+      data
+    );
+  },
+
+  /**
+   * Get activity log for an application
+   */
+  getApplicationActivity: async (id: string): Promise<any[]> => {
+    const response = await apiClient.get<{
+      success: boolean;
+      data: { activities: any[] };
+    }>(`/companies/applications/${id}/activity`);
+    return response.data.activities;
+  },
+
+  // ========== Analytics APIs for Companies ==========
+
+  /**
+   * Get company-wide analytics with date range filter
+   */
+  getCompanyAnalytics: async (
+    companyId: string,
+    dateFilter?: DateRangeFilter
+  ): Promise<CompanyAnalytics> => {
+    const queryParams = new URLSearchParams();
+
+    if (dateFilter) {
+      if (dateFilter.range !== 'custom') {
+        queryParams.append('range', dateFilter.range);
+      } else {
+        if (dateFilter.startDate) queryParams.append('startDate', dateFilter.startDate);
+        if (dateFilter.endDate) queryParams.append('endDate', dateFilter.endDate);
+      }
+    }
+
+    const queryString = queryParams.toString();
+    const response = await apiClient.get<{
+      success: boolean;
+      data: CompanyAnalytics;
+    }>(`/companies/${companyId}/analytics${queryString ? '?' + queryString : ''}`);
+    return response.data;
+  },
+
+  /**
+   * Get job-specific analytics
+   */
+  getJobAnalytics: async (
+    companyId: string,
+    jobId: string,
+    dateFilter?: DateRangeFilter
+  ): Promise<JobAnalytics> => {
+    const queryParams = new URLSearchParams();
+
+    if (dateFilter) {
+      if (dateFilter.range !== 'custom') {
+        queryParams.append('range', dateFilter.range);
+      } else {
+        if (dateFilter.startDate) queryParams.append('startDate', dateFilter.startDate);
+        if (dateFilter.endDate) queryParams.append('endDate', dateFilter.endDate);
+      }
+    }
+
+    const queryString = queryParams.toString();
+    const response = await apiClient.get<{
+      success: boolean;
+      data: JobAnalytics;
+    }>(
+      `/companies/${companyId}/analytics/jobs/${jobId}${queryString ? '?' + queryString : ''}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Export analytics as CSV
+   */
+  exportAnalyticsCSV: async (companyId: string, dateFilter?: DateRangeFilter): Promise<Blob> => {
+    const queryParams = new URLSearchParams();
+
+    if (dateFilter) {
+      if (dateFilter.range !== 'custom') {
+        queryParams.append('range', dateFilter.range);
+      } else {
+        if (dateFilter.startDate) queryParams.append('startDate', dateFilter.startDate);
+        if (dateFilter.endDate) queryParams.append('endDate', dateFilter.endDate);
+      }
+    }
+
+    const queryString = queryParams.toString();
+    const response = await apiClient.get<Blob>(
+      `/companies/${companyId}/analytics/export/csv${queryString ? '?' + queryString : ''}`,
+      {
+        responseType: 'blob',
+      }
+    );
+    return response;
+  },
+
+  /**
+   * Export analytics as PDF (backend-generated)
+   */
+  exportAnalyticsPDF: async (companyId: string, dateFilter?: DateRangeFilter): Promise<Blob> => {
+    const queryParams = new URLSearchParams();
+
+    if (dateFilter) {
+      if (dateFilter.range !== 'custom') {
+        queryParams.append('range', dateFilter.range);
+      } else {
+        if (dateFilter.startDate) queryParams.append('startDate', dateFilter.startDate);
+        if (dateFilter.endDate) queryParams.append('endDate', dateFilter.endDate);
+      }
+    }
+
+    const queryString = queryParams.toString();
+    const response = await apiClient.get<Blob>(
+      `/companies/${companyId}/analytics/export/pdf${queryString ? '?' + queryString : ''}`,
+      {
+        responseType: 'blob',
+      }
+    );
+    return response;
   },
 };
