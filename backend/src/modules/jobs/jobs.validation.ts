@@ -109,8 +109,10 @@ export const listJobsQuerySchema = z.object({
   frameworks: z.string().optional(), // Comma-separated
   modelStrategy: ModelStrategyEnum.optional(),
   search: z.string().optional(),
-  sortBy: z.enum(['publishedAt', 'salaryMax', 'viewCount']).default('publishedAt'),
+  sortBy: z.enum(['publishedAt', 'salaryMax', 'viewCount', 'matchScore']).default('publishedAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
+  match: z.coerce.boolean().optional(), // Include match scores
+  minMatchScore: z.coerce.number().min(0).max(100).optional(), // Filter by minimum match score
 });
 
 export type ListJobsQuery = z.infer<typeof listJobsQuerySchema>;
@@ -129,3 +131,45 @@ export const jobSlugParamSchema = z.object({
 
 export type JobIdParam = z.infer<typeof jobIdParamSchema>;
 export type JobSlugParam = z.infer<typeof jobSlugParamSchema>;
+
+// ============================================================================
+// APPLICATION SCHEMAS
+// ============================================================================
+
+export const ApplicationStatusEnum = z.enum([
+  'submitted',
+  'viewed',
+  'screening',
+  'interview',
+  'offer',
+  'rejected',
+  'withdrawn',
+]);
+
+export const applyToJobSchema = z.object({
+  coverLetter: z.string().max(5000, 'Cover letter must not exceed 5000 characters').optional(),
+  screeningAnswers: z.record(z.any()).optional(),
+  source: z.string().max(50).default('easy_apply'),
+});
+
+export type ApplyToJobInput = z.infer<typeof applyToJobSchema>;
+
+export const listApplicationsQuerySchema = z.object({
+  status: ApplicationStatusEnum.optional(),
+  sortBy: z.enum(['date_applied', 'status', 'company']).default('date_applied'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+});
+
+export type ListApplicationsQuery = z.infer<typeof listApplicationsQuerySchema>;
+
+export const updateApplicationStatusSchema = z.object({
+  status: ApplicationStatusEnum,
+});
+
+export type UpdateApplicationStatusInput = z.infer<typeof updateApplicationStatusSchema>;
+
+export const applicationIdParamSchema = z.object({
+  id: z.string().uuid('Invalid application ID format'),
+});
+
+export type ApplicationIdParam = z.infer<typeof applicationIdParamSchema>;

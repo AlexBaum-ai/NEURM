@@ -31,6 +31,19 @@ router.get(
 );
 
 /**
+ * @route   GET /api/v1/jobs/:id/match
+ * @desc    Get match score for a specific job
+ * @access  Private (authenticated users only)
+ * @param   id - Job UUID
+ */
+router.get(
+  '/:id/match',
+  authMiddleware,
+  rateLimiterMiddleware({ points: 100, duration: 60 }),
+  asyncHandler(jobController.getJobMatch)
+);
+
+/**
  * @route   GET /api/v1/jobs/:id
  * @desc    Get job details by ID
  * @access  Public

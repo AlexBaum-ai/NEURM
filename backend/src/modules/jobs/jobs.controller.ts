@@ -96,8 +96,9 @@ export class JobController {
       }
 
       const query: ListJobsQuery = validationResult.data;
+      const userId = req.user?.id; // Optional user ID for match scoring
 
-      const result = await this.service.listJobs(query);
+      const result = await this.service.listJobs(query, userId);
 
       res.status(200).json({
         success: true,
@@ -314,6 +315,48 @@ export class JobController {
         extra: {
           companyId: req.params.companyId,
           userId: req.user?.id,
+        },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * GET /api/v1/jobs/:id/match
+   * Get match score for a specific job (authenticated users only)
+   */
+  getJobMatch = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('Authentication required to view match scores');
+      }
+
+      // Validate ID parameter
+      const paramValidation = jobIdParamSchema.safeParse(req.params);
+
+      if (!paramValidation.success) {
+        const error = paramValidation.error as ZodError;
+        throw new ValidationError(error.issues[0].message);
+      }
+
+      const { id } = paramValidation.data;
+
+      logger.info(`User ${userId} requesting match score for job ${id}`);
+
+      const result = await this.service.getJobMatch(id, userId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'JobController', method: 'getJobMatch' },
+        extra: {
+          userId: req.user?.id,
+          jobId: req.params.id,
         },
       });
       throw error;
