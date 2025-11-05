@@ -5,6 +5,10 @@ import replyRoutes from './replyRoutes';
 import voteRoutes from './voteRoutes';
 import moderationRoutes from './moderationRoutes';
 import searchRoutes from './searchRoutes';
+import badgeRoutes from './badgeRoutes';
+import leaderboardRoutes from './leaderboardRoutes';
+import pollRoutes from './pollRoutes';
+import promptRoutes from '../prompts/prompts.routes';
 
 /**
  * Forum Routes Index
@@ -60,6 +64,18 @@ router.use('/search', searchRoutes);
 // Mount report routes (SPRINT-5-003)
 import reportRoutes from './reportRoutes';
 router.use('/reports', reportRoutes);
+
+// Mount badge routes (SPRINT-6-001)
+router.use('/badges', badgeRoutes);
+
+// Mount leaderboard routes (SPRINT-6-003)
+router.use('/leaderboards', leaderboardRoutes);
+
+// Mount poll routes (SPRINT-6-005)
+router.use('/polls', pollRoutes);
+
+// Mount prompt routes (SPRINT-6-007)
+router.use('/prompts', promptRoutes);
 
 // TODO: Mount other forum routes when implemented
 // router.use('/tags', tagRoutes);

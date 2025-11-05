@@ -135,6 +135,17 @@ enum BadgeType {
   platinum
 }
 
+enum BadgeCategory {
+  skill
+  activity
+  special
+}
+
+enum PollType {
+  single
+  multiple
+}
+
 enum JobType {
   full_time
   part_time
@@ -266,7 +277,11 @@ model User {
   reputation              UserReputation?
   reputationHistory       ReputationHistory[]
   userBadges              UserBadge[]
+  leaderboardEntries      Leaderboard[]
   watchedTopics           TopicWatch[]
+  prompts                 Prompt[]             @relation("PromptAuthor")
+  promptRatings           PromptRating[]
+  promptVotes             PromptVote[]
   savedPrompts            SavedPrompt[]
   pollVotes               PollVote[]
   moderatedCategories     CategoryModerator[] @relation("CategoryModerators")
@@ -862,7 +877,6 @@ model Topic {
   isPinned        Boolean     @default(false) @map("is_pinned")
   isLocked        Boolean     @default(false) @map("is_locked")
   isHidden        Boolean     @default(false) @map("is_hidden")
-  pollId          String?     @map("poll_id")
   viewCount       Int         @default(0) @map("view_count")
   replyCount      Int         @default(0) @map("reply_count")
   voteScore       Int         @default(0) @map("vote_score")
@@ -876,8 +890,8 @@ model Topic {
 
   author   User          @relation(fields: [authorId], references: [id])
   category ForumCategory @relation(fields: [categoryId], references: [id])
-  poll     Poll?         @relation(fields: [pollId], references: [id])
 
+  poll        Poll?
   replies     Reply[]
   votes       TopicVote[]
   tags        TopicTag[]
@@ -891,7 +905,6 @@ model Topic {
   @@index([isDraft])
   @@index([isFlagged])
   @@index([type])
-  @@index([pollId])
   @@index([createdAt(sort: Desc)])
   @@index([isPinned, createdAt(sort: Desc)])
   @@map("topics")
@@ -1061,19 +1074,21 @@ model ReputationHistory {
 }
 
 model Badge {
-  id          String    @id @default(uuid())
-  name        String    @db.VarChar(100)
-  slug        String    @unique @db.VarChar(100)
-  description String    @db.Text
-  iconUrl     String    @map("icon_url") @db.VarChar(500)
-  badgeType   BadgeType @map("badge_type")
+  id          String        @id @default(uuid())
+  name        String        @db.VarChar(100)
+  slug        String        @unique @db.VarChar(100)
+  description String        @db.Text
+  iconUrl     String        @map("icon_url") @db.VarChar(500)
+  badgeType   BadgeType     @map("badge_type")
+  category    BadgeCategory
   criteria    Json
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
 
   userBadges UserBadge[]
 
   @@index([slug])
   @@index([badgeType])
+  @@index([category])
   @@map("badges")
 }
 
@@ -1081,6 +1096,7 @@ model UserBadge {
   id       String   @id @default(uuid())
   userId   String   @map("user_id")
   badgeId  String   @map("badge_id")
+  progress Int      @default(0)
   earnedAt DateTime @default(now()) @map("earned_at") @db.Timestamptz(3)
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1090,6 +1106,29 @@ model UserBadge {
   @@index([userId])
   @@index([badgeId])
   @@map("user_badges")
+}
+
+model Leaderboard {
+  id              String   @id @default(uuid())
+  period          String   @db.VarChar(20)
+  periodStart     DateTime @map("period_start") @db.Timestamptz(3)
+  periodEnd       DateTime @map("period_end") @db.Timestamptz(3)
+  userId          String   @map("user_id")
+  rank            Int
+  reputationGain  Int      @map("reputation_gain")
+  postCount       Int      @default(0) @map("post_count")
+  replyCount      Int      @default(0) @map("reply_count")
+  acceptedAnswers Int      @default(0) @map("accepted_answers")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([period, userId])
+  @@index([period, rank])
+  @@index([userId])
+  @@index([updatedAt(sort: Desc)])
+  @@map("leaderboards")
 }
 
 model TopicWatch {
@@ -1106,21 +1145,76 @@ model TopicWatch {
 }
 
 model Prompt {
-  id         String   @id @default(uuid())
-  title      String   @db.VarChar(255)
-  content    String   @db.Text
-  category   String   @db.VarChar(100)
-  tags       String[]
-  modelIds   String[] @map("model_ids")
-  voteScore  Int      @default(0) @map("vote_score")
-  usageCount Int      @default(0) @map("usage_count")
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  parentId      String?  @map("parent_id")
+  title         String   @db.VarChar(255)
+  content       String   @db.Text
+  category      String   @db.VarChar(100)
+  useCase       String?  @map("use_case") @db.VarChar(200)
+  model         String?  @db.VarChar(100)
+  tags          String[]
+  templateJson  Json?    @map("template_json")
+  ratingAvg     Decimal  @default(0) @map("rating_avg") @db.Decimal(3, 2)
+  ratingCount   Int      @default(0) @map("rating_count")
+  voteScore     Int      @default(0) @map("vote_score")
+  upvoteCount   Int      @default(0) @map("upvote_count")
+  downvoteCount Int      @default(0) @map("downvote_count")
+  forkCount     Int      @default(0) @map("fork_count")
+  usageCount    Int      @default(0) @map("usage_count")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
+  author  User     @relation("PromptAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  parent  Prompt?  @relation("PromptForks", fields: [parentId], references: [id])
+  forks   Prompt[] @relation("PromptForks")
+  ratings PromptRating[]
+  votes   PromptVote[]
   savedBy SavedPrompt[]
 
+  @@index([userId])
+  @@index([parentId])
   @@index([category])
+  @@index([model])
   @@index([voteScore(sort: Desc)])
+  @@index([ratingAvg(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+  @@index([forkCount(sort: Desc)])
   @@map("prompts")
+}
+
+model PromptRating {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  promptId  String   @map("prompt_id")
+  rating    Int
+  comment   String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, promptId])
+  @@index([promptId])
+  @@index([userId])
+  @@index([rating])
+  @@map("prompt_ratings")
+}
+
+model PromptVote {
+  promptId  String   @map("prompt_id")
+  userId    String   @map("user_id")
+  value     Int
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([promptId, userId])
+  @@index([promptId])
+  @@index([userId])
+  @@map("prompt_votes")
 }
 
 model SavedPrompt {
@@ -1137,18 +1231,37 @@ model SavedPrompt {
 }
 
 model Poll {
-  id             String    @id @default(uuid())
-  question       String    @db.VarChar(255)
-  options        Json
-  multipleChoice Boolean   @default(false) @map("multiple_choice")
-  expiresAt      DateTime? @map("expires_at") @db.Timestamptz(3)
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  id          String    @id @default(uuid())
+  topicId     String?   @map("topic_id")
+  question    String    @db.VarChar(255)
+  pollType    PollType  @default(single) @map("poll_type")
+  isAnonymous Boolean   @default(true) @map("is_anonymous")
+  deadline    DateTime? @db.Timestamptz(3)
+  totalVotes  Int       @default(0) @map("total_votes")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  votes  PollVote[]
-  topics Topic[]
+  topic   Topic?       @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  options PollOption[]
+  votes   PollVote[]
 
-  @@index([expiresAt])
+  @@index([topicId])
+  @@index([deadline])
   @@map("polls")
+}
+
+model PollOption {
+  id           String @id @default(uuid())
+  pollId       String @map("poll_id")
+  optionText   String @db.VarChar(200)
+  voteCount    Int    @default(0) @map("vote_count")
+  displayOrder Int    @default(0) @map("display_order")
+
+  poll  Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes PollVote[]
+
+  @@index([pollId])
+  @@index([pollId, displayOrder])
+  @@map("poll_options")
 }
 
 model SavedSearch {
@@ -1216,17 +1329,18 @@ model ModerationLog {
 }
 
 model PollVote {
-  id            String   @id @default(uuid())
-  pollId        String   @map("poll_id")
-  userId        String   @map("user_id")
-  optionIndexes Int[]    @map("option_indexes")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  id        String   @id @default(uuid())
+  pollId    String   @map("poll_id")
+  optionId  String   @map("option_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  poll Poll @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  poll   Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([pollId, userId])
-  @@index([pollId])
+  @@index([pollId, userId])
+  @@index([optionId])
   @@map("poll_votes")
 }
 

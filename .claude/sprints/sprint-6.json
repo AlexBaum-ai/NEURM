@@ -2,7 +2,7 @@
   "sprintNumber": 6,
   "sprintGoal": "Complete forum with badges, leaderboards, polls, and Prompt Library",
   "duration": "2 weeks",
-  "status": "pending",
+  "status": "completed",
   "priority": "medium",
   "startDate": null,
   "endDate": null,
@@ -13,7 +13,9 @@
       "description": "Create badge framework with skill, activity, and special badges earned through achievements",
       "assignedTo": "backend",
       "estimatedHours": 12,
-      "dependencies": ["SPRINT-4-010"],
+      "dependencies": [
+        "SPRINT-4-010"
+      ],
       "acceptanceCriteria": [
         "badges table with types: skill, activity, special",
         "Badge definitions: name, description, icon, criteria, rarity",
@@ -28,7 +30,7 @@
         "Badge categories: Prompt Master, RAG Expert, Helpful, Popular, Beta Tester"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "tables": "badges (id, name, type, criteria_json, icon, rarity), user_badges (user_id, badge_id, earned_at, progress)",
         "cron": "Bull queue checks badge criteria every hour",
@@ -42,7 +44,9 @@
       "description": "Display badges on profiles and create badge showcase page",
       "assignedTo": "frontend",
       "estimatedHours": 10,
-      "dependencies": ["SPRINT-6-001"],
+      "dependencies": [
+        "SPRINT-6-001"
+      ],
       "acceptanceCriteria": [
         "Badge display on user profile (earned + locked)",
         "Badge cards show: icon, name, description, earned date",
@@ -56,7 +60,7 @@
         "Shareable badge achievements (social links)"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "routes": "/badges, /u/:username (profile)",
         "components": "BadgeCard, BadgeGallery, BadgeProgress, BadgeNotification",
@@ -69,7 +73,9 @@
       "description": "Create leaderboards for top contributors weekly, monthly, and all-time",
       "assignedTo": "backend",
       "estimatedHours": 8,
-      "dependencies": ["SPRINT-4-010"],
+      "dependencies": [
+        "SPRINT-4-010"
+      ],
       "acceptanceCriteria": [
         "GET /api/leaderboards/weekly returns top 50 users this week",
         "GET /api/leaderboards/monthly returns top 50 users this month",
@@ -82,7 +88,7 @@
         "Performance: precomputed rankings, not realtime calculation"
       ],
       "priority": "low",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "table": "leaderboards (period, user_id, rank, reputation_gain, updated_at)",
         "cron": "Bull queue recalculates rankings every hour",
@@ -96,7 +102,9 @@
       "description": "Create leaderboard display with tabs for weekly, monthly, all-time",
       "assignedTo": "frontend",
       "estimatedHours": 8,
-      "dependencies": ["SPRINT-6-003"],
+      "dependencies": [
+        "SPRINT-6-003"
+      ],
       "acceptanceCriteria": [
         "Leaderboards page at /forum/leaderboards",
         "Tabs: Weekly, Monthly, All-Time, Hall of Fame",
@@ -109,7 +117,7 @@
         "Update timestamp displayed"
       ],
       "priority": "low",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "route": "/forum/leaderboards",
         "components": "Leaderboard, LeaderboardEntry, RankPodium",
@@ -122,7 +130,9 @@
       "description": "Create poll creation, voting, and results tracking for topics",
       "assignedTo": "backend",
       "estimatedHours": 10,
-      "dependencies": ["SPRINT-4-003"],
+      "dependencies": [
+        "SPRINT-4-003"
+      ],
       "acceptanceCriteria": [
         "polls table linked to topics (optional)",
         "poll_options table with multiple choices",
@@ -138,7 +148,7 @@
         "Vote counts and percentages calculated"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "tables": "polls (id, topic_id, question, type, deadline, anonymous), poll_options (id, poll_id, option_text, vote_count), poll_votes (user_id, poll_id, option_id)",
         "unique": "UNIQUE(user_id, poll_id, option_id) for single_choice",
@@ -151,7 +161,9 @@
       "description": "Create poll creation widget and voting interface in topics",
       "assignedTo": "frontend",
       "estimatedHours": 12,
-      "dependencies": ["SPRINT-6-005"],
+      "dependencies": [
+        "SPRINT-6-005"
+      ],
       "acceptanceCriteria": [
         "Poll builder in topic creation form",
         "Add/remove poll options (min 2, max 10)",
@@ -167,7 +179,7 @@
         "Responsive design"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "components": "PollBuilder, PollVoting, PollResults",
         "charts": "Use recharts for results visualization",
@@ -180,7 +192,9 @@
       "description": "Create community prompt repository with rating, forking, and categorization",
       "assignedTo": "backend",
       "estimatedHours": 14,
-      "dependencies": ["SPRINT-0-002"],
+      "dependencies": [
+        "SPRINT-0-002"
+      ],
       "acceptanceCriteria": [
         "prompts table stores community prompts",
         "Prompt fields: title, content, category, use_case, model, author_id",
@@ -196,7 +210,7 @@
         "Search and filter by category, use_case, model, rating"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "tables": "prompts (id, user_id, parent_id, title, content, category, use_case, model, template_json, rating_avg, vote_score), prompt_ratings (user_id, prompt_id, rating)",
         "fork": "Copy prompt, set parent_id to original, increment fork_count",
@@ -209,7 +223,9 @@
       "description": "Create prompt browsing, creation, and forking interface",
       "assignedTo": "frontend",
       "estimatedHours": 16,
-      "dependencies": ["SPRINT-6-007"],
+      "dependencies": [
+        "SPRINT-6-007"
+      ],
       "acceptanceCriteria": [
         "Prompt Library at /forum/prompts",
         "Grid of prompt cards with title, excerpt, rating, votes",
@@ -227,7 +243,7 @@
         "Responsive design"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "routes": "/forum/prompts, /forum/prompts/new, /forum/prompts/:id",
         "components": "PromptLibrary, PromptCard, PromptDetail, PromptEditor, PromptTemplate",
@@ -264,7 +280,7 @@
         "No console errors"
       ],
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "tools": "Playwright E2E, Jest unit tests",
         "scenarios": [

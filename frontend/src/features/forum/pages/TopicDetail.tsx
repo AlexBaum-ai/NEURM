@@ -24,6 +24,7 @@ import {
 } from '../hooks/useReplies';
 import TopicHeader from '../components/TopicHeader';
 import { ReplyTree } from '../components/ReplyTree';
+import { PollVoting } from '../components/PollVoting';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import type { QuotedReply, ReplySortOption } from '../types';
 
@@ -265,36 +266,7 @@ const TopicContent: React.FC<{ topicId: string }> = ({ topicId }) => {
           {/* Poll */}
           {topic.poll && (
             <Box sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: 'divider' }}>
-              <Typography variant="h6" gutterBottom>
-                {topic.poll.question}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" gutterBottom>
-                {topic.poll.allowMultiple ? 'Multiple choice' : 'Single choice'}
-              </Typography>
-              <Stack spacing={1} sx={{ mt: 2 }}>
-                {topic.poll.options.map((option) => (
-                  <Box
-                    key={option.id}
-                    sx={{
-                      p: 2,
-                      border: 1,
-                      borderColor: 'divider',
-                      borderRadius: 1,
-                      cursor: 'pointer',
-                      '&:hover': {
-                        bgcolor: 'action.hover',
-                      },
-                    }}
-                  >
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography variant="body2">{option.text}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {option.voteCount} votes
-                      </Typography>
-                    </Stack>
-                  </Box>
-                ))}
-              </Stack>
+              <PollVoting poll={topic.poll} />
             </Box>
           )}
         </Paper>

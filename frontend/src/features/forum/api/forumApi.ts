@@ -762,6 +762,125 @@ export const forumApi = {
     );
     return response.data.history;
   },
+
+  // ========================================
+  // LEADERBOARD ENDPOINTS
+  // ========================================
+
+  /**
+   * Get weekly leaderboard
+   * GET /api/leaderboards/weekly
+   */
+  getWeeklyLeaderboard: async () => {
+    const response = await apiClient.get<any>('/leaderboards/weekly');
+    return response.data;
+  },
+
+  /**
+   * Get monthly leaderboard
+   * GET /api/leaderboards/monthly
+   */
+  getMonthlyLeaderboard: async () => {
+    const response = await apiClient.get<any>('/leaderboards/monthly');
+    return response.data;
+  },
+
+  /**
+   * Get all-time leaderboard
+   * GET /api/leaderboards/all-time
+   */
+  getAllTimeLeaderboard: async () => {
+    const response = await apiClient.get<any>('/leaderboards/all-time');
+    return response.data;
+  },
+
+  /**
+   * Get current user's ranks across all periods
+   * GET /api/leaderboards/me
+   */
+  getCurrentUserRanks: async () => {
+    const response = await apiClient.get<any>('/leaderboards/me');
+    return response.data;
+  },
+
+  /**
+   * Get hall of fame (archived top contributors)
+   * GET /api/leaderboards/hall-of-fame
+   */
+  getHallOfFame: async () => {
+    const response = await apiClient.get<any>('/leaderboards/hall-of-fame');
+    return response.data;
+  },
+
+  // ========================================
+  // POLL ENDPOINTS
+  // ========================================
+
+  /**
+   * Create a new poll for a topic
+   * POST /api/forum/polls
+   */
+  createPoll: async (data: {
+    topicId: string;
+    question: string;
+    allowMultiple: boolean;
+    isAnonymous: boolean;
+    endsAt?: string;
+    options: string[];
+  }) => {
+    const response = await apiClient.post<{
+      success: boolean;
+      data: { poll: any };
+    }>(`${FORUM_BASE}/polls`, data);
+    return response.data.poll;
+  },
+
+  /**
+   * Get poll by ID
+   * GET /api/forum/polls/:id
+   */
+  getPollById: async (pollId: string) => {
+    const response = await apiClient.get<{
+      success: boolean;
+      data: { poll: any };
+    }>(`${FORUM_BASE}/polls/${pollId}`);
+    return response.data.poll;
+  },
+
+  /**
+   * Get poll by topic ID
+   * GET /api/forum/polls/topic/:topicId
+   */
+  getPollByTopicId: async (topicId: string) => {
+    const response = await apiClient.get<{
+      success: boolean;
+      data: { poll: any };
+    }>(`${FORUM_BASE}/polls/topic/${topicId}`);
+    return response.data.poll;
+  },
+
+  /**
+   * Vote on a poll
+   * POST /api/forum/polls/:id/vote
+   */
+  voteOnPoll: async (pollId: string, optionIds: string[]) => {
+    const response = await apiClient.post<{
+      success: boolean;
+      data: { poll: any };
+    }>(`${FORUM_BASE}/polls/${pollId}/vote`, { optionIds });
+    return response.data.poll;
+  },
+
+  /**
+   * Delete a poll (admin only)
+   * DELETE /api/forum/polls/:id
+   */
+  deletePoll: async (pollId: string) => {
+    const response = await apiClient.delete<{ success: boolean; message: string }>(
+      `${FORUM_BASE}/polls/${pollId}`
+    );
+    return response;
+  },
 };
 
 export default forumApi;

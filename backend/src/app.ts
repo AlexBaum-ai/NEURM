@@ -23,7 +23,7 @@ import modelRoutes from '@/modules/models/models.routes';
 import mediaRoutes from '@/modules/media/media.routes';
 import folderRoutes from '@/modules/media/folder.routes';
 import forumRoutes from '@/modules/forum/routes';
-import { reputationRoutes } from '@/modules/forum';
+import { reputationRoutes, userBadgeRoutes } from '@/modules/forum';
 import messagingRoutes from '@/modules/messaging/messaging.routes';
 import jobRoutes from '@/modules/jobs/jobs.routes';
 import companyRoutes from '@/modules/jobs/company.routes';
@@ -95,6 +95,7 @@ app.use('/api/v1/media', mediaRoutes);
 app.use('/api/v1/media/folders', folderRoutes);
 app.use('/api/v1/forum', forumRoutes);
 app.use('/api/v1', reputationRoutes); // Reputation routes for /api/v1/users/:userId/reputation
+app.use('/api/v1/users/:userId/badges', userBadgeRoutes); // Badge routes for /api/v1/users/:userId/badges
 app.use('/api/v1', messagingRoutes); // Messaging routes for /api/v1/messages and /api/v1/conversations
 app.use('/api/v1/jobs', jobRoutes); // Job posting routes
 app.use('/api/v1/companies', companyRoutes); // Company profile routes

@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { seedForumCategories } from './seeds/forumCategories.seed';
 import { seedSpamKeywords } from './seeds/spamKeywords.seed';
+import { seedBadges } from './seeds/badges.seed';
 
 /**
  * Main Seed Script
@@ -21,6 +22,10 @@ async function main() {
 
     // Seed spam keywords
     await seedSpamKeywords(prisma);
+    console.log('');
+
+    // Seed badges
+    await seedBadges(prisma);
     console.log('');
 
     console.log('✅ Database seeding completed successfully!\n');

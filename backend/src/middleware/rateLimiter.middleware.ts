@@ -98,6 +98,20 @@ export const accountSettingsLimiter = createRateLimiter({
   message: 'Too many account setting changes, please try again later',
 });
 
+// Content creation limiter: 10 posts per hour (for prompts, topics, etc.)
+export const contentCreationLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: 'Too many content creation requests, please try again later',
+});
+
+// Vote limiter: 30 votes per hour (for upvotes, downvotes, ratings)
+export const voteLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  message: 'Too many votes, please try again later',
+});
+
 export default {
   createRateLimiter,
   apiLimiter,
@@ -107,4 +121,6 @@ export default {
   contentLimiter,
   searchLimiter,
   accountSettingsLimiter,
+  contentCreationLimiter,
+  voteLimiter,
 };

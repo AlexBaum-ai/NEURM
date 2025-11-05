@@ -34,6 +34,11 @@ const SearchResults = lazy(() => import('@/features/forum/pages/SearchResults'))
 const UnansweredQuestionsPage = lazy(() => import('@/features/forum/pages/UnansweredQuestionsPage'));
 const ModerationDashboard = lazy(() => import('@/features/forum/pages/ModerationDashboard'));
 const ModerationQueue = lazy(() => import('@/features/forum/pages/ModerationQueue'));
+const Leaderboards = lazy(() => import('@/features/forum/pages/Leaderboards'));
+const BadgesPage = lazy(() => import('@/features/forum/pages/BadgesPage'));
+const PromptLibrary = lazy(() => import('@/features/forum/pages/PromptLibrary'));
+const PromptDetail = lazy(() => import('@/features/forum/pages/PromptDetail'));
+const PromptEditor = lazy(() => import('@/features/forum/pages/PromptEditor'));
 
 // Lazy load messaging pages
 const MessagesPage = lazy(() => import('@/features/messages/pages/MessagesPage'));
@@ -264,6 +269,22 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'forum/leaderboards',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <Leaderboards />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'badges',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <BadgesPage />
+          </Suspense>
+        ),
+      },
+      {
         path: 'forum/mod',
         element: (
           <Suspense fallback={<PageLoader />}>
@@ -292,6 +313,38 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <TopicDetail />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'forum/prompts',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PromptLibrary />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'forum/prompts/new',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PromptEditor isEdit={false} />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'forum/prompts/:id',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PromptDetail />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'forum/prompts/:id/edit',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PromptEditor isEdit={true} />
           </Suspense>
         ),
       },

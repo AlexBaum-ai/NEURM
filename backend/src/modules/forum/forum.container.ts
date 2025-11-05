@@ -15,6 +15,9 @@ import { VoteController } from './controllers/VoteController';
 import { ReputationRepository } from './repositories/ReputationRepository';
 import { ReputationService } from './services/reputationService';
 import { ReputationController } from './controllers/ReputationController';
+import { LeaderboardRepository } from './repositories/LeaderboardRepository';
+import { LeaderboardService } from './services/leaderboardService';
+import { LeaderboardController } from './controllers/LeaderboardController';
 import { ModerationRepository } from './repositories/ModerationRepository';
 import { ModerationService } from './services/moderationService';
 import { ModerationController } from './controllers/ModerationController';
@@ -26,6 +29,12 @@ import { SearchController } from './controllers/SearchController';
 import { ReportRepository } from './repositories/ReportRepository';
 import { ReportService } from './services/reportService';
 import { ReportController } from './controllers/ReportController';
+import { BadgeRepository } from './repositories/BadgeRepository';
+import { BadgeService } from './services/badgeService';
+import { BadgeController } from './controllers/BadgeController';
+import { PollRepository } from './repositories/PollRepository';
+import { PollService } from './services/pollService';
+import { PollController } from './controllers/PollController';
 
 /**
  * Forum Module Dependency Injection Container
@@ -54,6 +63,9 @@ export function registerForumDependencies(prisma: PrismaClient): void {
   container.register(ReputationRepository, {
     useClass: ReputationRepository,
   });
+  container.register(LeaderboardRepository, {
+    useClass: LeaderboardRepository,
+  });
   container.register('ModerationRepository', {
     useClass: ModerationRepository,
   });
@@ -68,6 +80,12 @@ export function registerForumDependencies(prisma: PrismaClient): void {
   });
   container.register('ReportRepository', {
     useFactory: () => new ReportRepository(prisma),
+  });
+  container.register(BadgeRepository, {
+    useClass: BadgeRepository,
+  });
+  container.register('PollRepository', {
+    useClass: PollRepository,
   });
 
   // Register services
@@ -86,6 +104,9 @@ export function registerForumDependencies(prisma: PrismaClient): void {
   container.register('ReputationService', {
     useClass: ReputationService,
   });
+  container.register('LeaderboardService', {
+    useClass: LeaderboardService,
+  });
   container.register('ModerationService', {
     useClass: ModerationService,
   });
@@ -94,6 +115,12 @@ export function registerForumDependencies(prisma: PrismaClient): void {
   });
   container.register('ReportService', {
     useClass: ReportService,
+  });
+  container.register(BadgeService, {
+    useClass: BadgeService,
+  });
+  container.register('PollService', {
+    useClass: PollService,
   });
 
   // Register controllers
@@ -112,6 +139,9 @@ export function registerForumDependencies(prisma: PrismaClient): void {
   container.register(ReputationController, {
     useClass: ReputationController,
   });
+  container.register(LeaderboardController, {
+    useClass: LeaderboardController,
+  });
   container.register(ModerationController, {
     useClass: ModerationController,
   });
@@ -120,6 +150,12 @@ export function registerForumDependencies(prisma: PrismaClient): void {
   });
   container.register(ReportController, {
     useClass: ReportController,
+  });
+  container.register(BadgeController, {
+    useClass: BadgeController,
+  });
+  container.register(PollController, {
+    useClass: PollController,
   });
 }
 
