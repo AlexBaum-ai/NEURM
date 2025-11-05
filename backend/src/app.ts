@@ -27,6 +27,7 @@ import { reputationRoutes } from '@/modules/forum';
 import messagingRoutes from '@/modules/messaging/messaging.routes';
 import jobRoutes from '@/modules/jobs/jobs.routes';
 import companyRoutes from '@/modules/jobs/company.routes';
+import profilesRoutes from '@/modules/profiles/profiles.routes';
 
 const app: Application = express();
 
@@ -84,6 +85,7 @@ app.get('/health', (_req: Request, res: Response) => {
 
 // API routes
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/profiles', profilesRoutes); // Candidate profile routes
 app.use('/api/v1/news', newsRoutes);
 app.use('/api/v1/news/articles', articleRoutes);
 app.use('/api/v1/admin/articles', articleRoutes);

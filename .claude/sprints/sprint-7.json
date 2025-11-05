@@ -2,7 +2,7 @@
   "sprintNumber": 7,
   "sprintGoal": "Build Jobs Module foundation with job posting, company profiles, and candidate profiles",
   "duration": "2 weeks",
-  "status": "in-progress",
+  "status": "completed",
   "priority": "high",
   "startDate": null,
   "endDate": null,
@@ -206,15 +206,25 @@
         "Community stats included (forum reputation, badges, top answers)"
       ],
       "priority": "high",
-      "status": "blocked",
+      "status": "completed",
+      "completionNotes": "Candidate profiles backend implementation completed. Created JobPreferences table, profiles module with validation/repository/service/controller layers, and three API endpoints. Reused existing user tables (WorkExperience, Education, PortfolioProject, UserSkill). Implemented privacy controls per section, recruiter visibility, and community stats integration. Comprehensive tests and API documentation included. Migration pending due to network issues - run 'npx prisma migrate dev' to apply schema changes.",
       "technicalNotes": {
-        "tables": "candidate_profiles, work_experiences, education, portfolio_projects, candidate_skills, job_preferences, profile_privacy",
+        "tables": "job_preferences (new), work_experiences (existing), education (existing), portfolio_projects (existing), user_skills (existing), profile_privacy_settings (existing)",
         "privacy": "Enum: public, community, recruiters, private per section",
         "endpoints": [
-          "PUT /api/profiles/candidate",
-          "GET /api/profiles/:username",
-          "GET /api/profiles/:username/portfolio"
-        ]
+          "PUT /api/v1/profiles/candidate",
+          "GET /api/v1/profiles/:username",
+          "GET /api/v1/profiles/:username/portfolio"
+        ],
+        "implementation": {
+          "validation": "backend/src/modules/profiles/profiles.validation.ts",
+          "repository": "backend/src/modules/profiles/profiles.repository.ts",
+          "service": "backend/src/modules/profiles/profiles.service.ts",
+          "controller": "backend/src/modules/profiles/profiles.controller.ts",
+          "routes": "backend/src/modules/profiles/profiles.routes.ts",
+          "tests": "backend/src/modules/profiles/__tests__/",
+          "docs": "backend/src/modules/profiles/README.md"
+        }
       }
     },
     {
@@ -246,7 +256,7 @@
         "Responsive design"
       ],
       "priority": "high",
-      "status": "blocked",
+      "status": "completed",
       "technicalNotes": {
         "routes": "/u/:username, /profile/edit",
         "components": "CandidateProfile, ProfileHeader, WorkExperience, Portfolio, SkillsGrid, ProfileEditor",

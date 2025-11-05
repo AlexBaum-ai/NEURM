@@ -248,6 +248,7 @@ model User {
   workExperiences     WorkExperience[]
   educations          Education[]
   portfolioProjects   PortfolioProject[]
+  jobPreferences      JobPreferences?
 
   // Content creation
   articles            Article[]            @relation("ArticleAuthor")
@@ -490,6 +491,31 @@ model PortfolioProject {
   @@index([userId])
   @@index([userId, isFeatured])
   @@map("portfolio_projects")
+}
+
+model JobPreferences {
+  id                   String   @id @default(uuid())
+  userId               String   @unique @map("user_id")
+  rolesInterested      String[] @map("roles_interested")
+  jobTypes             String[] @map("job_types")
+  workLocations        String[] @map("work_locations")
+  preferredLocations   String[] @map("preferred_locations")
+  openToRelocation     Boolean  @default(false) @map("open_to_relocation")
+  salaryExpectationMin Decimal? @map("salary_expectation_min") @db.Decimal(12, 2)
+  salaryExpectationMax Decimal? @map("salary_expectation_max") @db.Decimal(12, 2)
+  salaryCurrency       String?  @map("salary_currency") @db.VarChar(10)
+  desiredStartDate     DateTime? @map("desired_start_date") @db.Date
+  availability         String?  @db.VarChar(100)
+  companyPreferences   Json?    @map("company_preferences")
+  visibleToRecruiters  Boolean  @default(true) @map("visible_to_recruiters")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([visibleToRecruiters])
+  @@map("job_preferences")
 }
 
 // ============================================================================
