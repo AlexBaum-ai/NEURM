@@ -1,7 +1,7 @@
 import { useSuspenseQuery, useMutation } from '@tanstack/react-query';
 import { jobsApi } from '../api/jobsApi';
 import type { DateRangeFilter, CompanyAnalytics, JobAnalytics } from '../types';
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 
 /**
  * Hook to fetch company analytics with date range filtering

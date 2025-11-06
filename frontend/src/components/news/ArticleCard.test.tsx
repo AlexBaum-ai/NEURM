@@ -98,7 +98,7 @@ describe('ArticleCard', () => {
     it('renders featured image with correct attributes', () => {
       render(<ArticleCard article={mockArticle} />, { wrapper: Wrapper });
 
-      const image = screen.getByAlt('Test Article Title');
+      const image = screen.getByAltText('Test Article Title');
       expect(image).toBeInTheDocument();
       expect(image).toHaveAttribute('loading', 'lazy');
       expect(image).toHaveAttribute('src', 'https://example.com/image.jpg');
@@ -385,7 +385,7 @@ describe('ArticleCard', () => {
     it('has srcset attribute for responsive images', () => {
       render(<ArticleCard article={mockArticle} />, { wrapper: Wrapper });
 
-      const image = screen.getByAlt('Test Article Title') as HTMLImageElement;
+      const image = screen.getByAltText('Test Article Title') as HTMLImageElement;
       expect(image.srcset).toBeTruthy();
       expect(image.srcset).toContain('400w');
       expect(image.srcset).toContain('800w');
@@ -394,14 +394,14 @@ describe('ArticleCard', () => {
     it('has sizes attribute for responsive images', () => {
       render(<ArticleCard article={mockArticle} />, { wrapper: Wrapper });
 
-      const image = screen.getByAlt('Test Article Title') as HTMLImageElement;
+      const image = screen.getByAltText('Test Article Title') as HTMLImageElement;
       expect(image.sizes).toBeTruthy();
     });
 
     it('uses lazy loading for images', () => {
       render(<ArticleCard article={mockArticle} />, { wrapper: Wrapper });
 
-      const image = screen.getByAlt('Test Article Title');
+      const image = screen.getByAltText('Test Article Title');
       expect(image).toHaveAttribute('loading', 'lazy');
     });
   });
@@ -410,7 +410,7 @@ describe('ArticleCard', () => {
     it('displays author avatar when available', () => {
       render(<ArticleCard article={mockArticle} />, { wrapper: Wrapper });
 
-      const avatar = screen.getByAlt('testuser');
+      const avatar = screen.getByAltText('testuser');
       expect(avatar).toBeInTheDocument();
     });
 

@@ -1,4 +1,3 @@
-import type { Article } from '@/features/news/types';
 
 export interface BookmarkCollection {
   id: string;

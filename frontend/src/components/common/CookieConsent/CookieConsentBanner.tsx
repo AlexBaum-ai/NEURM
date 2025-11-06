@@ -213,7 +213,7 @@ export const CookieConsentBanner: React.FC<CookieConsentBannerProps> = ({
                   Customize
                 </Button>
                 <Button
-                  variant="primary"
+                  variant="default"
                   size="sm"
                   onClick={handleAcceptAll}
                   aria-label="Accept all cookies"

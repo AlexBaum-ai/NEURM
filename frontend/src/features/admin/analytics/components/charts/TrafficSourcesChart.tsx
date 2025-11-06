@@ -48,7 +48,7 @@ const TrafficSourcesChart: React.FC<TrafficSourcesChartProps> = ({ sources }) =>
                   fill="#8884d8"
                   dataKey="sessions"
                 >
-                  {sources.map((entry, index) => (
+                  {sources.map((_entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>

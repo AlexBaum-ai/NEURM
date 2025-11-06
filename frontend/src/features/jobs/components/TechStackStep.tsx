@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UseFormWatch, UseFormSetValue, FieldErrors } from 'react-hook-form';
+import type { UseFormWatch, UseFormSetValue, FieldErrors } from 'react-hook-form';
 import { X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select } from '@/components/forms/Select';

@@ -15,7 +15,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 const CompanyProfileContent: React.FC<{ slug: string }> = ({ slug }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { company, jobs, jobCount } = useCompany(slug);
+  const { company, jobs } = useCompany(slug);
   const { follow, unfollow, isFollowing, isUnfollowing } = useFollowCompany(company.id, slug);
 
   // Check if current user is the company owner

@@ -176,7 +176,7 @@ export const ModelVersions: React.FC<ModelVersionsProps> = ({ modelSlug }) => {
 
             {/* Timeline Items */}
             <div className="space-y-6">
-              {data.versions.map((version, index) => (
+              {data.versions.map((version) => (
                 <div key={version.id} className="relative pl-10">
                   {/* Timeline Dot */}
                   <div

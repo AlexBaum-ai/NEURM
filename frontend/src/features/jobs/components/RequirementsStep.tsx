@@ -1,5 +1,5 @@
 import React from 'react';
-import { UseFormRegister, FieldErrors, UseFormWatch, UseFormSetValue } from 'react-hook-form';
+import type { UseFormRegister, FieldErrors, UseFormWatch, UseFormSetValue } from 'react-hook-form';
 import { Select } from '@/components/forms/Select';
 import { Textarea } from '@/components/forms/Textarea';
 import SkillsSelector from './SkillsSelector';

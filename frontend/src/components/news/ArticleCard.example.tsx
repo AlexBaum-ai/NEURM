@@ -54,7 +54,7 @@ const exampleArticle: Article = {
 export const GridVariantExample: React.FC = () => {
   const [article, setArticle] = useState(exampleArticle);
 
-  const handleBookmarkToggle = async (articleId: string, isBookmarked: boolean) => {
+  const handleBookmarkToggle = async (_articleId: string, isBookmarked: boolean) => {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 500));
 

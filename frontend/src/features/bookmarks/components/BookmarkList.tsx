@@ -1,10 +1,9 @@
 import React, { Suspense } from 'react';
-import { Box, Typography, Skeleton, Alert } from '@mui/material';
+import { Box, Typography, Skeleton } from '@mui/material';
 import { BookmarkBorder } from '@mui/icons-material';
 import { BookmarkCard } from './BookmarkCard';
 import { useBookmarks, useRemoveBookmark, useUpdateBookmark } from '../hooks/useBookmarks';
 import { useCollections } from '../hooks/useCollections';
-import type { BookmarkCollection } from '../types';
 
 interface BookmarkListProps {
   collectionId?: string;

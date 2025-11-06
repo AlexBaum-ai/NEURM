@@ -17,7 +17,7 @@ import { CollectionSidebar } from '../components/CollectionSidebar';
 import { BookmarkList } from '../components/BookmarkList';
 import { CreateCollectionModal } from '../components/CreateCollectionModal';
 import { EditCollectionModal } from '../components/EditCollectionModal';
-import { useCollections, useDeleteCollection } from '../hooks/useCollections';
+import { useDeleteCollection } from '../hooks/useCollections';
 import type { BookmarkCollection } from '../types';
 
 export const BookmarksPage: React.FC = () => {

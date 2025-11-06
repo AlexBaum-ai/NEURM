@@ -35,7 +35,7 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
     handleSubmit,
     watch,
     reset,
-    formState: { errors, isDirty },
+    formState: { errors },
   } = useForm<GeneralSettingsFormData>({
     resolver: zodResolver(generalSettingsSchema),
     defaultValues: settings,

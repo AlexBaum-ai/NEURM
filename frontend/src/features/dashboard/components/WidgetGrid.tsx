@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { Responsive, WidthProvider, Layout } from 'react-grid-layout';
+import { Responsive, WidthProvider } from 'react-grid-layout';
+import type { Layout } from 'react-grid-layout';
 import { Settings } from 'lucide-react';
 import type { DashboardWidget, DashboardData } from '../types';
 import { widgetsToLayout, layoutToWidgets } from '../utils/widgetConfigs';

@@ -110,7 +110,7 @@ const RevenueCharts: React.FC<RevenueChartsProps> = ({ revenue }) => {
                   fill="#8884d8"
                   dataKey="revenue"
                 >
-                  {revenue.revenueByPlan.map((entry, index) => (
+                  {revenue.revenueByPlan.map((_entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>

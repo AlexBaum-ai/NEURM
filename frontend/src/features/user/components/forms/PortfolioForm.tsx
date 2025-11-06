@@ -6,8 +6,8 @@ import Input from '@/components/common/Input/Input';
 import Button from '@/components/common/Button/Button';
 import RichTextEditor from '@/components/editors/RichTextEditor';
 import { useToast } from '@/components/common/Toast/ToastProvider';
-import {
-  portfolioProjectSchema,
+import { portfolioProjectSchema } from '../../types';
+import type {
   PortfolioProjectFormData,
   PortfolioProject,
 } from '../../types';

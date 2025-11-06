@@ -74,7 +74,7 @@ export const TrafficSourcesChart: React.FC<TrafficSourcesChartProps> = ({
                 labelStyle={{ color: 'var(--text-primary)' }}
               />
               <Bar dataKey="count" radius={[0, 8, 8, 0]}>
-                {chartData.map((entry, index) => (
+                {chartData.map((_entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Bar>

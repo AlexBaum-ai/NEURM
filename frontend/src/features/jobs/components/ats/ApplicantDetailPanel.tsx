@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { X, Star, Mail, ExternalLink, FileText, Award, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/common/Button/Button';
@@ -70,12 +70,12 @@ export const ApplicantDetailPanel: React.FC<ApplicantDetailPanelProps> = ({
   onStatusChange,
   onRatingChange,
   onAddNote,
-  onShare,
+  
   isLoading = false,
 }) => {
   const [newNote, setNewNote] = useState('');
   const [isSavingNote, setIsSavingNote] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<ATSStatus | null>(null);
+  const [_selectedStatus, setSelectedStatus] = useState<ATSStatus | null>(null);
 
   if (!isOpen || !applicant) return null;
 

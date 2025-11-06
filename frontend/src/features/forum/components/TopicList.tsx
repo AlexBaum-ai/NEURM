@@ -18,7 +18,8 @@ import {
 import { Add as AddIcon } from '@mui/icons-material';
 import { useTopics } from '../hooks';
 import TopicCard from './TopicCard';
-import TopicFilters, { TopicFilterState } from './TopicFilters';
+import TopicFilters from './TopicFilters';
+import type { TopicFilterState } from './TopicFilters';
 import type { TopicListQuery } from '../types';
 
 interface TopicListProps {

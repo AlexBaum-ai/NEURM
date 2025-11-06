@@ -24,7 +24,7 @@ export {
   useFunnelAnalysis,
   useExportAnalytics,
   useInvalidateAnalyticsCache,
-} from './hooks/useAnalytics';
+} from '../hooks/useAnalytics';
 
 // Types
 export type * from '../types/analytics.types';

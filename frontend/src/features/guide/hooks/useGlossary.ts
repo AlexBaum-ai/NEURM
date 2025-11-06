@@ -50,7 +50,7 @@ export const useGroupedGlossaryTerms = (filters?: GlossaryFilters) => {
   const { data: terms } = useGlossaryTerms(filters);
 
   return useMemo(() => {
-    const grouped = terms.reduce((acc, term) => {
+    const grouped = terms.reduce((acc: any, term: any) => {
       const firstLetter = term.term[0].toUpperCase();
       if (!acc[firstLetter]) {
         acc[firstLetter] = [];

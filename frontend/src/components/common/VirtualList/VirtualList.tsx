@@ -1,5 +1,5 @@
-import React, { ComponentType } from 'react';
-import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
+import React, { type ComponentType } from 'react';
+import { FixedSizeList as List, type ListChildComponentProps } from 'react-window';
 
 interface VirtualListProps<T> {
   items: T[];

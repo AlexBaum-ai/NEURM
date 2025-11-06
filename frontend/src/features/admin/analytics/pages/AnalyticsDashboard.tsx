@@ -23,13 +23,11 @@ const AnalyticsDashboardContent: React.FC = () => {
   const [compareMode, setCompareMode] = useState(false);
 
   // Fetch analytics data
-  const { data: analyticsData } = useAnalytics({
+  const { data: analytics } = useAnalytics({
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
     period: 'daily',
   });
-
-  const analytics = analyticsData?.data?.analytics;
 
   if (!analytics) {
     return (

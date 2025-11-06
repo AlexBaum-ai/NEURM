@@ -62,7 +62,7 @@ export const UserTable: React.FC<UserTableProps> = ({
   onSuspendUser,
   onBanUser,
   onSendMessage,
-  selectedUsers,
+  selectedUsers: _selectedUsers,
   onSelectionChange,
 }) => {
   const [sorting, setSorting] = useState<SortingState>([]);

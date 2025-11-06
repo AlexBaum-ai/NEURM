@@ -81,12 +81,11 @@ export const useBulkModerate = () => {
   return useMutation({
     mutationFn: (action: BulkModerationAction) => adminApi.bulkModerateContent(action),
     onSuccess: (data) => {
-      const { processed, failed } = data.data || {};
-      if (processed) {
-        toast.success(`Successfully moderated ${processed} item(s)`);
-      }
-      if (failed) {
-        toast.error(`Failed to moderate ${failed} item(s)`);
+      const affectedCount = data.affectedCount || 0;
+      if (affectedCount > 0) {
+        toast.success(`Successfully moderated ${affectedCount} item(s)`);
+      } else {
+        toast.success(data.message || 'Content moderated successfully');
       }
 
       // Invalidate content queue

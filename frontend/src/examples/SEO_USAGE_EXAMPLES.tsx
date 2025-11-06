@@ -406,7 +406,6 @@ export const SearchResultsExample = () => {
 // ============================================
 export const PaginatedListExample = () => {
   const currentPage = 2;
-  const totalPages = 10;
 
   const breadcrumbSchema = generateBreadcrumbSchema([
     { name: 'Home', path: '/' },

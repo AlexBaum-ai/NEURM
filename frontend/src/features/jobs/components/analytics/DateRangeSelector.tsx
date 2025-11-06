@@ -34,7 +34,7 @@ export const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({ value, onC
     }
   };
 
-  const currentLabel = value
+  const __currentLabel = value
     ? value.range === 'custom'
       ? `${value.startDate} to ${value.endDate}`
       : presetRanges.find((r) => r.value === value.range)?.label || 'Last 30 days'

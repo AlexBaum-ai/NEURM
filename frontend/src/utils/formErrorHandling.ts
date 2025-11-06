@@ -1,4 +1,4 @@
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { AppError, ErrorType, ErrorSeverity, handleError } from './errorHandling';
 
 /**
@@ -180,12 +180,12 @@ export function useFormSubmissionHandler<T = any>(
 export function showFieldErrorsSummary(fieldErrors: FieldError[]): void {
   if (fieldErrors.length === 0) return;
 
-  const errorMessages = fieldErrors
+  const errorMessage = fieldErrors
     .map((err) => `${err.field}: ${err.message}`)
-    .join('\n');
+    .slice(0, 3) // Show first 3 errors
+    .join(', ');
 
-  toast.error('Validation Errors', {
-    description: errorMessages,
+  toast.error(`Validation Errors: ${errorMessage}${fieldErrors.length > 3 ? '...' : ''}`, {
     duration: 5000,
   });
 }
@@ -272,7 +272,7 @@ export function createDebouncedSubmit<T>(
   return async (): Promise<T | null> => {
     // Prevent double submission
     if (isSubmitting) {
-      toast.warning('Please wait, your request is being processed...');
+      toast('Please wait, your request is being processed...', { icon: '⏳' });
       return null;
     }
 

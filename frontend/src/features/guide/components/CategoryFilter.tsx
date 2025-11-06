@@ -26,11 +26,11 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({ selectedCategory, onCat
           <div className="flex items-center justify-between">
             <span>All Categories</span>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              {categories.reduce((sum, cat) => sum + cat.count, 0)}
+              {categories.reduce((sum: any, cat: any) => sum + cat.count, 0)}
             </span>
           </div>
         </button>
-        {categories.map(category => (
+        {categories.map((category: any) => (
           <button
             key={category.category}
             onClick={() => onCategoryChange(category.category)}

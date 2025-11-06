@@ -4,7 +4,6 @@ import { ArrowLeft, MessageCircle } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { ConversationList, ChatView } from '../components';
 import { useConversations, useDeleteConversation, useBlockUser } from '../hooks';
-import { cn } from '@/lib/utils';
 
 const MessagesPage: React.FC = () => {
   const { conversationId } = useParams();

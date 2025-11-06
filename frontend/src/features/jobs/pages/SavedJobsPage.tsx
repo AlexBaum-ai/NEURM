@@ -6,7 +6,6 @@ import { JobCard } from '../components/JobCard';
 import { Card } from '@/components/common/Card/Card';
 import { Button } from '@/components/common/Button/Button';
 import { Link } from 'react-router-dom';
-import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import type { JobListItem } from '../types';
 
 export const SavedJobsPage: React.FC = () => {

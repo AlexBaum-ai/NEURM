@@ -100,7 +100,7 @@ export const MoveTopicModal: React.FC<MoveTopicModalProps> = ({
   const categories = categoriesData?.categories || [];
   const flatCategories = flattenCategories(categories);
 
-  const selectedCategory = flatCategories.find((c) => c.category.id === selectedCategoryId);
+  const ___selectedCategory = flatCategories.find((c) => c.category.id === selectedCategoryId);
 
   return (
     <Dialog

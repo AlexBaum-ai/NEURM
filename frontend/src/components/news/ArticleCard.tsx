@@ -2,8 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, Eye, Bookmark, BookmarkCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import type { Article } from '@/features/news/types';
+import { useAuthStore } from '@/store/authStore';
 
 export interface ArticleCardProps {
   article: {
@@ -62,7 +61,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   showBookmark = true,
   onBookmarkToggle,
 }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthStore();
   const [isBookmarked, setIsBookmarked] = useState(article.isBookmarked || false);
   const [isBookmarking, setIsBookmarking] = useState(false);
 

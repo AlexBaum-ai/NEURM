@@ -9,7 +9,6 @@ import { Link } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import BadgeCard from './BadgeCard';
 import BadgeModal from './BadgeModal';
-import BadgeShareButton from './BadgeShareButton';
 import { useUserBadges } from '../hooks/useBadges';
 import type { BadgeWithProgress } from '../types/badge';
 

@@ -15,10 +15,6 @@ import PreviewModal from '../components/PreviewModal';
 import {
   jobFormSchema,
   type JobFormValues,
-  basicInfoSchema,
-  requirementsSchema,
-  techStackSchema,
-  detailsSchema
 } from '../utils/validation';
 import { jobsApi } from '../api/jobsApi';
 

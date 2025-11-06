@@ -123,7 +123,7 @@ export const useFollow = (entityType: FollowEntityType, entityId: number) => {
 
       return { previousStatus };
     },
-    onError: (err, variables, context) => {
+    onError: (err, context) => {
       // Rollback on error
       if (context?.previousStatus) {
         queryClient.setQueryData(followKeys.status(entityType, entityId), context.previousStatus);
@@ -168,7 +168,7 @@ export const useUnfollow = (followId: number, entityType: FollowEntityType, enti
 
       return { previousStatus };
     },
-    onError: (err, variables, context) => {
+    onError: (err, context) => {
       // Rollback on error
       if (context?.previousStatus) {
         queryClient.setQueryData(followKeys.status(entityType, entityId), context.previousStatus);

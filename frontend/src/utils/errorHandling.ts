@@ -1,5 +1,5 @@
 import { captureException, addSentryBreadcrumb } from '@/lib/sentry';
-import { toast } from 'sonner'; // Assuming you're using sonner for toasts
+import toast from 'react-hot-toast';
 
 /**
  * Error types for categorization
@@ -238,29 +238,18 @@ export function handleError(error: any, context?: string): AppError {
  * Show error toast notification
  */
 export function showErrorToast(error: AppError): void {
-  const toastOptions = {
-    duration: error.severity === ErrorSeverity.CRITICAL ? 10000 : 5000,
-    action: error.isRetryable
-      ? {
-          label: 'Retry',
-          onClick: () => {
-            // Retry logic should be handled by the calling component
-            console.log('Retry requested');
-          },
-        }
-      : undefined,
-  };
+  const duration = error.severity === ErrorSeverity.CRITICAL ? 10000 : 5000;
 
   switch (error.severity) {
     case ErrorSeverity.CRITICAL:
     case ErrorSeverity.HIGH:
-      toast.error(error.userMessage, toastOptions);
+      toast.error(error.userMessage, { duration });
       break;
     case ErrorSeverity.MEDIUM:
-      toast.error(error.userMessage, toastOptions);
+      toast.error(error.userMessage, { duration });
       break;
     case ErrorSeverity.LOW:
-      toast.warning(error.userMessage, toastOptions);
+      toast(error.userMessage, { duration, icon: '⚠️' });
       break;
   }
 }
@@ -382,9 +371,5 @@ export function handleBoundaryError(error: Error, errorInfo: React.ErrorInfo): v
   // Show critical error notification
   toast.error('A critical error occurred. Please refresh the page.', {
     duration: 10000,
-    action: {
-      label: 'Refresh',
-      onClick: () => window.location.reload(),
-    },
   });
 }
