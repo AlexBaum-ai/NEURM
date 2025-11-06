@@ -19,6 +19,7 @@ const Footer: React.FC = () => {
       { label: t('nav.contact'), to: '/contact' },
       { label: t('footer.privacy'), to: '/privacy' },
       { label: t('footer.terms'), to: '/terms' },
+      { label: 'Cookie Policy', to: '/cookies' },
     ],
   };
 

@@ -538,4 +538,6 @@ export * from './prompt';
 
 // Re-export leaderboard types
 export * from './leaderboard';
-\n// Re-export badge types\nexport * from './badge';
+
+// Re-export badge types
+export * from './badge';

@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import logger from '@/utils/logger';
+import { prismaLoggingMiddleware } from '@/middleware/prisma-logging.middleware';
 
 // Singleton pattern for Prisma Client
 let prisma: PrismaClient;
@@ -21,6 +22,9 @@ if (process.env.NODE_ENV === 'production') {
   }
   prisma = global.__prisma;
 }
+
+// Add logging middleware for slow query detection
+prisma.$use(prismaLoggingMiddleware);
 
 // Don't connect during module load - let Prisma handle it lazily
 // This prevents blocking the application startup

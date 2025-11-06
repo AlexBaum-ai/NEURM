@@ -1,6 +1,5 @@
 import React, { Suspense, useState, useRef } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import { useArticleDetail } from '../hooks/useArticleDetail';
 import { useArticleAnalytics } from '../hooks/useArticleAnalytics';
 import { ArticleHeader } from '../components/ArticleHeader';
@@ -10,6 +9,9 @@ import { TableOfContents } from '../components/TableOfContents';
 import { RelatedArticles } from '../components/RelatedArticles';
 import { ReadingProgress } from '../components/ReadingProgress';
 import { RecommendationsSidebar, RecommendationsSidebarSkeleton } from '@/features/recommendations';
+import { SEO, StructuredData } from '@/components/common/SEO';
+import { generateArticleSchema, generateBreadcrumbSchema } from '@/utils/structuredData';
+import { extractExcerpt } from '@/utils/seo';
 import type { TableOfContentsItem } from '../types';
 
 const ArticleDetailContent: React.FC<{ slug: string }> = ({ slug }) => {
@@ -30,43 +32,48 @@ const ArticleDetailContent: React.FC<{ slug: string }> = ({ slug }) => {
     setTocItems(items);
   };
 
-  // Generate Open Graph and Twitter Card metadata
-  const metaDescription = article.summary.slice(0, 160);
-  const metaImage = article.featuredImageUrl || `${window.location.origin}/og-default.png`;
-  const canonicalUrl = window.location.href;
+  // Generate SEO metadata
+  const metaDescription = article.summary || extractExcerpt(article.content, 160);
+  const keywords = article.tags.map((t) => t.name);
+
+  // Generate structured data
+  const articleSchema = generateArticleSchema({
+    title: article.title,
+    description: metaDescription,
+    content: article.content,
+    featuredImage: article.featuredImageUrl,
+    publishedAt: article.publishedAt,
+    updatedAt: article.updatedAt,
+    author: {
+      name: article.author.name || article.author.username,
+      username: article.author.username,
+    },
+    slug: article.slug,
+  });
+
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'News', path: '/news' },
+    { name: article.category.name, path: `/news?category=${article.category.slug}` },
+    { name: article.title, path: `/news/${article.slug}` },
+  ]);
 
   return (
     <>
-      <Helmet>
-        {/* Basic meta tags */}
-        <title>{article.title} | Neurmatic</title>
-        <meta name="description" content={metaDescription} />
-        <link rel="canonical" href={canonicalUrl} />
-
-        {/* Open Graph meta tags */}
-        <meta property="og:type" content="article" />
-        <meta property="og:title" content={article.title} />
-        <meta property="og:description" content={metaDescription} />
-        <meta property="og:image" content={metaImage} />
-        <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:site_name" content="Neurmatic" />
-        <meta property="article:published_time" content={article.publishedAt} />
-        <meta property="article:author" content={article.author.username} />
-        <meta property="article:section" content={article.category.name} />
-        {article.tags.map((tag) => (
-          <meta key={tag.slug} property="article:tag" content={tag.name} />
-        ))}
-
-        {/* Twitter Card meta tags */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={article.title} />
-        <meta name="twitter:description" content={metaDescription} />
-        <meta name="twitter:image" content={metaImage} />
-
-        {/* Additional SEO meta tags */}
-        <meta name="author" content={article.author.username} />
-        <meta name="keywords" content={article.tags.map((t) => t.name).join(', ')} />
-      </Helmet>
+      <SEO
+        title={article.title}
+        description={metaDescription}
+        type="article"
+        image={article.featuredImageUrl}
+        url={`/news/${article.slug}`}
+        keywords={keywords}
+        author={article.author.username}
+        publishedTime={article.publishedAt}
+        modifiedTime={article.updatedAt}
+        section={article.category.name}
+        tags={keywords}
+      />
+      <StructuredData data={[articleSchema, breadcrumbSchema]} />
 
       <ReadingProgress />
 

@@ -2,12 +2,88 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>neurmatic-frontend</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Default meta tags (will be overridden by react-helmet-async) -->
+    <title>Neurmatic - LLM Community Platform</title>
+    <meta name="description" content="Join the Neurmatic community for LLM news, discussions, and job opportunities. Stay updated with the latest in Large Language Models." />
+    <meta name="keywords" content="LLM, large language models, AI, machine learning, ChatGPT, GPT-4, Claude, community, jobs, forum" />
+    <meta name="author" content="Neurmatic" />
+
+    <!-- Theme color -->
+    <meta name="theme-color" content="#2563eb" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Neurmatic" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- DNS Prefetch and Preconnect for performance -->
+    <link rel="dns-prefetch" href="https://vps-1a707765.vps.ovh.net" />
+    <link rel="preconnect" href="https://vps-1a707765.vps.ovh.net" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Preload critical resources -->
+    <link rel="modulepreload" href="/src/main.tsx" />
+
+    <!-- Performance hints -->
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+    <!-- Critical CSS inlining (if needed) -->
+    <style>
+      /* Critical CSS for initial render */
+      #root {
+        min-height: 100vh;
+      }
+
+      /* Loading spinner styles */
+      .app-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: #ffffff;
+      }
+
+      .app-loading-spinner {
+        width: 3rem;
+        height: 3rem;
+        border: 0.25rem solid #e5e7eb;
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .app-loading {
+          background: #0f172a;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Initial loading state -->
+      <div class="app-loading">
+        <div class="app-loading-spinner"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

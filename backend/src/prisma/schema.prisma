@@ -481,6 +481,14 @@ model User {
   skillEndorsementsGiven  SkillEndorsement[]     @relation("SkillEndorsementsByUser")
   skillEndorsementsReceived SkillEndorsement[]   @relation("SkillEndorsementsReceived")
 
+  // GDPR & Legal
+  consents                   UserConsent[]            @relation("UserConsents")
+  consentLogs                ConsentLog[]             @relation("UserConsentLogs")
+  emailUnsubscribes          EmailUnsubscribe[]       @relation("EmailUnsubscribes")
+  dataDeletionRequests       DataDeletionRequest[]    @relation("DataDeletionRequests")
+  processedDeletionRequests  DataDeletionRequest[]    @relation("ProcessedDeletionRequests")
+  publishedLegalDocuments    LegalDocument[]          @relation("PublishedLegalDocuments")
+
   // Follow counts
   followerCount  Int @default(0) @map("follower_count")
   followingCount Int @default(0) @map("following_count")
@@ -2759,4 +2767,164 @@ model AdminAuditLog {
   @@index([action])
   @@index([createdAt(sort: Desc)])
   @@map("admin_audit_log")
+}
+
+// ============================================================================
+// GDPR COMPLIANCE & LEGAL
+// ============================================================================
+
+enum ConsentType {
+  necessary    // Essential cookies and functionality
+  functional   // Enhanced features
+  analytics    // Usage tracking and analytics
+  marketing    // Marketing and advertising
+}
+
+enum ConsentStatus {
+  granted
+  denied
+  withdrawn
+}
+
+enum LegalDocumentType {
+  privacy_policy
+  terms_of_service
+  cookie_policy
+  data_processing_agreement
+}
+
+enum DataDeletionStatus {
+  requested
+  processing
+  completed
+  cancelled
+}
+
+model UserConsent {
+  id            String        @id @default(uuid())
+  userId        String        @map("user_id")
+  consentType   ConsentType   @map("consent_type")
+  status        ConsentStatus @default(denied)
+  grantedAt     DateTime?     @map("granted_at") @db.Timestamptz(3)
+  withdrawnAt   DateTime?     @map("withdrawn_at") @db.Timestamptz(3)
+  ipAddress     String?       @map("ip_address") @db.VarChar(45)
+  userAgent     String?       @map("user_agent") @db.VarChar(500)
+  version       Int           @default(1) // Version of consent (for tracking policy changes)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation("UserConsents", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, consentType])
+  @@index([userId])
+  @@index([consentType])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("user_consents")
+}
+
+model ConsentLog {
+  id            String        @id @default(uuid())
+  userId        String        @map("user_id")
+  consentType   ConsentType   @map("consent_type")
+  status        ConsentStatus
+  ipAddress     String?       @map("ip_address") @db.VarChar(45)
+  userAgent     String?       @map("user_agent") @db.VarChar(500)
+  version       Int           // Version of consent at time of action
+  metadata      Json?         // Additional context
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation("UserConsentLogs", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([consentType])
+  @@index([createdAt(sort: Desc)])
+  @@map("consent_logs")
+}
+
+model EmailUnsubscribe {
+  id              String   @id @default(uuid())
+  userId          String?  @map("user_id") // Nullable for users who delete account
+  email           String   @db.VarChar(255)
+  unsubscribeType String   @map("unsubscribe_type") @db.VarChar(50) // 'all', 'marketing', 'notifications', 'digest', etc.
+  token           String   @unique @db.VarChar(255) // Unsubscribe token
+  unsubscribedAt  DateTime @default(now()) @map("unsubscribed_at") @db.Timestamptz(3)
+
+  user User? @relation("EmailUnsubscribes", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([email])
+  @@index([token])
+  @@map("email_unsubscribes")
+}
+
+model DataDeletionRequest {
+  id            String             @id @default(uuid())
+  userId        String             @map("user_id")
+  status        DataDeletionStatus @default(requested)
+  reason        String?            @db.Text
+  requestedAt   DateTime           @default(now()) @map("requested_at") @db.Timestamptz(3)
+  processedAt   DateTime?          @map("processed_at") @db.Timestamptz(3)
+  completedAt   DateTime?          @map("completed_at") @db.Timestamptz(3)
+  processedBy   String?            @map("processed_by") // Admin user ID
+  notes         String?            @db.Text
+  exportedData  String?            @map("exported_data") @db.Text // Path to exported data file
+
+  user User @relation("DataDeletionRequests", fields: [userId], references: [id], onDelete: Cascade)
+  processedByAdmin User? @relation("ProcessedDeletionRequests", fields: [processedBy], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([requestedAt(sort: Desc)])
+  @@map("data_deletion_requests")
+}
+
+model LegalDocument {
+  id           String             @id @default(uuid())
+  documentType LegalDocumentType  @map("document_type")
+  version      String             @db.VarChar(50) // e.g., "1.0", "2.1"
+  title        String             @db.VarChar(255)
+  content      String             @db.Text // Markdown or HTML content
+  effectiveAt  DateTime           @map("effective_at") @db.Timestamptz(3) // When this version becomes active
+  publishedAt  DateTime?          @map("published_at") @db.Timestamptz(3)
+  publishedBy  String?            @map("published_by")
+  isActive     Boolean            @default(false) @map("is_active")
+  createdAt    DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  publisher User? @relation("PublishedLegalDocuments", fields: [publishedBy], references: [id], onDelete: SetNull)
+
+  @@unique([documentType, version])
+  @@index([documentType])
+  @@index([isActive])
+  @@index([effectiveAt])
+  @@map("legal_documents")
+}
+
+model DataRetentionPolicy {
+  id              String   @id @default(uuid())
+  dataType        String   @map("data_type") @db.VarChar(100) // e.g., 'logs', 'analytics', 'sessions'
+  retentionDays   Int      @map("retention_days")
+  description     String?  @db.Text
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([dataType])
+  @@index([isActive])
+  @@map("data_retention_policies")
+}
+
+model DPOContact {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(255)
+  email       String   @db.VarChar(255)
+  phone       String?  @db.VarChar(50)
+  address     String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([isActive])
+  @@map("dpo_contacts")
 }
