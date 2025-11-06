@@ -347,7 +347,8 @@
         "Responsive design"
       ],
       "priority": "low",
-      "status": "pending",
+      "status": "completed",
+      "completedAt": "2025-11-06",
       "technicalNotes": {
         "components": "ActivityFeed, ActivityItem, ActivityTimeline",
         "location": "User profile /u/:username/activity, Following feed /following"
