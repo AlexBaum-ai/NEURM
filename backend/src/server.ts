@@ -15,6 +15,10 @@ import processAnalyticsEvent from '@/jobs/workers/analyticsWorker';
 import processArticleScheduler from '@/jobs/workers/articleSchedulerWorker';
 import { registerForumDependencies } from '@/modules/forum/forum.container';
 import { registerAdminDependencies } from '@/modules/admin/admin.container';
+import { performHealthCheck } from '@/services/monitoring.service';
+import { scheduleAlertChecks } from '@/services/alerting.service';
+import { scheduleMetricsLogging } from '@/middleware/performance-monitoring.middleware';
+import { logQueryMetricsSummary } from '@/middleware/prisma-logging.middleware';
 
 const PORT = env.PORT || 3000;
 
@@ -99,6 +103,35 @@ const server = app.listen(PORT, async () => {
   setupSessionCleanupScheduler();
   setupArticleScheduler();
   initJobAnalyticsScheduler();
+
+  // Initialize monitoring and alerting
+  logger.info('Initializing monitoring and alerting systems...');
+
+  // Schedule alert checks every 5 minutes
+  scheduleAlertChecks(5, performHealthCheck);
+  logger.info('Alert checking scheduled (every 5 minutes)');
+
+  // Schedule metrics logging every hour
+  scheduleMetricsLogging(60);
+  logger.info('Performance metrics logging scheduled (every hour)');
+
+  // Schedule database metrics logging every hour
+  setInterval(() => {
+    logQueryMetricsSummary();
+  }, 60 * 60 * 1000);
+  logger.info('Database metrics logging scheduled (every hour)');
+
+  // Perform initial health check
+  performHealthCheck()
+    .then((result) => {
+      logger.info('Initial health check completed', {
+        status: result.status,
+        timestamp: result.timestamp,
+      });
+    })
+    .catch((error) => {
+      logger.error('Initial health check failed', error);
+    });
 });
 
 // Handle unhandled promise rejections

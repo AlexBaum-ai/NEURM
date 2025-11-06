@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import Layout from '@/components/layout/Layout/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/common/Card/Card';
+import { ErrorBoundaryWithRetry } from '@/components/common/ErrorBoundary';
 
 // Lazy load dashboard
 const Dashboard = lazy(() => import('@/features/dashboard/pages/Dashboard'));
@@ -92,6 +93,17 @@ const AdminUseCaseReviewPage = lazy(() => import('@/features/guide/pages').then(
 // Lazy load admin pages
 const PlatformSettings = lazy(() => import('@/features/admin/pages/PlatformSettings'));
 const AnalyticsDashboard = lazy(() => import('@/features/admin/analytics/pages/AnalyticsDashboard'));
+
+// Lazy load error pages
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
+const ServerErrorPage = lazy(() => import('@/pages/ServerErrorPage'));
+const MaintenancePage = lazy(() => import('@/pages/MaintenancePage'));
+const OfflinePage = lazy(() => import('@/pages/OfflinePage'));
+
+// Lazy load legal pages
+const PrivacyPolicyPage = lazy(() => import('@/pages/PrivacyPolicyPage'));
+const TermsOfServicePage = lazy(() => import('@/pages/TermsOfServicePage'));
+const CookiePolicyPage = lazy(() => import('@/pages/CookiePolicyPage'));
 
 // Loading fallback
 const PageLoader = () => (
@@ -192,31 +204,41 @@ const router = createBrowserRouter([
   {
     path: '/verify',
     element: (
-      <Suspense fallback={<PageLoader />}>
-        <EmailVerification />
-      </Suspense>
+      <ErrorBoundaryWithRetry maxRetries={2}>
+        <Suspense fallback={<PageLoader />}>
+          <EmailVerification />
+        </Suspense>
+      </ErrorBoundaryWithRetry>
     ),
   },
   {
     path: '/forgot-password',
     element: (
-      <Suspense fallback={<PageLoader />}>
-        <ForgotPassword />
-      </Suspense>
+      <ErrorBoundaryWithRetry maxRetries={2}>
+        <Suspense fallback={<PageLoader />}>
+          <ForgotPassword />
+        </Suspense>
+      </ErrorBoundaryWithRetry>
     ),
   },
   {
     path: '/reset-password',
     element: (
-      <Suspense fallback={<PageLoader />}>
-        <ResetPassword />
-      </Suspense>
+      <ErrorBoundaryWithRetry maxRetries={2}>
+        <Suspense fallback={<PageLoader />}>
+          <ResetPassword />
+        </Suspense>
+      </ErrorBoundaryWithRetry>
     ),
   },
   // Main app routes (with layout)
   {
     path: '/',
-    element: <Layout />,
+    element: (
+      <ErrorBoundaryWithRetry maxRetries={3}>
+        <Layout />
+      </ErrorBoundaryWithRetry>
+    ),
     children: [
       {
         index: true,
@@ -675,6 +697,63 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <NotificationsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'privacy',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PrivacyPolicyPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'terms',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <TermsOfServicePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'cookies',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <CookiePolicyPage />
+          </Suspense>
+        ),
+      },
+      // Error pages
+      {
+        path: 'error',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ServerErrorPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'maintenance',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <MaintenancePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'offline',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <OfflinePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: '*',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <NotFoundPage />
           </Suspense>
         ),
       },

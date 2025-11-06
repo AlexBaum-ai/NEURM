@@ -1,0 +1,199 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: neurmatic-postgres-staging
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-neurmatic}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: neurmatic_staging
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    networks:
+      - neurmatic-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-neurmatic}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=100"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "effective_cache_size=1GB"
+      - "-c"
+      - "maintenance_work_mem=64MB"
+      - "-c"
+      - "checkpoint_completion_target=0.9"
+      - "-c"
+      - "wal_buffers=16MB"
+      - "-c"
+      - "default_statistics_target=100"
+      - "-c"
+      - "random_page_cost=1.1"
+      - "-c"
+      - "effective_io_concurrency=200"
+      - "-c"
+      - "work_mem=2621kB"
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    container_name: neurmatic-redis-staging
+    restart: always
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_staging_data:/data
+    networks:
+      - neurmatic-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--pass', '${REDIS_PASSWORD}', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_NAME_BACKEND:-neurmatic-backend}:${IMAGE_TAG:-staging-latest}
+    container_name: neurmatic-backend-staging
+    restart: always
+    environment:
+      NODE_ENV: staging
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-neurmatic}:${POSTGRES_PASSWORD}@postgres:5432/neurmatic_staging
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_EXPIRES_IN: 15m
+      REFRESH_TOKEN_EXPIRES_IN: 30d
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_CALLBACK_URL: ${API_URL}/api/v1/auth/oauth/google/callback
+      LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID}
+      LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET}
+      LINKEDIN_CALLBACK_URL: ${API_URL}/api/v1/auth/oauth/linkedin/callback
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      GITHUB_CALLBACK_URL: ${API_URL}/api/v1/auth/oauth/github/callback
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      FROM_EMAIL: ${FROM_EMAIL:-noreply@staging.neurmatic.com}
+      SUPPORT_EMAIL: ${SUPPORT_EMAIL:-support@staging.neurmatic.com}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-neurmatic-staging-media}
+      AWS_REGION: ${AWS_REGION:-eu-west-1}
+      SENTRY_DSN: ${SENTRY_DSN}
+      SENTRY_ENVIRONMENT: staging
+      SENTRY_TRACES_SAMPLE_RATE: 0.5
+      SENTRY_PROFILES_SAMPLE_RATE: 0.5
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 200
+      BCRYPT_ROUNDS: 12
+      SESSION_SECRET: ${SESSION_SECRET}
+      LOG_LEVEL: info
+      FRONTEND_URL: ${FRONTEND_URL}
+      API_URL: ${API_URL}
+    ports:
+      - '3000:3000'
+    networks:
+      - neurmatic-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3000/api/v1/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+  # Frontend Application
+  frontend:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_NAME_FRONTEND:-neurmatic-frontend}:${IMAGE_TAG:-staging-latest}
+    container_name: neurmatic-frontend-staging
+    restart: always
+    ports:
+      - '80:80'
+    networks:
+      - neurmatic-network
+    depends_on:
+      - backend
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:80']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  # Nginx Reverse Proxy & Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: neurmatic-nginx-staging
+    restart: always
+    ports:
+      - '443:443'
+      - '8080:80'
+    volumes:
+      - ./infrastructure/nginx/staging.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_cache:/var/cache/nginx
+    networks:
+      - neurmatic-network
+    depends_on:
+      - backend
+      - frontend
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:80/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_staging_data:
+    driver: local
+  redis_staging_data:
+    driver: local
+  nginx_cache:
+    driver: local
+
+networks:
+  neurmatic-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

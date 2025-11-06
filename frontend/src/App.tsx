@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { queryClient } from '@/lib/reactQuery';
 import { AppRouter } from '@/routes';
 import { ToastProvider } from '@/components/common/Toast/ToastProvider';
+import { CookieConsentBanner } from '@/components/common/CookieConsent/CookieConsentBanner';
 import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation';
 import '@/styles/accessibility.css';
 
@@ -17,6 +18,7 @@ const App = () => {
       <HelmetProvider>
         <ToastProvider>
           <AppRouter />
+          <CookieConsentBanner />
           <Toaster
             position="top-right"
             toastOptions={{

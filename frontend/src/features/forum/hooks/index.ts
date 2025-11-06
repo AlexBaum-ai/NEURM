@@ -32,4 +32,4 @@ export { useSearchSuggestions } from './useSearchSuggestions';
 export { useSavedSearches } from './useSavedSearches';
 export { useSearchHistory } from './useSearchHistory';
 export { usePopularSearches } from './usePopularSearches';
-\nexport * from './useBadges';
+export * from './useBadges';
