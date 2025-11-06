@@ -89,9 +89,16 @@ const DefaultFallback: React.FC<{ error: Error; resetError: () => void }> = ({ e
  * ```
  */
 const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({ children, fallback }) => {
+  const FallbackComponent = fallback || DefaultFallback;
+
   return (
     <Sentry.ErrorBoundary
-      fallback={fallback || DefaultFallback}
+      fallback={(errorData) => (
+        <FallbackComponent
+          error={errorData.error instanceof Error ? errorData.error : new Error(String(errorData.error))}
+          resetError={errorData.resetError}
+        />
+      )}
       showDialog={false}
       beforeCapture={(scope) => {
         scope.setTag('errorBoundary', 'true');

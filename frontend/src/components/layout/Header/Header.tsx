@@ -106,7 +106,6 @@ const Header: React.FC = () => {
                         : 'text-gray-600 dark:text-gray-300'
                     )
                   }
-                  aria-current={({ isActive }) => (isActive ? 'page' : undefined)}
                 >
                   {link.label}
                 </NavLink>

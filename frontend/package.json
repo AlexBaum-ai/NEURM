@@ -64,7 +64,7 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.9.5",
     "react-syntax-highlighter": "^16.1.0",
-    "react-window": "^2.2.2",
+    "react-window": "^1.8.10",
     "recharts": "^3.3.0",
     "rehype-highlight": "^7.0.2",
     "rehype-raw": "^7.0.0",

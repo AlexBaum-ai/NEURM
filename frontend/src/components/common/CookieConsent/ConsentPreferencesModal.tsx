@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Modal } from '@/components/common/Modal/Modal';
+import { Dialog } from '@/components/common/Dialog/Dialog';
 import { Button } from '@/components/common/Button/Button';
 import type { ConsentPreferences } from '@/types/gdpr';
 import { getCurrentConsent } from './CookieConsentBanner';
@@ -113,9 +113,9 @@ export const ConsentPreferencesModal: React.FC<ConsentPreferencesModalProps> = (
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
       title="Cookie Preferences"
       size="lg"
     >
@@ -208,7 +208,7 @@ export const ConsentPreferencesModal: React.FC<ConsentPreferencesModalProps> = (
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               variant="outline"
-              size="md"
+              size="default"
               onClick={handleRejectAll}
               className="w-full sm:w-auto"
             >
@@ -216,7 +216,7 @@ export const ConsentPreferencesModal: React.FC<ConsentPreferencesModalProps> = (
             </Button>
             <Button
               variant="outline"
-              size="md"
+              size="default"
               onClick={handleAcceptAll}
               className="w-full sm:w-auto"
             >
@@ -226,15 +226,15 @@ export const ConsentPreferencesModal: React.FC<ConsentPreferencesModalProps> = (
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               variant="outline"
-              size="md"
+              size="default"
               onClick={onClose}
               className="w-full sm:w-auto"
             >
               Cancel
             </Button>
             <Button
-              variant="primary"
-              size="md"
+              variant="default"
+              size="default"
               onClick={handleSave}
               className="w-full sm:w-auto"
             >
@@ -243,6 +243,6 @@ export const ConsentPreferencesModal: React.FC<ConsentPreferencesModalProps> = (
           </div>
         </div>
       </div>
-    </Modal>
+    </Dialog>
   );
 };

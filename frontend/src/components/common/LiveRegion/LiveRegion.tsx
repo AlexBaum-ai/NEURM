@@ -11,8 +11,18 @@ interface LiveRegionProps {
   /** Whether the entire region should be announced when changed */
   atomic?: boolean;
 
-  /** Whether only the changed part should be announced */
-  relevant?: 'additions' | 'removals' | 'text' | 'all';
+  /** What types of changes should be announced (can be space-separated) */
+  relevant?:
+    | 'additions'
+    | 'removals'
+    | 'text'
+    | 'all'
+    | 'additions text'
+    | 'additions removals'
+    | 'removals text'
+    | 'removals additions'
+    | 'text additions'
+    | 'text removals';
 
   /** Role attribute */
   role?: 'status' | 'alert' | 'log' | 'timer';
