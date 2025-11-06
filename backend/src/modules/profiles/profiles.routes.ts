@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import ProfilesController from './profiles.controller';
+import ProfileViewsController from './profileViews.controller';
+import endorsementsRoutes from '@/modules/users/endorsements/endorsements.routes';
 import { authenticate, optionalAuth } from '@/middleware/auth.middleware';
 import { profileUpdateLimiter, apiLimiter } from '@/middleware/rateLimiter.middleware';
 import { asyncHandler } from '@/utils/asyncHandler';
@@ -10,6 +12,7 @@ import { asyncHandler } from '@/utils/asyncHandler';
  */
 const router = Router();
 const profilesController = new ProfilesController();
+const profileViewsController = new ProfileViewsController();
 
 /**
  * @route   PUT /api/v1/profiles/candidate
@@ -22,6 +25,19 @@ router.put(
   authenticate,
   profileUpdateLimiter,
   asyncHandler(profilesController.updateCandidateProfile)
+);
+
+/**
+ * @route   GET /api/v1/profiles/me/views
+ * @desc    Get who viewed my profile (premium only)
+ * @access  Private (requires authentication and premium access)
+ * @note    Returns last 30 days of views
+ */
+router.get(
+  '/me/views',
+  authenticate,
+  apiLimiter,
+  asyncHandler(profileViewsController.getMyProfileViewers)
 );
 
 /**
@@ -38,6 +54,30 @@ router.get(
 );
 
 /**
+ * @route   POST /api/v1/profiles/:username/view
+ * @desc    Track a profile view
+ * @access  Private (requires authentication)
+ * @note    Deduplicates views (one per viewer per 24h)
+ */
+router.post(
+  '/:username/view',
+  authenticate,
+  apiLimiter,
+  asyncHandler(profileViewsController.trackProfileView)
+);
+
+/**
+ * @route   GET /api/v1/profiles/:username/view-count
+ * @desc    Get profile view count
+ * @access  Public
+ */
+router.get(
+  '/:username/view-count',
+  apiLimiter,
+  asyncHandler(profileViewsController.getProfileViewCount)
+);
+
+/**
  * @route   GET /api/v1/profiles/:username/portfolio
  * @desc    Get portfolio projects for a user
  * @access  Public (optional authentication for privacy settings)
@@ -49,5 +89,11 @@ router.get(
   apiLimiter,
   asyncHandler(profilesController.getPortfolio)
 );
+
+/**
+ * Skill endorsements routes
+ * Mounted at /api/v1/profiles/:username/skills/:skillId
+ */
+router.use('/:username/skills/:skillId', endorsementsRoutes);
 
 export default router;

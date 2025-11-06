@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api';
 import type { UserProfile, ProfileCompletenessResult } from '../types';
+import type { ProfileViewsData, ViewCountData } from '../types/profileViews';
 
 export const profileApi = {
   /**
@@ -84,5 +85,32 @@ export const profileApi = {
       completionPercentage,
       missingFields,
     };
+  },
+
+  /**
+   * Get who viewed my profile (premium only)
+   */
+  getMyProfileViewers: async (page: number = 1, limit: number = 20): Promise<ProfileViewsData> => {
+    const response = await apiClient.get<{ success: boolean; data: ProfileViewsData }>(
+      `/profiles/me/views?page=${page}&limit=${limit}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Get profile view count for any user
+   */
+  getProfileViewCount: async (username: string): Promise<ViewCountData> => {
+    const response = await apiClient.get<{ success: boolean; data: ViewCountData }>(
+      `/profiles/${username}/view-count`
+    );
+    return response.data;
+  },
+
+  /**
+   * Track a profile view
+   */
+  trackProfileView: async (username: string, anonymous: boolean = false): Promise<void> => {
+    await apiClient.post(`/profiles/${username}/view`, { anonymous });
   },
 };

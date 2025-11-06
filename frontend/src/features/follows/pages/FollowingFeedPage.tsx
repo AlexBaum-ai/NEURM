@@ -2,26 +2,35 @@ import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Card, CardContent } from '@/components/common/Card/Card';
 import { Button } from '@/components/common/Button/Button';
-import { ActivityFeedItem } from '../components/ActivityFeedItem';
+import { ActivityTimeline } from '@/features/activities/components/ActivityTimeline';
+import { useFollowingFeedActivities } from '@/features/activities/hooks/useActivities';
 import { FollowSuggestions } from '../components/FollowSuggestions';
-import { useActivityFeed } from '../hooks/useFollows';
+import type { ActivityType, ActivityGroup } from '@/features/activities/types';
 
-type FeedFilter = 'all' | 'article' | 'forum_post' | 'job';
+type FeedFilter = ActivityType | 'all';
 
 const FollowingFeedPage: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FeedFilter>('all');
   const filterType = activeFilter === 'all' ? undefined : activeFilter;
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-  } = useActivityFeed(filterType);
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
+    useFollowingFeedActivities(filterType);
 
-  const allItems = data?.pages.flatMap((page) => page.items) || [];
-  const isEmpty = !isLoading && allItems.length === 0;
+  // Flatten all groups from all pages
+  const allGroups: ActivityGroup[] = data?.pages.flatMap((page) => page.groups) || [];
+
+  // Merge groups with the same timeGroup
+  const mergedGroups = allGroups.reduce((acc, group) => {
+    const existingGroup = acc.find((g) => g.timeGroup === group.timeGroup);
+    if (existingGroup) {
+      existingGroup.activities.push(...group.activities);
+    } else {
+      acc.push({ ...group });
+    }
+    return acc;
+  }, [] as ActivityGroup[]);
+
+  const isEmpty = !isLoading && mergedGroups.length === 0;
 
   const filters: { value: FeedFilter; label: string; icon: React.ReactNode }[] = [
     {
@@ -34,7 +43,7 @@ const FollowingFeedPage: React.FC = () => {
       ),
     },
     {
-      value: 'article',
+      value: 'posted_article',
       label: 'Articles',
       icon: (
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -43,8 +52,8 @@ const FollowingFeedPage: React.FC = () => {
       ),
     },
     {
-      value: 'forum_post',
-      label: 'Discussions',
+      value: 'created_topic',
+      label: 'Topics',
       icon: (
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
           <path
@@ -56,7 +65,20 @@ const FollowingFeedPage: React.FC = () => {
       ),
     },
     {
-      value: 'job',
+      value: 'replied',
+      label: 'Replies',
+      icon: (
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fillRule="evenodd"
+            d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+            clipRule="evenodd"
+          />
+        </svg>
+      ),
+    },
+    {
+      value: 'applied_job',
       label: 'Jobs',
       icon: (
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -112,7 +134,15 @@ const FollowingFeedPage: React.FC = () => {
             </div>
 
             {/* Feed Items */}
-            {isEmpty ? (
+            {isLoading ? (
+              <Card>
+                <CardContent className="p-8">
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : isEmpty ? (
               <Card>
                 <CardContent className="p-12 text-center">
                   <div className="max-w-md mx-auto space-y-4">
@@ -135,8 +165,8 @@ const FollowingFeedPage: React.FC = () => {
                       No activity yet
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400">
-                      Follow topics, users, or companies you're interested in to see their latest
-                      activity here.
+                      Follow users to see their latest activity here. Start by exploring content
+                      and following interesting people in the community.
                     </p>
                     <div className="pt-4">
                       <Button
@@ -151,14 +181,16 @@ const FollowingFeedPage: React.FC = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
-                {allItems.map((item) => (
-                  <ActivityFeedItem key={item.id} item={item} />
-                ))}
+              <div className="space-y-6">
+                <Card>
+                  <CardContent className="p-6">
+                    <ActivityTimeline groups={mergedGroups} showUser={true} />
+                  </CardContent>
+                </Card>
 
                 {/* Load More Button */}
                 {hasNextPage && (
-                  <div className="flex justify-center pt-4">
+                  <div className="flex justify-center">
                     <Button
                       onClick={() => fetchNextPage()}
                       disabled={isFetchingNextPage}

@@ -38,7 +38,10 @@ import {
   Description,
 } from '@mui/icons-material';
 import { useCandidate, useSaveCandidate, useUnsaveCandidate, useSendMessage } from '../../hooks';
-import type { CandidateSearchResult } from '../../types/candidates';
+import { useAuthStore } from '@/store/authStore';
+import type { CandidateSearchResult, CandidateSkill } from '../../types/candidates';
+import EndorseButton from './EndorseButton';
+import EndorsersList from './EndorsersList';
 
 interface ProfilePreviewProps {
   candidate: CandidateSearchResult | null;
@@ -55,13 +58,17 @@ const ProfilePreview: React.FC<ProfilePreviewProps> = ({ candidate, open, onClos
   const [messageSubject, setMessageSubject] = useState('');
   const [messageBody, setMessageBody] = useState('');
   const [isSaved, setIsSaved] = useState(false);
+  const [endorsersModalOpen, setEndorsersModalOpen] = useState(false);
+  const [selectedSkill, setSelectedSkill] = useState<CandidateSkill | null>(null);
 
+  const { user } = useAuthStore();
   const { data: fullProfile, isLoading } = useCandidate(candidate?.id || '', open && !!candidate);
   const saveCandidate = useSaveCandidate();
   const unsaveCandidate = useUnsaveCandidate();
   const sendMessage = useSendMessage();
 
   const profile = fullProfile || candidate;
+  const isOwnProfile = user?.username === profile?.username;
 
   if (!candidate || !profile) {
     return null;
@@ -208,18 +215,88 @@ const ProfilePreview: React.FC<ProfilePreviewProps> = ({ candidate, open, onClos
           )}
 
           {/* Skills */}
-          {profile.topSkills && profile.topSkills.length > 0 && (
+          {profile.skills && profile.skills.length > 0 && (
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                Top Skills
+                Skills
               </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {profile.topSkills.map((skill, index) => (
-                  <Chip key={index} label={skill} size="small" variant="outlined" />
+              <Stack spacing={2}>
+                {profile.skills.map((skill, index) => (
+                  <Box
+                    key={skill.id || index}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 2,
+                      p: 1.5,
+                      borderRadius: 1,
+                      bgcolor: 'background.default',
+                      border: 1,
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" fontWeight="medium" noWrap>
+                        {skill.name}
+                      </Typography>
+                      {skill.endorsementCount !== undefined && skill.endorsementCount > 0 && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{
+                            cursor: skill.id ? 'pointer' : 'default',
+                            '&:hover': skill.id
+                              ? {
+                                  textDecoration: 'underline',
+                                  color: 'primary.main',
+                                }
+                              : {},
+                          }}
+                          onClick={() => {
+                            if (skill.id) {
+                              setSelectedSkill(skill);
+                              setEndorsersModalOpen(true);
+                            }
+                          }}
+                        >
+                          {skill.endorsementCount}{' '}
+                          {skill.endorsementCount === 1 ? 'endorsement' : 'endorsements'}
+                        </Typography>
+                      )}
+                    </Box>
+
+                    {/* Endorse Button - Only show if not own profile and skill has ID */}
+                    {!isOwnProfile && skill.id && (
+                      <EndorseButton
+                        username={profile.username}
+                        skillId={skill.id}
+                        skillName={skill.name}
+                        hasEndorsed={skill.hasEndorsed || false}
+                        size="small"
+                      />
+                    )}
+                  </Box>
                 ))}
-              </Box>
+              </Stack>
             </Box>
           )}
+
+          {/* Top Skills (fallback if detailed skills not available) */}
+          {(!profile.skills || profile.skills.length === 0) &&
+            profile.topSkills &&
+            profile.topSkills.length > 0 && (
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                  Top Skills
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {profile.topSkills.map((skill, index) => (
+                    <Chip key={index} label={skill} size="small" variant="outlined" />
+                  ))}
+                </Box>
+              </Box>
+            )}
 
           {/* Tech Stack */}
           {profile.primaryLlms && profile.primaryLlms.length > 0 && (
@@ -357,6 +434,20 @@ const ProfilePreview: React.FC<ProfilePreviewProps> = ({ candidate, open, onClos
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Endorsers List Modal */}
+      {selectedSkill && selectedSkill.id && (
+        <EndorsersList
+          open={endorsersModalOpen}
+          onClose={() => {
+            setEndorsersModalOpen(false);
+            setSelectedSkill(null);
+          }}
+          username={profile.username}
+          skillId={selectedSkill.id}
+          skillName={selectedSkill.name}
+        />
+      )}
     </>
   );
 };

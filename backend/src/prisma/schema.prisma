@@ -193,14 +193,60 @@ enum ModelStrategy {
 }
 
 enum NotificationType {
+  // News notifications
+  new_article_in_followed_category
+  trending_article
+
+  // Forum notifications
+  topic_reply
+  comment_reply
   mention
-  reply
-  follow
   upvote
-  badge
-  job_match
+  downvote
+  accepted_answer
+
+  // Jobs notifications
+  new_job_match
+  application_status_update
+  profile_view
+
+  // Social notifications
+  new_follower
+  badge_earned
+  reputation_milestone
   message
-  system
+
+  // System notifications
+  system_announcement
+  account_update
+}
+
+enum DeliveryChannel {
+  in_app
+  email
+  push
+}
+
+enum NotificationFrequency {
+  real_time
+  hourly_digest
+  daily_digest
+  weekly_digest
+  off
+}
+
+enum DigestType {
+  daily
+  weekly
+}
+
+enum EmailTrackingEventType {
+  sent
+  delivered
+  opened
+  clicked
+  bounced
+  unsubscribed
 }
 
 enum MessageStatus {
@@ -231,6 +277,26 @@ enum FollowableType {
   tag
   category
   model
+}
+
+enum ActivityType {
+  posted_article
+  created_topic
+  replied
+  upvoted
+  bookmarked
+  applied_job
+  earned_badge
+  followed_user
+}
+
+enum ActivityTargetType {
+  article
+  topic
+  reply
+  job
+  badge
+  user
 }
 
 enum UseCaseStatus {
@@ -378,9 +444,14 @@ model User {
   jobAlerts       JobAlert[]       @relation("UserJobAlerts")
 
   // Platform
-  notifications           Notification[]
-  followers               Follow[]               @relation("UserFollowers")
-  following               Follow[]               @relation("UserFollowing")
+  notifications             Notification[]
+  notificationPreferences   NotificationPreference[] @relation("UserNotificationPreferences")
+  doNotDisturbSchedule      DoNotDisturbSchedule?    @relation("UserDoNotDisturb")
+  pushSubscriptions         PushSubscription[]       @relation("UserPushSubscriptions")
+  digestPreference          DigestPreference?        @relation("UserDigestPreferences")
+  emailDigests              EmailDigest[]            @relation("UserEmailDigests")
+  followers                 Follow[]                 @relation("UserFollowers")
+  following                 Follow[]                 @relation("UserFollowing")
   sentMessages            Message[]              @relation("MessageSender")
   receivedMessages        Message[]              @relation("MessageRecipient")
   conversationsAsParty1   Conversation[]         @relation("ConversationParticipant1")
@@ -406,6 +477,9 @@ model User {
   useCases                UseCase[]              @relation("UseCaseAuthor")
   settingAuditLogs        PlatformSettingAuditLog[] @relation("AdminSettingAuditLogs")
   adminAuditLogs          AdminAuditLog[]          @relation("AdminAuditLogs")
+  activities              UserActivity[]           @relation("UserActivities")
+  skillEndorsementsGiven  SkillEndorsement[]     @relation("SkillEndorsementsByUser")
+  skillEndorsementsReceived SkillEndorsement[]   @relation("SkillEndorsementsReceived")
 
   // Follow counts
   followerCount  Int @default(0) @map("follower_count")
@@ -521,12 +595,31 @@ model UserSkill {
   endorsementCount Int      @default(0) @map("endorsement_count")
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endorsements  SkillEndorsement[]
 
   @@unique([userId, skillName])
   @@index([userId])
   @@index([skillType])
   @@map("user_skills")
+}
+
+model SkillEndorsement {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  profileId String   @map("profile_id")
+  skillId   String   @map("skill_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user    User      @relation("SkillEndorsementsByUser", fields: [userId], references: [id], onDelete: Cascade)
+  profile User      @relation("SkillEndorsementsReceived", fields: [profileId], references: [id], onDelete: Cascade)
+  skill   UserSkill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, profileId, skillId])
+  @@index([userId])
+  @@index([profileId])
+  @@index([skillId])
+  @@map("skill_endorsements")
 }
 
 model UserModel {
@@ -638,6 +731,7 @@ model ProfileView {
   viewerId   String   @map("viewer_id")
   viewerType String   @default("recruiter") @map("viewer_type") @db.VarChar(50)
   companyId  String?  @map("company_id")
+  anonymous  Boolean  @default(false)
   viewedAt   DateTime @default(now()) @map("viewed_at") @db.Timestamptz(3)
 
   profile Profile @relation(fields: [profileId], references: [userId], onDelete: Cascade)
@@ -648,6 +742,7 @@ model ProfileView {
   @@index([viewerId])
   @@index([companyId])
   @@index([viewedAt])
+  @@index([viewerId, profileId, viewedAt(sort: Desc)], name: "idx_profile_views_dedup")
   @@map("profile_views")
 }
 
@@ -1811,22 +1906,170 @@ model JobAlert {
 // ============================================================================
 
 model Notification {
-  id          String           @id @default(uuid())
-  userId      String           @map("user_id")
-  type        NotificationType
-  title       String           @db.VarChar(255)
-  message     String           @db.Text
-  actionUrl   String?          @map("action_url") @db.VarChar(500)
-  referenceId String?          @map("reference_id")
-  isRead      Boolean          @default(false) @map("is_read")
-  readAt      DateTime?        @map("read_at") @db.Timestamptz(3)
-  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  id               String             @id @default(uuid())
+  userId           String             @map("user_id")
+  type             NotificationType
+  title            String             @db.VarChar(255)
+  message          String             @db.Text
+  actionUrl        String?            @map("action_url") @db.VarChar(500)
+  referenceId      String?            @map("reference_id")
+  dataJson         Json?              @map("data_json")
+  deliveryChannels DeliveryChannel[]  @default([in_app])
+  bundleKey        String?            @map("bundle_key") @db.VarChar(255)
+  bundleCount      Int                @default(1) @map("bundle_count")
+  isRead           Boolean            @default(false) @map("is_read")
+  readAt           DateTime?          @map("read_at") @db.Timestamptz(3)
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead])
   @@index([createdAt(sort: Desc)])
+  @@index([bundleKey])
+  @@index([userId, bundleKey])
   @@map("notifications")
+}
+
+model NotificationPreference {
+  id                String                @id @default(uuid())
+  userId            String                @map("user_id")
+  notificationType  NotificationType      @map("notification_type")
+  channel           DeliveryChannel
+  frequency         NotificationFrequency @default(real_time)
+  enabled           Boolean               @default(true)
+  createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation("UserNotificationPreferences", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, notificationType, channel])
+  @@index([userId])
+  @@map("notification_preferences")
+}
+
+model DoNotDisturbSchedule {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  startTime String   @map("start_time") @db.VarChar(5) // Format: "22:00"
+  endTime   String   @map("end_time") @db.VarChar(5)   // Format: "08:00"
+  days      Int[]    @default([]) // Days of week: 0=Sunday, 1=Monday, etc.
+  enabled   Boolean  @default(false)
+  timezone  String   @default("UTC") @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation("UserDoNotDisturb", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, enabled])
+  @@map("do_not_disturb_schedules")
+}
+
+model PushSubscription {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  endpoint     String   @unique @db.Text
+  p256dhKey    String   @map("p256dh_key") @db.Text
+  authKey      String   @map("auth_key") @db.Text
+  userAgent    String?  @map("user_agent") @db.VarChar(500)
+  lastUsedAt   DateTime @default(now()) @map("last_used_at") @db.Timestamptz(3)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation("UserPushSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+model DigestPreference {
+  id                String     @id @default(uuid())
+  userId            String     @unique @map("user_id")
+  dailyEnabled      Boolean    @default(true) @map("daily_enabled")
+  dailyTime         String     @default("09:00") @map("daily_time") @db.VarChar(5) // Format: "09:00"
+  weeklyEnabled     Boolean    @default(true) @map("weekly_enabled")
+  weeklyDay         Int        @default(1) @map("weekly_day") // 0=Sunday, 1=Monday, etc.
+  weeklyTime        String     @default("09:00") @map("weekly_time") @db.VarChar(5) // Format: "09:00"
+  timezone          String     @default("UTC") @db.VarChar(50)
+  includeNews       Boolean    @default(true) @map("include_news")
+  includeForum      Boolean    @default(true) @map("include_forum")
+  includeJobs       Boolean    @default(true) @map("include_jobs")
+  includeActivity   Boolean    @default(true) @map("include_activity")
+  minContentItems   Int        @default(3) @map("min_content_items") // Skip digest if less than this many items
+  vacationMode      Boolean    @default(false) @map("vacation_mode")
+  vacationUntil     DateTime?  @map("vacation_until") @db.Timestamptz(3)
+  lastDailyDigest   DateTime?  @map("last_daily_digest") @db.Timestamptz(3)
+  lastWeeklyDigest  DateTime?  @map("last_weekly_digest") @db.Timestamptz(3)
+  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation("UserDigestPreferences", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([dailyEnabled])
+  @@index([weeklyEnabled])
+  @@index([vacationMode])
+  @@map("digest_preferences")
+}
+
+model EmailDigest {
+  id              String     @id @default(uuid())
+  userId          String     @map("user_id")
+  type            DigestType
+  sentAt          DateTime   @map("sent_at") @db.Timestamptz(3)
+  emailTo         String     @map("email_to") @db.VarChar(255)
+  subject         String     @db.VarChar(255)
+  contentSummary  Json       @map("content_summary") // Store what was included for reference
+  itemCount       Int        @map("item_count")
+  trackingToken   String     @unique @map("tracking_token") @db.VarChar(100)
+  openedAt        DateTime?  @map("opened_at") @db.Timestamptz(3)
+  clickCount      Int        @default(0) @map("click_count")
+  unsubscribedAt  DateTime?  @map("unsubscribed_at") @db.Timestamptz(3)
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user     User                 @relation("UserEmailDigests", fields: [userId], references: [id], onDelete: Cascade)
+  tracking EmailTrackingEvent[]
+
+  @@index([userId])
+  @@index([type])
+  @@index([sentAt(sort: Desc)])
+  @@index([trackingToken])
+  @@index([userId, type, sentAt(sort: Desc)])
+  @@map("email_digests")
+}
+
+model EmailTrackingEvent {
+  id          String                  @id @default(uuid())
+  digestId    String?                 @map("digest_id")
+  eventType   EmailTrackingEventType  @map("event_type")
+  linkUrl     String?                 @map("link_url") @db.VarChar(500)
+  ipAddress   String?                 @map("ip_address") @db.VarChar(45)
+  userAgent   String?                 @map("user_agent") @db.VarChar(500)
+  metadata    Json?
+  createdAt   DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  digest EmailDigest? @relation(fields: [digestId], references: [id], onDelete: SetNull)
+
+  @@index([digestId])
+  @@index([eventType])
+  @@index([createdAt(sort: Desc)])
+  @@map("email_tracking_events")
+}
+
+model UserActivity {
+  id           String               @id @default(uuid())
+  userId       String               @map("user_id")
+  activityType ActivityType         @map("activity_type")
+  targetType   ActivityTargetType   @map("target_type")
+  targetId     String               @map("target_id")
+  privacy      PrivacyVisibility    @default(public)
+  metadata     Json?
+  createdAt    DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation("UserActivities", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([activityType, createdAt(sort: Desc)])
+  @@index([targetType, targetId])
+  @@map("user_activities")
 }
 
 model Follow {
