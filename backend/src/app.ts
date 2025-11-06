@@ -28,6 +28,7 @@ import forumRoutes from '@/modules/forum/routes';
 import { reputationRoutes, userBadgeRoutes } from '@/modules/forum';
 import messagingRoutes from '@/modules/messaging/messaging.routes';
 import bulkMessagingRoutes from '@/modules/messaging/bulkMessaging.routes';
+import notificationRoutes from '@/modules/notifications/notifications.routes';
 import jobRoutes from '@/modules/jobs/jobs.routes';
 import companyRoutes from '@/modules/jobs/company.routes';
 import applicationRoutes from '@/modules/jobs/application.routes';
@@ -42,6 +43,7 @@ import {
   createUserFollowsRoutes,
   createEntityFollowsRoutes,
 } from '@/modules/follows/follows.routes';
+import { createActivitiesRoutes } from '@/modules/activities/activities.routes';
 import adminUsersRoutes from '@/modules/admin/users/adminUsers.routes';
 import adminRoutes from '@/modules/admin/routes';
 import settingsRoutes from '@/modules/admin/settings.routes';
@@ -123,6 +125,7 @@ app.use('/api/v1', reputationRoutes); // Reputation routes for /api/v1/users/:us
 app.use('/api/v1/users/:userId/badges', userBadgeRoutes); // Badge routes for /api/v1/users/:userId/badges
 app.use('/api/v1', messagingRoutes); // Messaging routes for /api/v1/messages and /api/v1/conversations
 app.use('/api/v1', bulkMessagingRoutes); // Bulk messaging routes for recruiters
+app.use('/api/v1/notifications', notificationRoutes); // Notification system routes
 app.use('/api/v1/jobs', jobRoutes); // Job posting routes
 app.use('/api/v1/companies', companyRoutes); // Company profile routes
 app.use('/api/v1/companies/applications', atsRoutes); // ATS (company-side application management) routes
@@ -134,6 +137,7 @@ app.use('/api/v1/recommendations', recommendationsRoutes); // AI recommendation 
 app.use('/api/v1/follows', createFollowsRoutes(prisma, redis)); // Follow/unfollow and feed routes
 app.use('/api/v1/following', createFollowsRoutes(prisma, redis)); // Alternative path for following feed
 app.use('/api/v1', createEntityFollowsRoutes(prisma, redis)); // Entity followers routes
+app.use('/api/v1', createActivitiesRoutes(prisma, redis)); // Activity tracking and feeds
 
 // RSS Feed routes (no version prefix for feed URLs)
 app.use('/api/feed', rssRoutes);
