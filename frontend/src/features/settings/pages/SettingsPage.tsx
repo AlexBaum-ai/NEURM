@@ -8,10 +8,11 @@ import { getCurrentUserProfile } from '@/features/user/api/profileApi';
 const AccountTab = lazy(() => import('../components/AccountTab'));
 const PrivacyTab = lazy(() => import('../components/PrivacyTab'));
 const SecurityTab = lazy(() => import('../components/SecurityTab'));
+const NotificationsTab = lazy(() => import('../components/NotificationsTab'));
 const SessionsTab = lazy(() => import('../components/SessionsTab'));
 const DangerZoneTab = lazy(() => import('../components/DangerZoneTab'));
 
-type TabId = 'account' | 'privacy' | 'security' | 'sessions' | 'danger';
+type TabId = 'account' | 'privacy' | 'security' | 'notifications' | 'sessions' | 'danger';
 
 interface Tab {
   id: TabId;
@@ -23,6 +24,7 @@ const TABS: Tab[] = [
   { id: 'account', label: 'Account', icon: '👤' },
   { id: 'privacy', label: 'Privacy', icon: '🔒' },
   { id: 'security', label: 'Security', icon: '🛡️' },
+  { id: 'notifications', label: 'Notifications', icon: '🔔' },
   { id: 'sessions', label: 'Sessions', icon: '💻' },
   { id: 'danger', label: 'Danger Zone', icon: '⚠️' },
 ];
@@ -71,6 +73,12 @@ const SettingsPage: React.FC = () => {
         return (
           <Suspense fallback={<TabLoader />}>
             <SecurityTab />
+          </Suspense>
+        );
+      case 'notifications':
+        return (
+          <Suspense fallback={<TabLoader />}>
+            <NotificationsTab />
           </Suspense>
         );
       case 'sessions':
