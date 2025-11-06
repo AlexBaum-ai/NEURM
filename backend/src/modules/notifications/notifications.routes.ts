@@ -184,4 +184,11 @@ router.get(
   asyncHandler(notificationController.getPushSubscriptions)
 );
 
+// ============================================================================
+// DIGEST ROUTES
+// ============================================================================
+
+import digestRoutes from './digest/digest.routes';
+router.use('/digest', digestRoutes);
+
 export default router;
