@@ -6,7 +6,8 @@ import * as Slider from '@radix-ui/react-slider';
 import Input from '@/components/common/Input/Input';
 import Button from '@/components/common/Button/Button';
 import { useToast } from '@/components/common/Toast/ToastProvider';
-import { skillSchema, SkillFormData, UserSkill } from '../../types';
+import { skillSchema } from '../../types';
+import type { SkillFormData, UserSkill } from '../../types';
 import { useCreateSkill, useUpdateSkill, useDeleteSkill } from '../../hooks/useProfile';
 
 interface SkillsFormProps {

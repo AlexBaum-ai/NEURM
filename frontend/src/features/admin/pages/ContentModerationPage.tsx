@@ -31,7 +31,9 @@ import StatusBadge from '../components/StatusBadge';
 import SpamScoreIndicator from '../components/SpamScoreIndicator';
 
 // Types
-import type { ContentItem, ModerationTab, ContentType, ContentStatus } from '../types';
+import type { ContentItem, ContentType, ContentStatus, ModerationFilters } from '../types';
+
+type ModerationTab = 'all' | 'pending' | 'reported' | 'flagged';
 
 const ContentModerationPage: React.FC = () => {
   // State
@@ -86,13 +88,13 @@ const ContentModerationPage: React.FC = () => {
   }, []);
 
   const handleSelectAll = useCallback(() => {
-    if (!data?.content) return;
-    if (selectedItems.size === data.content.length) {
+    if (!data?.items) return;
+    if (selectedItems.size === data.items.length) {
       setSelectedItems(new Set());
     } else {
-      setSelectedItems(new Set(data.content.map(item => item.id)));
+      setSelectedItems(new Set(data.items.map(item => item.id)));
     }
-  }, [data?.content, selectedItems.size]);
+  }, [data?.items, selectedItems.size]);
 
   const handleApprove = useCallback(async (item: ContentItem) => {
     await approveMutation.mutateAsync({

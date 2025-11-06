@@ -259,5 +259,92 @@ export interface ExportOptions {
   dateRange?: DateRange;
 }
 
+// Content Moderation Types
+export type ContentType = 'article' | 'topic' | 'reply' | 'job';
+
+export type ContentStatus = 'pending' | 'approved' | 'rejected' | 'flagged' | 'hidden' | 'deleted';
+
+export interface ContentItem {
+  id: string;
+  type: ContentType;
+  title: string;
+  excerpt?: string;
+  author: string | {
+    id: string;
+    displayName: string;
+    avatarUrl?: string;
+    reputation: number;
+  };
+  status: ContentStatus;
+  createdAt: string;
+  thumbnailUrl?: string;
+  categoryName?: string;
+  jobTitle?: string;
+  reportCount?: number;
+  spamScore?: number;
+}
+
+export interface ContentQueueResponse {
+  items: ContentItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface ContentDetail extends ContentItem {
+  content: string;
+  metadata?: Record<string, unknown>;
+  reports?: ContentReport[];
+  moderationHistory?: ModerationHistoryItem[];
+}
+
+export interface ContentReport {
+  id: string;
+  reporterId: string;
+  reporterName: string;
+  reason: string;
+  description: string;
+  createdAt: string;
+}
+
+export interface ModerationHistoryItem {
+  id: string;
+  action: 'approved' | 'rejected' | 'hidden' | 'deleted';
+  moderatorId: string;
+  moderatorName: string;
+  reason?: string;
+  createdAt: string;
+}
+
+export interface ModerationAction {
+  contentId: string;
+  contentType: ContentType;
+  action: 'approve' | 'reject' | 'hide' | 'delete';
+  reason?: string;
+}
+
+export interface BulkModerationAction {
+  contentIds: string[];
+  contentType: ContentType;
+  action: 'approve' | 'reject' | 'hide' | 'delete';
+  reason?: string;
+}
+
+export interface ModerationResponse {
+  success: boolean;
+  message: string;
+  affectedCount?: number;
+}
+
+export interface ModerationFilters {
+  tab?: 'pending' | 'reported' | 'flagged';
+  contentType?: ContentType | 'all';
+  status?: ContentStatus | 'all';
+  search?: string;
+  sortBy?: 'newest' | 'oldest' | 'most_reported' | 'highest_spam';
+  sortOrder?: 'asc' | 'desc';
+}
+
 // Export analytics types
 export * from './analytics.types';

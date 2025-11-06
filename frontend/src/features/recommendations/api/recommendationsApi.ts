@@ -34,7 +34,7 @@ export const recommendationsApi = {
     const url = queryParams.toString() ? `${BASE_URL}?${queryParams}` : BASE_URL;
 
     const response = await apiClient.get<RecommendationsResponse>(url);
-    return response.data;
+    return response;
   },
 
   /**

@@ -3,7 +3,8 @@
  * React Query hooks for fetching and managing badge data
  */
 
-import { useQuery, useSuspenseQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import type { UseQueryOptions } from '@tanstack/react-query';
 import { badgeApi } from '../api/badgeApi';
 import type {
   Badge,

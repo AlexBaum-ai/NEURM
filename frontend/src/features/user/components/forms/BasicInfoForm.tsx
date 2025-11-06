@@ -6,7 +6,8 @@ import Input from '@/components/common/Input/Input';
 import Button from '@/components/common/Button/Button';
 import RichTextEditor from '@/components/editors/RichTextEditor';
 import { useToast } from '@/components/common/Toast/ToastProvider';
-import { profileUpdateSchema, ProfileUpdateFormData, UserProfile } from '../../types';
+import { profileUpdateSchema } from '../../types';
+import type { ProfileUpdateFormData, UserProfile } from '../../types';
 import { useUpdateProfile } from '../../hooks/useProfile';
 
 interface BasicInfoFormProps {

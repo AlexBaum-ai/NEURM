@@ -110,18 +110,24 @@ const ContentQueueItem: React.FC<ContentQueueItemProps> = ({
 
           <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-2">
             <div className="flex items-center gap-1">
-              {item.author.avatarUrl ? (
-                <img
-                  src={item.author.avatarUrl}
-                  alt={item.author.displayName}
-                  className="w-5 h-5 rounded-full"
-                />
+              {typeof item.author === 'object' ? (
+                <>
+                  {item.author.avatarUrl ? (
+                    <img
+                      src={item.author.avatarUrl}
+                      alt={item.author.displayName}
+                      className="w-5 h-5 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-gray-300 dark:bg-gray-600" />
+                  )}
+                  <span className="font-medium">{item.author.displayName}</span>
+                  {item.author.reputation !== undefined && (
+                    <span className="text-gray-400">({item.author.reputation})</span>
+                  )}
+                </>
               ) : (
-                <div className="w-5 h-5 rounded-full bg-gray-300 dark:bg-gray-600" />
-              )}
-              <span className="font-medium">{item.author.displayName}</span>
-              {item.author.reputation !== undefined && (
-                <span className="text-gray-400">({item.author.reputation})</span>
+                <span className="font-medium">{item.author}</span>
               )}
             </div>
 
@@ -143,7 +149,7 @@ const ContentQueueItem: React.FC<ContentQueueItemProps> = ({
               </>
             )}
 
-            {item.reportCount > 0 && (
+            {item.reportCount !== undefined && item.reportCount > 0 && (
               <>
                 <span>•</span>
                 <span className="text-red-600 dark:text-red-400 font-medium">
@@ -154,18 +160,20 @@ const ContentQueueItem: React.FC<ContentQueueItemProps> = ({
           </div>
 
           {/* Spam Score */}
-          <div className="flex items-center gap-3 mb-3">
-            <span className="text-xs text-gray-500 dark:text-gray-400">Spam Score:</span>
-            <SpamScoreIndicator score={item.spamScore} size="sm" />
-          </div>
+          {item.spamScore !== undefined && (
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-xs text-gray-500 dark:text-gray-400">Spam Score:</span>
+              <SpamScoreIndicator score={item.spamScore} size="sm" />
+            </div>
+          )}
 
           {/* Quick Actions */}
           {item.status === 'pending' && (
             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-              <Button size="sm" variant="success" onClick={handleQuickApprove}>
+              <Button size="sm" variant="default" onClick={handleQuickApprove}>
                 Approve
               </Button>
-              <Button size="sm" variant="danger" onClick={handleQuickReject}>
+              <Button size="sm" variant="destructive" onClick={handleQuickReject}>
                 Reject
               </Button>
               <Button size="sm" variant="secondary" onClick={handleView}>

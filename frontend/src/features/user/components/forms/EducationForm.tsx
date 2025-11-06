@@ -6,7 +6,8 @@ import Input from '@/components/common/Input/Input';
 import Button from '@/components/common/Button/Button';
 import RichTextEditor from '@/components/editors/RichTextEditor';
 import { useToast } from '@/components/common/Toast/ToastProvider';
-import { educationSchema, EducationFormData, Education } from '../../types';
+import { educationSchema } from '../../types';
+import type { EducationFormData, Education } from '../../types';
 import {
   useCreateEducation,
   useUpdateEducation,

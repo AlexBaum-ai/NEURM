@@ -8,7 +8,7 @@ import SkillsForm from './forms/SkillsForm';
 import WorkExperienceForm from './forms/WorkExperienceForm';
 import EducationForm from './forms/EducationForm';
 import PortfolioForm from './forms/PortfolioForm';
-import { UserProfile } from '../types';
+import type { UserProfile } from '../types';
 
 interface ProfileEditModalProps {
   isOpen: boolean;

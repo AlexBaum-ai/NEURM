@@ -1,5 +1,5 @@
 import React from 'react';
-import { UseFormRegister, FieldErrors, UseFormWatch } from 'react-hook-form';
+import type { UseFormRegister, FieldErrors, UseFormWatch } from 'react-hook-form';
 import Input from '@/components/common/Input/Input';
 import { Select } from '@/components/forms/Select';
 import RichTextEditor from '@/components/editors/RichTextEditor';

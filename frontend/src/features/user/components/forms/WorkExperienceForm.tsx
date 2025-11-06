@@ -7,7 +7,8 @@ import Button from '@/components/common/Button/Button';
 import Select from '@/components/forms/Select';
 import RichTextEditor from '@/components/editors/RichTextEditor';
 import { useToast } from '@/components/common/Toast/ToastProvider';
-import { workExperienceSchema, WorkExperienceFormData, WorkExperience } from '../../types';
+import { workExperienceSchema } from '../../types';
+import type { WorkExperienceFormData, WorkExperience } from '../../types';
 import {
   useCreateWorkExperience,
   useUpdateWorkExperience,
