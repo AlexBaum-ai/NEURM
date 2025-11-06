@@ -331,11 +331,41 @@
         "Responsive design"
       ],
       "priority": "low",
-      "status": "pending",
+      "status": "completed",
+      "completedAt": "2025-11-06T11:30:00Z",
       "technicalNotes": {
         "route": "/profile/views",
         "components": "ProfileViews, ViewersList, ViewsChart",
         "paywall": "Show teaser + upgrade button if not premium"
+      },
+      "implementation": {
+        "files": [
+          "frontend/src/features/profile/types/profileViews.ts",
+          "frontend/src/features/profile/api/profileApi.ts",
+          "frontend/src/features/profile/components/PremiumUpsell.tsx",
+          "frontend/src/features/profile/components/ViewersList.tsx",
+          "frontend/src/features/profile/components/ViewsChart.tsx",
+          "frontend/src/features/profile/components/index.ts",
+          "frontend/src/features/profile/pages/ProfileViewsPage.tsx",
+          "frontend/src/features/profile/pages/index.ts",
+          "frontend/src/routes/index.tsx"
+        ],
+        "components": [
+          "ProfileViewsPage - Main page with stats, chart, and viewers list",
+          "ViewersList - Display profile viewers with avatar, name, company badge",
+          "ViewsChart - Line chart showing views over last 30 days (recharts)",
+          "PremiumUpsell - Paywall component for non-premium users"
+        ],
+        "features": [
+          "Premium access check (premium, admin, company roles)",
+          "Stats cards showing total views and unique viewers",
+          "Line chart visualization of views over time",
+          "Viewer list with anonymous viewer support",
+          "Company badge for recruiters",
+          "Pagination support (20 viewers per page)",
+          "Empty state for no views",
+          "Responsive design for all screen sizes"
+        ]
       }
     },
     {
