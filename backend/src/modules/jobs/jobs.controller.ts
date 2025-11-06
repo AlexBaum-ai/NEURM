@@ -391,6 +391,48 @@ export class JobController {
     }
   };
 
+  /**
+   * GET /api/v1/jobs/slug/:slug/match
+   * Get match score for a specific job by slug
+   */
+  getJobMatchBySlug = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('Authentication required to view match scores');
+      }
+
+      // Validate slug parameter
+      const paramValidation = jobSlugParamSchema.safeParse(req.params);
+
+      if (!paramValidation.success) {
+        const error = paramValidation.error as ZodError;
+        throw new ValidationError(error.issues[0].message);
+      }
+
+      const { slug } = paramValidation.data;
+
+      logger.info(`User ${userId} requesting match score for job slug ${slug}`);
+
+      const result = await this.service.getJobMatchBySlug(slug, userId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'JobController', method: 'getJobMatchBySlug' },
+        extra: {
+          userId: req.user?.id,
+          jobSlug: req.params.slug,
+        },
+      });
+      throw error;
+    }
+  };
+
   // ============================================================================
   // SAVED JOBS ENDPOINTS
   // ============================================================================
@@ -768,6 +810,45 @@ export class JobController {
       Sentry.captureException(error, {
         tags: { controller: 'JobController', method: 'trackAlertClick' },
         extra: { body: req.body },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * POST /api/v1/jobs/alerts/:id/test
+   * Send test alert email
+   */
+  testJobAlert = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('Authentication required');
+      }
+
+      const paramValidation = alertIdParamSchema.safeParse(req.params);
+      if (!paramValidation.success) {
+        throw new ValidationError(paramValidation.error.issues[0].message);
+      }
+
+      const { id: alertId } = paramValidation.data;
+
+      logger.info(`User ${userId} testing alert ${alertId}`);
+
+      const result = await this.jobAlertsService.sendTestAlert(userId, alertId);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          jobsMatched: result.jobsMatched,
+        },
+        message: result.message,
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'JobController', method: 'testJobAlert' },
+        extra: { userId: req.user?.id, alertId: req.params.id },
       });
       throw error;
     }

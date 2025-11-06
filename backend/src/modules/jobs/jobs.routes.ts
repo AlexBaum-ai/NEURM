@@ -124,6 +124,19 @@ router.delete(
 );
 
 /**
+ * @route   POST /api/v1/jobs/alerts/:id/test
+ * @desc    Send test alert email with matching jobs
+ * @access  Private (authenticated users only)
+ * @param   id - Alert UUID
+ */
+router.post(
+  '/alerts/:id/test',
+  authMiddleware,
+  rateLimiterMiddleware({ points: 5, duration: 3600 }), // 5 tests per hour
+  asyncHandler(jobController.testJobAlert)
+);
+
+/**
  * @route   POST /api/v1/jobs/:id/apply
  * @desc    Apply to a job (Easy Apply)
  * @access  Private (authenticated users only)
@@ -201,6 +214,19 @@ router.get(
   '/:id',
   rateLimiterMiddleware({ points: 100, duration: 60 }),
   asyncHandler(jobController.getJobById)
+);
+
+/**
+ * @route   GET /api/v1/jobs/slug/:slug/match
+ * @desc    Get match score for a specific job by slug
+ * @access  Private (authenticated users only)
+ * @param   slug - Job slug
+ */
+router.get(
+  '/slug/:slug/match',
+  authMiddleware,
+  rateLimiterMiddleware({ points: 100, duration: 60 }),
+  asyncHandler(jobController.getJobMatchBySlug)
 );
 
 /**

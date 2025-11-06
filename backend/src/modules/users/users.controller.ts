@@ -435,6 +435,53 @@ export class UserController {
       throw error;
     }
   };
+
+  /**
+   * GET /api/v1/users/me/saved-jobs
+   * Get user's saved jobs with pagination
+   */
+  getSavedJobs = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('User ID not found in request');
+      }
+
+      // Import SavedJobsService dynamically to avoid circular dependency
+      const { default: SavedJobsService } = await import(
+        '@/modules/jobs/services/savedJobsService'
+      );
+      const savedJobsService = new SavedJobsService();
+
+      // Parse query parameters
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const sortBy = (req.query.sortBy as string) || 'savedAt';
+      const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
+
+      const query = { page, limit, sortBy, sortOrder };
+
+      logger.info(`User ${userId} fetching saved jobs`);
+
+      const result = await savedJobsService.getSavedJobs(userId, query);
+
+      res.status(200).json({
+        success: true,
+        data: result.savedJobs,
+        pagination: result.pagination,
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'UserController', method: 'getSavedJobs' },
+        extra: {
+          userId: req.user?.id,
+          query: req.query,
+        },
+      });
+      throw error;
+    }
+  };
 }
 
 export default UserController;

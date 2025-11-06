@@ -316,6 +316,43 @@ export class JobService {
   }
 
   /**
+   * Get job match score by slug
+   */
+  async getJobMatchBySlug(slug: string, userId: string): Promise<any> {
+    try {
+      // Find job by slug
+      const job = await this.repository.findBySlug(slug);
+
+      if (!job) {
+        throw new NotFoundError('Job not found');
+      }
+
+      // Calculate match score using existing logic
+      const matchScore = await this.matchingService.calculateMatchScore(job.id, userId);
+
+      return {
+        job: {
+          id: job.id,
+          title: job.title,
+          slug: job.slug,
+          company: job.company,
+        },
+        match: matchScore,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+
+      Sentry.captureException(error, {
+        tags: { service: 'JobService', method: 'getJobMatchBySlug' },
+        extra: { slug, userId },
+      });
+      throw error;
+    }
+  }
+
+  /**
    * Update job
    */
   async updateJob(

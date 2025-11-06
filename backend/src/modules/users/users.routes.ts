@@ -329,6 +329,19 @@ router.get(
 );
 
 /**
+ * @route   GET /api/v1/users/me/saved-jobs
+ * @desc    Get user's saved jobs with pagination
+ * @access  Private (requires authentication)
+ * @query   page, limit, sortBy, sortOrder
+ */
+router.get(
+  '/me/saved-jobs',
+  authenticate,
+  apiLimiter,
+  asyncHandler(userController.getSavedJobs)
+);
+
+/**
  * WORK EXPERIENCE MANAGEMENT ROUTES
  */
 

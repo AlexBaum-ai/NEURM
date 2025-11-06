@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
+import { apiClient } from '@/lib/api';
 import * as authApi from '../api/authApi';
 import type { LoginFormData, RegisterFormData, OAuthProvider } from '../types';
 
@@ -23,9 +24,17 @@ export const useAuth = (options: UseAuthOptions = {}) => {
   // Login mutation
   const loginMutation = useMutation({
     mutationFn: authApi.login,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setAuthState(data.user, data.accessToken);
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+
+      // Initialize CSRF token after successful login
+      try {
+        await apiClient.initializeCsrfToken();
+      } catch (error) {
+        console.error('Failed to initialize CSRF token after login:', error);
+      }
+
       navigate(redirectTo);
       onSuccess?.();
     },
@@ -42,9 +51,17 @@ export const useAuth = (options: UseAuthOptions = {}) => {
         email: data.email,
         password: data.password,
       }),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setAuthState(data.user, data.accessToken);
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+
+      // Initialize CSRF token after successful registration
+      try {
+        await apiClient.initializeCsrfToken();
+      } catch (error) {
+        console.error('Failed to initialize CSRF token after registration:', error);
+      }
+
       navigate(redirectTo);
       onSuccess?.();
     },
@@ -59,6 +76,8 @@ export const useAuth = (options: UseAuthOptions = {}) => {
     onSuccess: () => {
       clearAuthState();
       queryClient.clear();
+      // Clear CSRF token on logout
+      apiClient.clearCsrfToken();
       navigate('/');
       onSuccess?.();
     },
@@ -66,6 +85,8 @@ export const useAuth = (options: UseAuthOptions = {}) => {
       // Still clear local state even if API call fails
       clearAuthState();
       queryClient.clear();
+      // Clear CSRF token even if logout fails
+      apiClient.clearCsrfToken();
       navigate('/');
       onError?.(error as Error);
     },
@@ -76,7 +97,7 @@ export const useAuth = (options: UseAuthOptions = {}) => {
     authApi.initiateOAuth(provider);
 
     // Listen for OAuth callback
-    const handleMessage = (event: MessageEvent) => {
+    const handleMessage = async (event: MessageEvent) => {
       // Validate origin for security
       if (event.origin !== window.location.origin) return;
 
@@ -84,6 +105,14 @@ export const useAuth = (options: UseAuthOptions = {}) => {
         const { user, accessToken } = event.data;
         setAuthState(user, accessToken);
         queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+
+        // Initialize CSRF token after successful OAuth
+        try {
+          await apiClient.initializeCsrfToken();
+        } catch (error) {
+          console.error('Failed to initialize CSRF token after OAuth:', error);
+        }
+
         navigate(redirectTo);
         onSuccess?.();
       } else if (event.data.type === 'oauth-error') {

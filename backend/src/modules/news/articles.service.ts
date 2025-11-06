@@ -699,6 +699,175 @@ export class ArticleService {
       throw error;
     }
   }
+
+  /**
+   * Toggle bookmark for an article
+   */
+  async toggleBookmark(
+    userId: string,
+    slug: string
+  ): Promise<{ bookmarked: boolean; bookmarkId?: string }> {
+    try {
+      // Find article by slug
+      const article = await this.repository.findBySlug(slug);
+      if (!article) {
+        throw new NotFoundError(`Article with slug "${slug}" not found`);
+      }
+
+      // Check if bookmark already exists
+      const existingBookmark = await this.repository.prisma.bookmark.findUnique({
+        where: {
+          userId_articleId: {
+            userId,
+            articleId: article.id,
+          },
+        },
+      });
+
+      if (existingBookmark) {
+        // Remove bookmark
+        await this.repository.prisma.bookmark.delete({
+          where: { id: existingBookmark.id },
+        });
+
+        logger.info(`Bookmark removed: user ${userId}, article ${article.id}`);
+
+        return { bookmarked: false };
+      } else {
+        // Create bookmark
+        const bookmark = await this.repository.prisma.bookmark.create({
+          data: {
+            userId,
+            articleId: article.id,
+          },
+        });
+
+        logger.info(`Bookmark created: user ${userId}, article ${article.id}`);
+
+        return { bookmarked: true, bookmarkId: bookmark.id };
+      }
+    } catch (error) {
+      logger.error(`Failed to toggle bookmark:`, error);
+      Sentry.captureException(error, {
+        tags: { service: 'ArticleService', method: 'toggleBookmark' },
+        extra: { userId, slug },
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Remove bookmark for an article
+   */
+  async removeBookmark(userId: string, slug: string): Promise<void> {
+    try {
+      // Find article by slug
+      const article = await this.repository.findBySlug(slug);
+      if (!article) {
+        throw new NotFoundError(`Article with slug "${slug}" not found`);
+      }
+
+      // Check if bookmark exists
+      const existingBookmark = await this.repository.prisma.bookmark.findUnique({
+        where: {
+          userId_articleId: {
+            userId,
+            articleId: article.id,
+          },
+        },
+      });
+
+      if (existingBookmark) {
+        await this.repository.prisma.bookmark.delete({
+          where: { id: existingBookmark.id },
+        });
+
+        logger.info(`Bookmark removed: user ${userId}, article ${article.id}`);
+      }
+      // If bookmark doesn't exist, silently succeed (idempotent operation)
+    } catch (error) {
+      logger.error(`Failed to remove bookmark:`, error);
+      Sentry.captureException(error, {
+        tags: { service: 'ArticleService', method: 'removeBookmark' },
+        extra: { userId, slug },
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Track article view with deduplication
+   */
+  async trackView(
+    slug: string,
+    userId: string | undefined,
+    ipAddress: string,
+    userAgent: string
+  ): Promise<{ viewCount: number; tracked: boolean }> {
+    try {
+      // Find article by slug
+      const article = await this.repository.findBySlug(slug);
+      if (!article) {
+        throw new NotFoundError(`Article with slug "${slug}" not found`);
+      }
+
+      // Hash IP address for privacy (using simple hash for now)
+      const crypto = await import('crypto');
+      const ipHash = crypto
+        .createHash('sha256')
+        .update(ipAddress + process.env.IP_SALT || 'default-salt')
+        .digest('hex');
+
+      // Check for duplicate view within last hour
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      const recentView = await this.repository.prisma.articleView.findFirst({
+        where: {
+          articleId: article.id,
+          viewedAt: { gte: oneHourAgo },
+          OR: [
+            userId ? { userId } : {},
+            { ipHash },
+          ].filter(obj => Object.keys(obj).length > 0),
+        },
+      });
+
+      let tracked = false;
+
+      if (!recentView) {
+        // Create new view record
+        await this.repository.prisma.articleView.create({
+          data: {
+            articleId: article.id,
+            userId: userId || null,
+            ipHash,
+            userAgent: userAgent.substring(0, 500), // Limit length
+            viewedAt: new Date(),
+          },
+        });
+
+        tracked = true;
+        logger.debug(`View tracked for article ${article.id}`);
+      } else {
+        logger.debug(
+          `Duplicate view detected for article ${article.id} within 1 hour`
+        );
+      }
+
+      // Get total view count
+      const viewCount = await this.repository.prisma.articleView.count({
+        where: { articleId: article.id },
+      });
+
+      return { viewCount, tracked };
+    } catch (error) {
+      logger.error(`Failed to track view:`, error);
+      Sentry.captureException(error, {
+        tags: { service: 'ArticleService', method: 'trackView' },
+        extra: { slug, userId, ipAddress: ipAddress.substring(0, 15) },
+      });
+      throw error;
+    }
+  }
 }
 
 export default ArticleService;
