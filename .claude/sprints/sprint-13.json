@@ -203,7 +203,7 @@
         "Performance: activity queries < 500ms"
       ],
       "priority": "low",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "table": "user_activities (user_id, activity_type, target_type, target_id, privacy, created_at)",
         "privacy": "WHERE privacy <= viewer_relationship (public < community < private)",
