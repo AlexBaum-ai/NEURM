@@ -72,8 +72,15 @@ const Header: React.FC = () => {
         <div className="flex h-16 items-center justify-between gap-4">
           {/* Logo */}
           <div className="flex items-center gap-8 flex-shrink-0">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white font-bold">
+            <Link
+              to="/"
+              className="flex items-center gap-2"
+              aria-label={t('accessibility.homeLink', 'Go to homepage')}
+            >
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white font-bold"
+                aria-hidden="true"
+              >
                 N
               </div>
               <span className="hidden sm:inline text-xl font-bold text-gray-900 dark:text-white">
@@ -82,7 +89,11 @@ const Header: React.FC = () => {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-6">
+            <nav
+              id="main-navigation"
+              className="hidden lg:flex items-center gap-6"
+              aria-label={t('accessibility.mainNavigation', 'Main navigation')}
+            >
               {navLinks.map((link) => (
                 <NavLink
                   key={link.to}
@@ -95,6 +106,7 @@ const Header: React.FC = () => {
                         : 'text-gray-600 dark:text-gray-300'
                     )
                   }
+                  aria-current={({ isActive }) => (isActive ? 'page' : undefined)}
                 >
                   {link.label}
                 </NavLink>
@@ -103,7 +115,7 @@ const Header: React.FC = () => {
           </div>
 
           {/* Search Bar - Desktop/Tablet */}
-          <div className="hidden md:flex flex-1 max-w-xl mx-4">
+          <div id="search" className="hidden md:flex flex-1 max-w-xl mx-4">
             <GlobalSearchBar
               placeholder="Search..."
               showVoiceSearch={false}
@@ -139,7 +151,11 @@ const Header: React.FC = () => {
 
                 {/* User dropdown menu */}
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 py-1 z-50">
+                  <div
+                    className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 py-1 z-50"
+                    role="menu"
+                    aria-label={t('accessibility.userMenu', 'User menu')}
+                  >
                     <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {user?.username}
@@ -153,8 +169,9 @@ const Header: React.FC = () => {
                       to={`/profile/${user?.username}`}
                       onClick={() => setShowUserMenu(false)}
                       className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      role="menuitem"
                     >
-                      <PersonIcon className="h-4 w-4" />
+                      <PersonIcon className="h-4 w-4" aria-hidden="true" />
                       <span>Profile</span>
                     </Link>
 
@@ -162,8 +179,9 @@ const Header: React.FC = () => {
                       to="/settings"
                       onClick={() => setShowUserMenu(false)}
                       className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      role="menuitem"
                     >
-                      <GearIcon className="h-4 w-4" />
+                      <GearIcon className="h-4 w-4" aria-hidden="true" />
                       <span>Settings</span>
                     </Link>
 
@@ -172,8 +190,9 @@ const Header: React.FC = () => {
                     <button
                       onClick={handleLogout}
                       className="flex items-center gap-3 px-4 py-2 text-sm text-accent-600 dark:text-accent-400 hover:bg-gray-100 dark:hover:bg-gray-800 w-full text-left"
+                      role="menuitem"
                     >
-                      <ExitIcon className="h-4 w-4" />
+                      <ExitIcon className="h-4 w-4" aria-hidden="true" />
                       <span>Logout</span>
                     </button>
                   </div>

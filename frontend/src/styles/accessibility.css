@@ -1,0 +1,290 @@
+/**
+ * Global Accessibility Styles
+ * WCAG 2.1 AA Compliant
+ */
+
+/* ============================================
+   Focus Indicators - 3px solid border
+   ============================================ */
+
+/* Default focus indicator for all interactive elements */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 3px solid #0284c7; /* primary-600 */
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Dark mode focus indicator */
+.dark *:focus-visible {
+  outline-color: #38bdf8; /* primary-400 */
+}
+
+/* High contrast focus for buttons */
+button:focus-visible,
+[role="button"]:focus-visible,
+a:focus-visible {
+  outline: 3px solid #0284c7;
+  outline-offset: 2px;
+}
+
+.dark button:focus-visible,
+.dark [role="button"]:focus-visible,
+.dark a:focus-visible {
+  outline-color: #38bdf8;
+}
+
+/* Form elements focus */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid #0284c7;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+}
+
+.dark input:focus-visible,
+.dark textarea:focus-visible,
+.dark select:focus-visible {
+  outline-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+}
+
+/* Error state focus */
+[aria-invalid="true"]:focus-visible {
+  outline-color: #dc2626; /* accent-600 */
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+/* ============================================
+   Skip Links
+   ============================================ */
+
+.skip-link {
+  position: fixed;
+  top: -40px;
+  left: 0;
+  z-index: 9999;
+  background: #0284c7;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0 0 4px 0;
+  transition: top 0.2s ease-in-out;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+/* ============================================
+   Screen Reader Only Content
+   ============================================ */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only-focusable:focus,
+.sr-only-focusable:active {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* ============================================
+   High Contrast Mode Support
+   ============================================ */
+
+@media (prefers-contrast: high) {
+  *:focus-visible {
+    outline-width: 4px;
+    outline-offset: 3px;
+  }
+
+  button,
+  [role="button"],
+  a {
+    border: 2px solid currentColor;
+  }
+}
+
+/* ============================================
+   Reduced Motion
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================
+   Keyboard Navigation Indicators
+   ============================================ */
+
+/* Show focus on keyboard navigation, hide on mouse clicks */
+body:not(.user-is-tabbing) button:focus,
+body:not(.user-is-tabbing) a:focus,
+body:not(.user-is-tabbing) input:focus,
+body:not(.user-is-tabbing) select:focus,
+body:not(.user-is-tabbing) textarea:focus {
+  outline: none;
+}
+
+body.user-is-tabbing *:focus {
+  outline: 3px solid #0284c7;
+  outline-offset: 2px;
+}
+
+/* ============================================
+   Live Regions
+   ============================================ */
+
+[role="status"],
+[role="alert"],
+[aria-live] {
+  position: relative;
+}
+
+/* Visual indicator for live regions in development */
+[data-dev-mode="true"] [role="status"]::before,
+[data-dev-mode="true"] [role="alert"]::before,
+[data-dev-mode="true"] [aria-live]::before {
+  content: "Live: " attr(aria-live);
+  position: absolute;
+  top: -20px;
+  left: 0;
+  font-size: 10px;
+  color: #9333ea;
+  background: #f3e8ff;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* ============================================
+   Accessible Color Contrast
+   ============================================ */
+
+/* Ensure minimum contrast ratios */
+.text-muted {
+  color: #6b7280; /* gray-500 - 4.6:1 on white */
+}
+
+.dark .text-muted {
+  color: #9ca3af; /* gray-400 - 4.5:1 on black */
+}
+
+/* ============================================
+   Focus Trap
+   ============================================ */
+
+[data-focus-trap] {
+  position: relative;
+}
+
+/* ============================================
+   Disabled State
+   ============================================ */
+
+[disabled],
+[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ============================================
+   Loading State
+   ============================================ */
+
+[aria-busy="true"] {
+  cursor: wait;
+  pointer-events: none;
+}
+
+/* ============================================
+   Required Fields
+   ============================================ */
+
+[aria-required="true"]::after,
+[required]::after {
+  content: " *";
+  color: #dc2626;
+  margin-left: 0.25rem;
+}
+
+/* ============================================
+   Error Messages
+   ============================================ */
+
+[role="alert"] {
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+  margin-top: 0.5rem;
+}
+
+[role="alert"].error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.dark [role="alert"].error {
+  background-color: #450a0a;
+  color: #fca5a5;
+  border-color: #991b1b;
+}
+
+/* ============================================
+   Accessible Tables
+   ============================================ */
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th {
+  text-align: left;
+  font-weight: 600;
+}
+
+th[scope="col"] {
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.dark th[scope="col"] {
+  border-bottom-color: #374151;
+}
+
+/* ============================================
+   Navigation Skip Link Target
+   ============================================ */
+
+#main-content:focus,
+#main-navigation:focus,
+#search:focus {
+  outline: none;
+}

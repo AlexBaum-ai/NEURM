@@ -4,11 +4,14 @@ import { cn } from '@/lib/utils';
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   label?: string;
+  description?: string;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, error, label, id, ...props }, ref) => {
+  ({ className, type, error, label, description, id, required, ...props }, ref) => {
     const inputId = id || `input-${React.useId()}`;
+    const errorId = `${inputId}-error`;
+    const descriptionId = `${inputId}-description`;
 
     return (
       <div className="w-full">
@@ -18,7 +21,17 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
             {label}
+            {required && (
+              <span className="text-accent-600 ml-1" aria-label="required">
+                *
+              </span>
+            )}
           </label>
+        )}
+        {description && (
+          <p id={descriptionId} className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+            {description}
+          </p>
         )}
         <input
           id={inputId}
@@ -29,9 +42,25 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className
           )}
           ref={ref}
+          required={required}
+          aria-required={required}
+          aria-invalid={!!error}
+          aria-describedby={cn(
+            error && errorId,
+            description && descriptionId
+          ) || undefined}
           {...props}
         />
-        {error && <p className="mt-1 text-sm text-accent-600 dark:text-accent-400">{error}</p>}
+        {error && (
+          <p
+            id={errorId}
+            className="mt-1 text-sm text-accent-600 dark:text-accent-400"
+            role="alert"
+            aria-live="polite"
+          >
+            {error}
+          </p>
+        )}
       </div>
     );
   }

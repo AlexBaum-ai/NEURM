@@ -5,8 +5,13 @@ import { Toaster } from 'react-hot-toast';
 import { queryClient } from '@/lib/reactQuery';
 import { AppRouter } from '@/routes';
 import { ToastProvider } from '@/components/common/Toast/ToastProvider';
+import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation';
+import '@/styles/accessibility.css';
 
 const App = () => {
+  // Enable keyboard navigation detection
+  useKeyboardNavigation();
+
   return (
     <QueryClientProvider client={queryClient}>
       <HelmetProvider>
