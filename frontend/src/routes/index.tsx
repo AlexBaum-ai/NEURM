@@ -24,6 +24,12 @@ const BookmarksPage = lazy(() => import('@/features/bookmarks/pages/BookmarksPag
 // Lazy load media pages
 const MediaLibraryPage = lazy(() => import('@/features/media/pages/MediaLibraryPage'));
 
+// Lazy load admin pages
+const AdminDashboard = lazy(() => import('@/features/admin/pages/AdminDashboard'));
+const ContentModerationPage = lazy(() => import('@/features/admin/pages/ContentModerationPage'));
+const UserManagement = lazy(() => import('@/features/admin/pages/UserManagement'));
+const UserDetail = lazy(() => import('@/features/admin/pages/UserDetail'));
+
 // Lazy load model tracker pages
 const ModelListPage = lazy(() => import('@/features/models/pages/ModelListPage').then(m => ({ default: m.ModelListPage })));
 const ModelDetailPage = lazy(() => import('@/features/models/pages/ModelDetailPage').then(m => ({ default: m.ModelDetailPage })));
@@ -78,6 +84,10 @@ const UseCasesLibraryPage = lazy(() => import('@/features/guide/pages').then(m =
 const UseCaseDetailPage = lazy(() => import('@/features/guide/pages').then(m => ({ default: m.UseCaseDetailPage })));
 const SubmitUseCasePage = lazy(() => import('@/features/guide/pages').then(m => ({ default: m.SubmitUseCasePage })));
 const AdminUseCaseReviewPage = lazy(() => import('@/features/guide/pages').then(m => ({ default: m.AdminUseCaseReviewPage })));
+
+// Lazy load admin pages
+const PlatformSettings = lazy(() => import('@/features/admin/pages/PlatformSettings'));
+const AnalyticsDashboard = lazy(() => import('@/features/admin/analytics/pages/AnalyticsDashboard'));
 
 // Loading fallback
 const PageLoader = () => (
@@ -229,6 +239,14 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'admin',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <AdminDashboard />
+          </Suspense>
+        ),
+      },
+      {
         path: 'admin/articles/:id/edit',
         element: (
           <Suspense fallback={<PageLoader />}>
@@ -241,6 +259,30 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <MediaLibraryPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'admin/content',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ContentModerationPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'admin/users',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <UserManagement />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'admin/users/:userId',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <UserDetail />
           </Suspense>
         ),
       },
@@ -541,6 +583,22 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <AdminUseCaseReviewPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'admin/settings',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PlatformSettings />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'admin/analytics',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <AnalyticsDashboard />
           </Suspense>
         ),
       },

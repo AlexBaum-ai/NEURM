@@ -14,6 +14,7 @@ import { articleSchedulerQueue, shutdownArticleSchedulerQueue } from '@/jobs/que
 import processAnalyticsEvent from '@/jobs/workers/analyticsWorker';
 import processArticleScheduler from '@/jobs/workers/articleSchedulerWorker';
 import { registerForumDependencies } from '@/modules/forum/forum.container';
+import { registerAdminDependencies } from '@/modules/admin/admin.container';
 
 const PORT = env.PORT || 3000;
 
@@ -81,6 +82,10 @@ const server = app.listen(PORT, async () => {
   // Initialize forum dependencies
   registerForumDependencies(prisma);
   logger.info('Forum dependencies initialized');
+
+  // Initialize admin dependencies
+  registerAdminDependencies(prisma);
+  logger.info('Admin dependencies initialized');
 
   // Initialize analytics worker
   analyticsQueue.process(processAnalyticsEvent);
