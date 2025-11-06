@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, Eye, TrendingUp, ChevronRight } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { MessageCircle, TrendingUp, ChevronRight } from 'lucide-react';
 import type { TrendingDiscussion } from '../../types';
 
 interface TrendingDiscussionsWidgetProps {

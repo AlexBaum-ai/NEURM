@@ -18,7 +18,7 @@ interface BadgeNotificationProps {
  * Custom Badge Notification Content
  */
 export const BadgeNotificationContent: React.FC<{ badge: Badge }> = ({ badge }) => {
-  const rarityConfig = BADGE_RARITY_CONFIG[badge.rarity];
+  const __rarityConfig = BADGE_RARITY_CONFIG[badge.rarity];
 
   return (
     <div className="flex items-start gap-3 p-1">
@@ -65,7 +65,7 @@ export const useBadgeNotification = () => {
   const { showToast } = useToast();
 
   const showBadgeEarned = (badge: Badge) => {
-    const rarityConfig = BADGE_RARITY_CONFIG[badge.rarity];
+    const __rarityConfig = BADGE_RARITY_CONFIG[badge.rarity];
 
     // Determine duration based on rarity
     const duration = badge.rarity === 'legendary' ? 8000 : badge.rarity === 'epic' ? 6000 : 5000;

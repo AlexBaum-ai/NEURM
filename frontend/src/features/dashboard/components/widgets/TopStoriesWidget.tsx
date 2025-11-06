@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, Eye, ChevronRight } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
 import type { TopStory } from '../../types';
 
 interface TopStoriesWidgetProps {

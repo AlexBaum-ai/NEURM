@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Image, File, Check, Trash2, Edit2, Download, Copy } from 'lucide-react';
+import { File, Check, Trash2, Edit2, Download, Copy } from 'lucide-react';
 import type { MediaFile } from '../types/media.types';
 import { formatDate } from 'date-fns';
 

@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Clock, Eye, Bookmark, BookmarkCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
-import type { Article } from '@/features/news/types';
 
 export interface ArticleCardProps {
   article: {
@@ -62,7 +61,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   showBookmark = true,
   onBookmarkToggle,
 }) => {
-  const { user, isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const [isBookmarked, setIsBookmarked] = useState(article.isBookmarked || false);
   const [isBookmarking, setIsBookmarking] = useState(false);
 

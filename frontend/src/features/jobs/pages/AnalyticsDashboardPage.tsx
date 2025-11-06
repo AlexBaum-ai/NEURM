@@ -18,7 +18,7 @@ import { Button } from '@/components/common/Button/Button';
 const MOCK_COMPANY_ID = '1';
 
 export const AnalyticsDashboardPage: React.FC = () => {
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [_selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
   const {
     data: analytics,

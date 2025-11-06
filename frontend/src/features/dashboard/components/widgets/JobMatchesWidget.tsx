@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Briefcase, TrendingUp, ChevronRight } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
 import type { JobMatch } from '../../types';
 
 interface JobMatchesWidgetProps {

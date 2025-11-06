@@ -87,7 +87,7 @@ export const PollResults: React.FC<PollResultsProps> = ({ poll, className }) => 
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }} />
             <Bar dataKey="votes" radius={[0, 4, 4, 0]}>
-              {chartData.map((entry, index) => (
+              {chartData.map((entry, _index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={entry.userVoted ? '#10b981' : colors[index % colors.length]}
@@ -102,7 +102,7 @@ export const PollResults: React.FC<PollResultsProps> = ({ poll, className }) => 
       <div className="space-y-2">
         {poll.options
           .sort((a, b) => b.voteCount - a.voteCount)
-          .map((option, index) => {
+          .map((option, _index) => {
             const percentage = poll.totalVotes > 0 ? (option.voteCount / poll.totalVotes) * 100 : 0;
 
             return (

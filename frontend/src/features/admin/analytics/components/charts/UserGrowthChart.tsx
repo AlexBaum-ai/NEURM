@@ -70,7 +70,7 @@ const UserGrowthChart: React.FC<UserGrowthChartProps> = ({
   const displayData = aggregateData(data, viewMode);
 
   const ChartComponent = chartType === 'area' ? AreaChart : LineChart;
-  const DataComponent = chartType === 'area' ? Area : Line;
+  // const DataComponent = chartType === 'area' ? Area : Line;
 
   return (
     <Card>

@@ -33,7 +33,6 @@ import {
 } from '@mui/icons-material';
 import { useUnansweredTopics, useCategories } from '../hooks';
 import TopicCard from '../components/TopicCard';
-import { formatDistanceToNow } from 'date-fns';
 
 // Empty State Component
 const EmptyState: React.FC = () => (

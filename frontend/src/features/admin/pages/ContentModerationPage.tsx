@@ -6,13 +6,12 @@
 
 import React, { useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Filter, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 // Hooks
 import {
   useContentQueue,
-  useModerateContent,
   useBulkModerate,
   useApproveContent,
   useRejectContent,
@@ -38,7 +37,7 @@ type ModerationTab = 'all' | 'pending' | 'reported' | 'flagged';
 const ContentModerationPage: React.FC = () => {
   // State
   const [activeTab, setActiveTab] = useState<ModerationTab>('all');
-  const [contentTypeFilter, setContentTypeFilter] = useState<ContentType | 'all'>('all');
+  const [_contentTypeFilter] = useState<ContentType | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [reviewingItem, setReviewingItem] = useState<ContentItem | null>(null);
@@ -50,7 +49,7 @@ const ContentModerationPage: React.FC = () => {
   const [page, setPage] = useState(1);
 
   // Queries
-  const { data, isLoading, refetch } = useContentQueue({
+  const { data, isLoading } = useContentQueue({
     page,
     limit: 20,
     filters: {
@@ -141,11 +140,11 @@ const ContentModerationPage: React.FC = () => {
   const handleBulkAction = useCallback(async (action: 'approve' | 'reject' | 'hide' | 'delete') => {
     if (selectedItems.size === 0) return;
 
-    const contentItems = data?.content.filter(item => selectedItems.has(item.id)) || [];
+    const contentItems = data?.content.filter((item: ContentItem) => selectedItems.has(item.id)) || [];
     if (contentItems.length === 0) return;
 
     // Group by content type
-    const grouped = contentItems.reduce((acc, item) => {
+    const grouped = contentItems.reduce((acc: Record<ContentType, string[]>, item: ContentItem) => {
       if (!acc[item.type]) acc[item.type] = [];
       acc[item.type].push(item.id);
       return acc;
@@ -295,7 +294,7 @@ const ContentModerationPage: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              {data.content.map(item => (
+              {data.content.map((item: ContentItem) => (
                 <ContentQueueItemComponent
                   key={item.id}
                   item={item}
@@ -559,7 +558,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
               Reports ({item.reportCount})
             </h3>
             <div className="space-y-2 max-h-48 overflow-y-auto">
-              {item.reports.map((report) => (
+              {item.reports.map((report: any) => (
                 <div
                   key={report.id}
                   className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded"

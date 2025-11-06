@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { Box, Button, Typography, IconButton, CircularProgress } from '@mui/material';
+import { Box, Typography, IconButton, CircularProgress } from '@mui/material';
 import { CloudUpload as UploadIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
 interface ImageUploadProps {
