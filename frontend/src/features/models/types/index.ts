@@ -115,3 +115,75 @@ export interface ModelFilters {
   provider?: string[];
   search?: string;
 }
+
+export interface ModelComparison {
+  id: string;
+  models: Model[];
+  createdAt: string;
+  userId?: number;
+}
+
+export interface ModelComparisonResponse {
+  id: string;
+  models: Model[];
+}
+
+export interface SavedComparison {
+  id: string;
+  name: string;
+  modelIds: number[];
+  createdAt: string;
+}
+
+export interface ModelVersion {
+  id: number;
+  version: string;
+  releasedAt: string;
+  changelog?: string;
+  features?: string[];
+  improvements?: string[];
+  isLatest: boolean;
+}
+
+export interface ModelVersionsResponse {
+  versions: ModelVersion[];
+  total: number;
+}
+
+export interface RelatedModel {
+  id: number;
+  name: string;
+  slug: string;
+  provider: ModelProvider;
+  category: ModelCategory;
+  description: string;
+  similarity: number; // 0-100 similarity score
+}
+
+export interface CommunityResource {
+  id: number;
+  type: 'tutorial' | 'use_case' | 'article' | 'video';
+  title: string;
+  url: string;
+  author?: string;
+  publishedAt?: string;
+  description?: string;
+}
+
+export interface BenchmarkComparisonData {
+  models: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    color: string;
+  }>;
+  benchmarks: Array<{
+    name: string;
+    description?: string;
+    scores: Array<{
+      modelId: number;
+      score: number;
+      maxScore?: number;
+    }>;
+  }>;
+}

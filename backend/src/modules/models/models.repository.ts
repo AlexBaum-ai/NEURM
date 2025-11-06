@@ -490,6 +490,147 @@ export class ModelRepository {
       throw error;
     }
   }
+
+  /**
+   * Get model versions by model ID
+   */
+  async getModelVersions(modelId: string) {
+    try {
+      return await prisma.modelVersion.findMany({
+        where: { modelId },
+        orderBy: {
+          releasedAt: 'desc',
+        },
+      });
+    } catch (error) {
+      logger.error(`Failed to fetch model versions for model: ${modelId}`, error);
+      Sentry.captureException(error, {
+        tags: { repository: 'ModelRepository', method: 'getModelVersions' },
+        extra: { modelId },
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get model benchmarks by model ID
+   */
+  async getModelBenchmarks(modelId: string): Promise<ModelBenchmark[]> {
+    try {
+      return await prisma.modelBenchmark.findMany({
+        where: { modelId },
+        orderBy: {
+          benchmarkName: 'asc',
+        },
+      });
+    } catch (error) {
+      logger.error(`Failed to fetch model benchmarks for model: ${modelId}`, error);
+      Sentry.captureException(error, {
+        tags: { repository: 'ModelRepository', method: 'getModelBenchmarks' },
+        extra: { modelId },
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Compare multiple models by IDs
+   */
+  async compareModels(modelIds: string[]) {
+    try {
+      const models = await prisma.lLMModel.findMany({
+        where: {
+          id: {
+            in: modelIds,
+          },
+        },
+        include: {
+          modelBenchmarks: {
+            orderBy: {
+              benchmarkName: 'asc',
+            },
+          },
+          modelVersions: {
+            where: {
+              isLatest: true,
+            },
+            take: 1,
+          },
+        },
+      });
+
+      // Return models in the same order as requested
+      return modelIds
+        .map((id) => models.find((model) => model.id === id))
+        .filter((model) => model !== undefined);
+    } catch (error) {
+      logger.error('Failed to compare models:', error);
+      Sentry.captureException(error, {
+        tags: { repository: 'ModelRepository', method: 'compareModels' },
+        extra: { modelIds },
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new model version (admin only)
+   */
+  async createModelVersion(modelId: string, versionData: any) {
+    try {
+      // If this version is marked as latest, unset other versions
+      if (versionData.isLatest) {
+        await prisma.modelVersion.updateMany({
+          where: {
+            modelId,
+            isLatest: true,
+          },
+          data: {
+            isLatest: false,
+          },
+        });
+      }
+
+      const version = await prisma.modelVersion.create({
+        data: {
+          ...versionData,
+          modelId,
+        },
+      });
+
+      logger.info(`Created new version ${version.version} for model ${modelId}`);
+      return version;
+    } catch (error) {
+      logger.error('Failed to create model version:', error);
+      Sentry.captureException(error, {
+        tags: { repository: 'ModelRepository', method: 'createModelVersion' },
+        extra: { modelId, versionData },
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Update model (admin only)
+   */
+  async updateModel(id: string, updateData: any) {
+    try {
+      const model = await prisma.lLMModel.update({
+        where: { id },
+        data: updateData,
+      });
+
+      logger.info(`Updated model ${id}`);
+      return model;
+    } catch (error) {
+      logger.error('Failed to update model:', error);
+      Sentry.captureException(error, {
+        tags: { repository: 'ModelRepository', method: 'updateModel' },
+        extra: { id, updateData },
+      });
+      throw error;
+    }
+  }
 }
 
 export default new ModelRepository();

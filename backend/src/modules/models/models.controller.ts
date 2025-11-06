@@ -7,6 +7,11 @@ import {
   getModelBySlugParamsSchema,
   relatedContentQuerySchema,
   followModelParamsSchema,
+  compareModelsQuerySchema,
+  getModelBenchmarksParamsSchema,
+  getModelVersionsParamsSchema,
+  createModelVersionSchema,
+  updateModelSchema,
   ListModelsQuery,
   RelatedContentQuery,
 } from './models.validation';
@@ -370,6 +375,207 @@ export class ModelController {
       Sentry.captureException(error, {
         tags: { controller: 'ModelController', method: 'getUserFollowedModels' },
         extra: { userId: req.user?.id },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * GET /api/v1/models/:slug/versions
+   * Get version history for a model
+   */
+  getModelVersions = async (req: Request, res: Response): Promise<void> => {
+    try {
+      // Validate params
+      const validationResult = getModelVersionsParamsSchema.safeParse(req.params);
+
+      if (!validationResult.success) {
+        throw new ValidationError('Invalid slug');
+      }
+
+      const { slug } = validationResult.data;
+
+      const result = await modelService.getModelVersions(slug);
+
+      if (!result) {
+        throw new NotFoundError(`Model with slug '${slug}' not found`);
+      }
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'ModelController', method: 'getModelVersions' },
+        extra: { params: req.params },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * GET /api/v1/models/:slug/benchmarks
+   * Get benchmark scores for a model
+   */
+  getModelBenchmarks = async (req: Request, res: Response): Promise<void> => {
+    try {
+      // Validate params
+      const validationResult = getModelBenchmarksParamsSchema.safeParse(req.params);
+
+      if (!validationResult.success) {
+        throw new ValidationError('Invalid slug');
+      }
+
+      const { slug } = validationResult.data;
+
+      const result = await modelService.getModelBenchmarks(slug);
+
+      if (!result) {
+        throw new NotFoundError(`Model with slug '${slug}' not found`);
+      }
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'ModelController', method: 'getModelBenchmarks' },
+        extra: { params: req.params },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * GET /api/v1/models/compare?ids=1,2,3
+   * Compare multiple models side-by-side
+   */
+  compareModels = async (req: Request, res: Response): Promise<void> => {
+    try {
+      // Validate query
+      const validationResult = compareModelsQuerySchema.safeParse(req.query);
+
+      if (!validationResult.success) {
+        const error = validationResult.error as ZodError;
+        throw new ValidationError(
+          error.issues[0]?.message || 'Invalid model IDs for comparison'
+        );
+      }
+
+      const { ids } = validationResult.data;
+
+      const result = await modelService.compareModels(ids);
+
+      if (result.total === 0) {
+        throw new NotFoundError('No models found with the provided IDs');
+      }
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'ModelController', method: 'compareModels' },
+        extra: { query: req.query },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * POST /api/v1/models/:slug/versions
+   * Create a new version for a model (admin only)
+   */
+  createModelVersion = async (req: Request, res: Response): Promise<void> => {
+    try {
+      // Validate params
+      const paramsValidation = getModelVersionsParamsSchema.safeParse(req.params);
+      if (!paramsValidation.success) {
+        throw new ValidationError('Invalid slug');
+      }
+
+      // Validate body
+      const bodyValidation = createModelVersionSchema.safeParse(req.body);
+      if (!bodyValidation.success) {
+        const error = bodyValidation.error as ZodError;
+        const errors = error.issues.map((err) => ({
+          field: err.path.join('.'),
+          message: err.message,
+        }));
+        throw new ValidationError(
+          `Validation failed: ${errors.map((e) => e.message).join(', ')}`
+        );
+      }
+
+      const { slug } = paramsValidation.data;
+      const versionData = bodyValidation.data;
+
+      const result = await modelService.createModelVersion(slug, versionData);
+
+      if (!result.success) {
+        throw new NotFoundError(result.error || 'Model not found');
+      }
+
+      res.status(201).json({
+        success: true,
+        data: result.version,
+        message: 'Model version created successfully',
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'ModelController', method: 'createModelVersion' },
+        extra: { params: req.params, body: req.body },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * PUT /api/v1/models/:slug
+   * Update model information (admin only)
+   */
+  updateModel = async (req: Request, res: Response): Promise<void> => {
+    try {
+      // Validate params
+      const paramsValidation = getModelBySlugParamsSchema.safeParse(req.params);
+      if (!paramsValidation.success) {
+        throw new ValidationError('Invalid slug');
+      }
+
+      // Validate body
+      const bodyValidation = updateModelSchema.safeParse(req.body);
+      if (!bodyValidation.success) {
+        const error = bodyValidation.error as ZodError;
+        const errors = error.issues.map((err) => ({
+          field: err.path.join('.'),
+          message: err.message,
+        }));
+        throw new ValidationError(
+          `Validation failed: ${errors.map((e) => e.message).join(', ')}`
+        );
+      }
+
+      const { slug } = paramsValidation.data;
+      const updateData = bodyValidation.data;
+
+      const result = await modelService.updateModel(slug, updateData);
+
+      if (!result.success) {
+        throw new NotFoundError(result.error || 'Model not found');
+      }
+
+      res.status(200).json({
+        success: true,
+        data: result.model,
+        message: 'Model updated successfully',
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'ModelController', method: 'updateModel' },
+        extra: { params: req.params, body: req.body },
       });
       throw error;
     }

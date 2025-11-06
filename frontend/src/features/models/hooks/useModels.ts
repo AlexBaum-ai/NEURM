@@ -1,4 +1,4 @@
-import { useSuspenseQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSuspenseQuery, useInfiniteQuery, useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import type {
   Model,
@@ -7,6 +7,10 @@ import type {
   ModelDiscussion,
   ModelJob,
   ModelFilters,
+  ModelVersionsResponse,
+  RelatedModel,
+  CommunityResource,
+  BenchmarkComparisonData,
 } from '../types';
 
 // Query keys
@@ -19,6 +23,11 @@ export const modelKeys = {
   news: (slug: string) => [...modelKeys.detail(slug), 'news'] as const,
   discussions: (slug: string) => [...modelKeys.detail(slug), 'discussions'] as const,
   jobs: (slug: string) => [...modelKeys.detail(slug), 'jobs'] as const,
+  versions: (slug: string) => [...modelKeys.detail(slug), 'versions'] as const,
+  benchmarks: (slug: string) => [...modelKeys.detail(slug), 'benchmarks'] as const,
+  relatedModels: (slug: string) => [...modelKeys.detail(slug), 'related'] as const,
+  communityResources: (slug: string) => [...modelKeys.detail(slug), 'community'] as const,
+  benchmarkComparison: (modelIds: number[]) => [...modelKeys.all, 'benchmarkComparison', modelIds] as const,
 };
 
 // Fetch all models
@@ -122,5 +131,69 @@ export const useFollowModel = (slug: string) => {
         };
       });
     },
+  });
+};
+
+// Fetch model versions
+export const useModelVersions = (slug: string) => {
+  return useQuery({
+    queryKey: modelKeys.versions(slug),
+    queryFn: async () => {
+      const response = await api.get<{ data: ModelVersionsResponse }>(`/models/${slug}/versions`);
+      return response.data.data;
+    },
+  });
+};
+
+// Fetch model benchmarks (for comparison)
+export const useModelBenchmarks = (slug: string) => {
+  return useQuery({
+    queryKey: modelKeys.benchmarks(slug),
+    queryFn: async () => {
+      const response = await api.get<{ data: { benchmarks: any[] } }>(`/models/${slug}/benchmarks`);
+      return response.data.data;
+    },
+  });
+};
+
+// Fetch related models
+export const useRelatedModels = (slug: string) => {
+  return useQuery({
+    queryKey: modelKeys.relatedModels(slug),
+    queryFn: async () => {
+      const response = await api.get<{ data: { models: RelatedModel[]; total: number } }>(
+        `/models/${slug}/related?limit=6`
+      );
+      return response.data.data;
+    },
+  });
+};
+
+// Fetch community resources
+export const useCommunityResources = (slug: string) => {
+  return useQuery({
+    queryKey: modelKeys.communityResources(slug),
+    queryFn: async () => {
+      const response = await api.get<{ data: { resources: CommunityResource[]; total: number } }>(
+        `/models/${slug}/community-resources?limit=10`
+      );
+      return response.data.data;
+    },
+  });
+};
+
+// Fetch benchmark comparison data for multiple models
+export const useBenchmarkComparison = (modelIds: number[]) => {
+  return useQuery({
+    queryKey: modelKeys.benchmarkComparison(modelIds),
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append('ids', modelIds.join(','));
+      const response = await api.get<{ data: BenchmarkComparisonData }>(
+        `/models/compare/benchmarks?${params.toString()}`
+      );
+      return response.data.data;
+    },
+    enabled: modelIds.length > 0,
   });
 };

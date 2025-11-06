@@ -27,6 +27,7 @@ const MediaLibraryPage = lazy(() => import('@/features/media/pages/MediaLibraryP
 // Lazy load model tracker pages
 const ModelListPage = lazy(() => import('@/features/models/pages/ModelListPage').then(m => ({ default: m.ModelListPage })));
 const ModelDetailPage = lazy(() => import('@/features/models/pages/ModelDetailPage').then(m => ({ default: m.ModelDetailPage })));
+const ModelComparisonPage = lazy(() => import('@/features/models/pages/ModelComparisonPage').then(m => ({ default: m.ModelComparisonPage })));
 
 // Lazy load forum pages
 const ForumHome = lazy(() => import('@/features/forum/pages/ForumHome'));
@@ -69,6 +70,14 @@ const FollowingPage = lazy(() => import('@/features/follows/pages/FollowingPage'
 
 // Lazy load search pages
 const SearchResultsPage = lazy(() => import('@/features/search/pages/SearchResultsPage'));
+
+// Lazy load guide pages
+const GlossaryPage = lazy(() => import('@/features/guide/pages/GlossaryPage'));
+const TermDetailPage = lazy(() => import('@/features/guide/pages/TermDetailPage'));
+const UseCasesLibraryPage = lazy(() => import('@/features/guide/pages').then(m => ({ default: m.UseCasesLibraryPage })));
+const UseCaseDetailPage = lazy(() => import('@/features/guide/pages').then(m => ({ default: m.UseCaseDetailPage })));
+const SubmitUseCasePage = lazy(() => import('@/features/guide/pages').then(m => ({ default: m.SubmitUseCasePage })));
+const AdminUseCaseReviewPage = lazy(() => import('@/features/guide/pages').then(m => ({ default: m.AdminUseCaseReviewPage })));
 
 // Loading fallback
 const PageLoader = () => (
@@ -248,6 +257,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <ModelListPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'models/compare',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ModelComparisonPage />
           </Suspense>
         ),
       },
@@ -478,6 +495,54 @@ const router = createBrowserRouter([
       {
         path: 'guide',
         element: <ComingSoonPage title="LLM Guide" />,
+      },
+      {
+        path: 'guide/glossary',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <GlossaryPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'guide/glossary/:slug',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <TermDetailPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'guide/use-cases',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <UseCasesLibraryPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'guide/use-cases/submit',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <SubmitUseCasePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'guide/use-cases/:slug',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <UseCaseDetailPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'admin/use-cases',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <AdminUseCaseReviewPage />
+          </Suspense>
+        ),
       },
       {
         path: 'following',

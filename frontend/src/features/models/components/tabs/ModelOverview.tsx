@@ -1,6 +1,9 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/common/Card/Card';
 import ModelAPIQuickstart from '../ModelAPIQuickstart';
+import ModelVersions from '../ModelVersions';
+import RelatedModels from '../RelatedModels';
+import CommunityResources from '../CommunityResources';
 import type { Model } from '../../types';
 
 interface ModelOverviewProps {
@@ -67,6 +70,15 @@ export const ModelOverview: React.FC<ModelOverviewProps> = ({ model }) => {
       {/* API Quickstart */}
       <ModelAPIQuickstart model={model} />
 
+      {/* Version History */}
+      <ModelVersions modelSlug={model.slug} />
+
+      {/* Community Resources */}
+      <CommunityResources modelSlug={model.slug} />
+
+      {/* Related Models */}
+      <RelatedModels modelSlug={model.slug} />
+
       {/* Additional Info */}
       <Card>
         <CardHeader>
@@ -117,6 +129,24 @@ export const ModelOverview: React.FC<ModelOverviewProps> = ({ model }) => {
             <dd className="text-sm text-gray-900 dark:text-white capitalize">
               {model.status.replace('_', ' ')}
             </dd>
+            {model.documentationUrl && (
+              <>
+                <dt className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Official Documentation
+                </dt>
+                <dd className="text-sm text-gray-900 dark:text-white">
+                  <a
+                    href={model.documentationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary-600 dark:text-primary-400 hover:underline inline-flex items-center gap-1"
+                  >
+                    View Documentation
+                    <span>→</span>
+                  </a>
+                </dd>
+              </>
+            )}
           </dl>
         </CardContent>
       </Card>
