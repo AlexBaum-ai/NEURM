@@ -13,7 +13,9 @@
       "description": "Create unified notification system with in-app, email, and push delivery channels",
       "assignedTo": "backend",
       "estimatedHours": 16,
-      "dependencies": ["SPRINT-0-002"],
+      "dependencies": [
+        "SPRINT-0-002"
+      ],
       "acceptanceCriteria": [
         "notifications table stores all notifications",
         "Notification types: news (new articles in followed categories, trending), forum (replies, mentions, upvotes, accepted_answer), jobs (new matches, status_updates, profile_views), social (new_followers, messages, badges_earned, reputation_milestones)",
@@ -49,7 +51,9 @@
       "description": "Create notification bell, dropdown, and notifications page",
       "assignedTo": "frontend",
       "estimatedHours": 14,
-      "dependencies": ["SPRINT-13-001"],
+      "dependencies": [
+        "SPRINT-13-001"
+      ],
       "acceptanceCriteria": [
         "Notification bell icon in header",
         "Unread count badge on bell",
@@ -129,7 +133,9 @@
       "description": "Create settings page for notification customization",
       "assignedTo": "frontend",
       "estimatedHours": 10,
-      "dependencies": ["SPRINT-13-001"],
+      "dependencies": [
+        "SPRINT-13-001"
+      ],
       "acceptanceCriteria": [
         "Notification settings at /settings/notifications",
         "Sections: News, Forum, Jobs, Social",
@@ -185,7 +191,9 @@
       "description": "Create automated email digests (daily, weekly) with personalized content",
       "assignedTo": "backend",
       "estimatedHours": 12,
-      "dependencies": ["SPRINT-13-001"],
+      "dependencies": [
+        "SPRINT-13-001"
+      ],
       "acceptanceCriteria": [
         "Daily digest cron job runs at user's preferred time",
         "Weekly digest runs every Monday at 9am user's timezone",
@@ -214,7 +222,9 @@
       "description": "Create skill endorsement feature for candidate profiles",
       "assignedTo": "backend",
       "estimatedHours": 8,
-      "dependencies": ["SPRINT-7-006"],
+      "dependencies": [
+        "SPRINT-7-006"
+      ],
       "acceptanceCriteria": [
         "skill_endorsements table tracks endorsements",
         "POST /api/profiles/:username/skills/:skillId/endorse creates endorsement",
@@ -240,7 +250,9 @@
       "description": "Add endorsement buttons and display to profile skills",
       "assignedTo": "frontend",
       "estimatedHours": 6,
-      "dependencies": ["SPRINT-13-005"],
+      "dependencies": [
+        "SPRINT-13-005"
+      ],
       "acceptanceCriteria": [
         "Endorse button on each skill in profile",
         "Button shows: '+ Endorse' or 'Endorsed' (if already endorsed)",
@@ -252,11 +264,39 @@
         "Responsive design"
       ],
       "priority": "low",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "components": "EndorseButton, EndorsersList",
         "location": "Candidate profile skills section"
-      }
+      },
+      "completedAt": "2025-11-06T10:41:52Z",
+      "implementation": {
+        "files": [
+          "frontend/src/features/jobs/api/endorsementsApi.ts",
+          "frontend/src/features/jobs/hooks/useEndorsements.ts",
+          "frontend/src/features/jobs/components/candidates/EndorseButton.tsx",
+          "frontend/src/features/jobs/components/candidates/EndorsersList.tsx",
+          "frontend/src/features/jobs/components/candidates/ProfilePreview.tsx",
+          "frontend/src/features/jobs/components/candidates/index.ts",
+          "frontend/src/features/jobs/hooks/index.ts",
+          "frontend/src/features/jobs/types/candidates.ts"
+        ],
+        "components": [
+          "EndorseButton - Endorsement button with optimistic updates",
+          "EndorsersList - Modal showing list of endorsers"
+        ],
+        "features": [
+          "Endorse button on each skill with \"+ Endorse\" / \"Endorsed\" states",
+          "Endorsement count display (clickable to show endorsers list)",
+          "Endorsers list modal with avatar, name, headline, and date",
+          "Optimistic UI updates for instant feedback",
+          "Success notification on endorse/unendorse",
+          "Hidden button on own profile (cannot endorse own skills)",
+          "Responsive design with MUI components",
+          "Integration with React Query for caching"
+        ]
+      },
+      "documentation": "frontend/src/features/jobs/components/candidates/ENDORSEMENT_IMPLEMENTATION.md"
     },
     {
       "taskId": "SPRINT-13-007",
@@ -264,7 +304,9 @@
       "description": "Create activity tracking and feed for user actions",
       "assignedTo": "backend",
       "estimatedHours": 10,
-      "dependencies": ["SPRINT-0-002"],
+      "dependencies": [
+        "SPRINT-0-002"
+      ],
       "acceptanceCriteria": [
         "user_activities table logs user actions",
         "Activity types: posted_article, created_topic, replied, upvoted, bookmarked, applied_job, earned_badge, followed_user",
@@ -290,7 +332,9 @@
       "description": "Display user activity on profiles and following feed",
       "assignedTo": "frontend",
       "estimatedHours": 8,
-      "dependencies": ["SPRINT-13-007"],
+      "dependencies": [
+        "SPRINT-13-007"
+      ],
       "acceptanceCriteria": [
         "Activity tab on user profiles",
         "Activity timeline with icons per type",
@@ -315,7 +359,9 @@
       "description": "Track profile views and display to premium users",
       "assignedTo": "backend",
       "estimatedHours": 6,
-      "dependencies": ["SPRINT-7-006"],
+      "dependencies": [
+        "SPRINT-7-006"
+      ],
       "acceptanceCriteria": [
         "profile_views table tracks views",
         "POST /api/profiles/:username/view logs view",
@@ -363,7 +409,9 @@
       "description": "Display profile viewers to premium users",
       "assignedTo": "frontend",
       "estimatedHours": 6,
-      "dependencies": ["SPRINT-13-009"],
+      "dependencies": [
+        "SPRINT-13-009"
+      ],
       "acceptanceCriteria": [
         "Profile views section at /profile/views (premium only)",
         "List of recent viewers with avatar, name, headline, viewed date",
