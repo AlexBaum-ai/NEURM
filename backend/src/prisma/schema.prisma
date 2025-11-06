@@ -225,6 +225,14 @@ enum ReportStatus {
   dismissed
 }
 
+enum FollowableType {
+  user
+  company
+  tag
+  category
+  model
+}
+
 // ============================================================================
 // USERS & AUTHENTICATION DOMAIN
 // ============================================================================
@@ -286,8 +294,10 @@ model User {
   pollVotes               PollVote[]
   moderatedCategories     CategoryModerator[] @relation("CategoryModerators")
   moderationLogs          ModerationLog[]     @relation("ModeratorLogs")
-  savedSearches           SavedSearch[]
-  searchHistory           SearchHistory[]
+  searchQueries           SearchQuery[]       @relation("UserSearchQueries")
+  savedSearches           SavedSearch[]       @relation("UserSavedSearches")
+  searchHistory           SearchHistory[]     @relation("UserSearchHistory")
+  dashboardConfig         UserDashboardConfig? @relation("UserDashboardConfig")
 
   // Jobs
   company         Company?         @relation("CompanyOwner")
@@ -320,6 +330,12 @@ model User {
   resolvedReports         Report[]               @relation("UserResolutions")
   bulkMessageRecipients   BulkMessageRecipient[] @relation("BulkMessageRecipients")
   companyBlocks           CompanyBlock[]         @relation("CandidateCompanyBlocks")
+  polymorphicFollows      PolymorphicFollow[]    @relation("UserPolymorphicFollows")
+  recommendationFeedback  RecommendationFeedback[] @relation("UserRecommendationFeedback")
+
+  // Follow counts
+  followerCount  Int @default(0) @map("follower_count")
+  followingCount Int @default(0) @map("following_count")
 
   @@index([email])
   @@index([username])
@@ -595,6 +611,7 @@ model NewsCategory {
   displayOrder Int      @default(0) @map("display_order")
   isActive     Boolean  @default(true) @map("is_active")
   articleCount Int      @default(0) @map("article_count")
+  followerCount Int     @default(0) @map("follower_count")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -610,12 +627,13 @@ model NewsCategory {
 }
 
 model NewsTag {
-  id          String   @id @default(uuid())
-  name        String   @unique @db.VarChar(50)
-  slug        String   @unique @db.VarChar(50)
-  description String?  @db.Text
-  usageCount  Int      @default(0) @map("usage_count")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  id            String   @id @default(uuid())
+  name          String   @unique @db.VarChar(50)
+  slug          String   @unique @db.VarChar(50)
+  description   String?  @db.Text
+  usageCount    Int      @default(0) @map("usage_count")
+  followerCount Int      @default(0) @map("follower_count")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   articles ArticleTag[]
 
@@ -734,6 +752,7 @@ model LLMModel {
   jobCount      Int           @default(0) @map("job_count")
   viewCount     Int           @default(0) @map("view_count")
   followCount   Int           @default(0) @map("follow_count")
+  followerCount Int           @default(0) @map("follower_count")
   createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -879,6 +898,7 @@ model ForumCategory {
   isActive       Boolean            @default(true) @map("is_active")
   topicCount     Int                @default(0) @map("topic_count")
   replyCount     Int                @default(0) @map("reply_count")
+  followerCount  Int                @default(0) @map("follower_count")
   lastActivityAt DateTime?          @map("last_activity_at") @db.Timestamptz(3)
   createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -1078,11 +1098,12 @@ model TopicTag {
 }
 
 model ForumTag {
-  id         String   @id @default(uuid())
-  name       String   @unique @db.VarChar(50)
-  slug       String   @unique @db.VarChar(50)
-  usageCount Int      @default(0) @map("usage_count")
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  id            String   @id @default(uuid())
+  name          String   @unique @db.VarChar(50)
+  slug          String   @unique @db.VarChar(50)
+  usageCount    Int      @default(0) @map("usage_count")
+  followerCount Int      @default(0) @map("follower_count")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   topics TopicTag[]
 
@@ -1723,6 +1744,22 @@ model Follow {
   @@map("follows")
 }
 
+model PolymorphicFollow {
+  id             String         @id @default(uuid())
+  followerId     String         @map("follower_id")
+  followableType FollowableType @map("followable_type")
+  followableId   String         @map("followable_id")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  follower User @relation("UserPolymorphicFollows", fields: [followerId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followableType, followableId])
+  @@index([followerId])
+  @@index([followableType, followableId])
+  @@index([createdAt(sort: Desc)])
+  @@map("polymorphic_follows")
+}
+
 model Message {
   id              String        @id @default(uuid())
   senderId        String        @map("sender_id")
@@ -2133,4 +2170,102 @@ model ApplicationShare {
   @@index([sharedBy])
   @@index([sharedWith])
   @@map("application_shares")
+}
+
+// ============================================================================
+// SEARCH MODULE
+// ============================================================================
+
+model SearchQuery {
+  id                 String    @id @default(uuid())
+  userId             String?   @map("user_id")
+  query              String    @db.VarChar(500)
+  contentTypes       String[]  @map("content_types")
+  resultsCount       Int       @default(0) @map("results_count")
+  clickedResultId    String?   @map("clicked_result_id")
+  clickedResultType  String?   @map("clicked_result_type") @db.VarChar(50)
+  sortBy             String?   @map("sort_by") @db.VarChar(50)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User? @relation("UserSearchQueries", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([query])
+  @@index([createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("search_queries")
+}
+
+model SavedSearch {
+  id                  String   @id @default(uuid())
+  userId              String   @map("user_id")
+  name                String   @db.VarChar(100)
+  query               String   @db.VarChar(500)
+  contentTypes        String[] @map("content_types")
+  sortBy              String?  @map("sort_by") @db.VarChar(50)
+  notificationEnabled Boolean  @default(false) @map("notification_enabled")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation("UserSavedSearches", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@map("saved_searches")
+}
+
+model SearchHistory {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  query        String   @db.VarChar(500)
+  contentTypes String[] @map("content_types")
+  sortBy       String?  @map("sort_by") @db.VarChar(50)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation("UserSearchHistory", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+  @@map("search_history")
+}
+
+// ============================================================================
+// Dashboard Configuration
+// ============================================================================
+
+model UserDashboardConfig {
+  id           String   @id @default(uuid())
+  userId       String   @unique @map("user_id")
+  widgetConfig Json     @map("widget_config")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation("UserDashboardConfig", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_dashboard_configs")
+}
+
+// ============================================================================
+// RECOMMENDATION MODULE
+// ============================================================================
+
+model RecommendationFeedback {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  itemType  String   @map("item_type") @db.VarChar(50) // 'article', 'forum_topic', 'job', 'user'
+  itemId    String   @map("item_id")
+  feedback  String   @db.VarChar(50) // 'like', 'dislike', 'dismiss', 'not_interested'
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation("UserRecommendationFeedback", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemType, itemId])
+  @@index([userId])
+  @@index([itemType, itemId])
+  @@index([createdAt(sort: Desc)])
+  @@map("recommendation_feedback")
 }

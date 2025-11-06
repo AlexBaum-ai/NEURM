@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useProfileSuspense } from '../hooks/useProfile';
 import { ProfileHeader } from './ProfileHeader';
 import { AboutSection } from './AboutSection';
@@ -11,6 +11,7 @@ import { ReputationHistorySection } from './ReputationHistorySection';
 import { LLMExperienceSection } from './LLMExperienceSection';
 import { CommunityStatsSection } from './CommunityStatsSection';
 import { JobPreferencesSection } from './JobPreferencesSection';
+import { RecommendationsSidebar, RecommendationsSidebarSkeleton } from '@/features/recommendations';
 
 interface ProfileContentProps {
   username: string;
@@ -32,12 +33,25 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({ username, onEdit
 
       {/* Profile Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - About, Skills, LLM Experience, and Reputation */}
+        {/* Left Column - About, Skills, LLM Experience, Reputation, and Suggested Users */}
         <div className="lg:col-span-1 space-y-6">
           <AboutSection profile={profile} />
           <SkillsSection profile={profile} />
           <LLMExperienceSection profile={profile} />
           <ReputationSection profile={profile} />
+
+          {/* Suggested Users to Follow */}
+          {!profile.isOwner && (
+            <Suspense fallback={<RecommendationsSidebarSkeleton />}>
+              <RecommendationsSidebar
+                type="user"
+                excludeIds={[profile.id]}
+                limit={5}
+                title="Suggested Users"
+                emptyMessage="No user recommendations available"
+              />
+            </Suspense>
+          )}
         </div>
 
         {/* Right Column - Experience, Education, Portfolio, Community Stats, Job Preferences, and Reputation History */}

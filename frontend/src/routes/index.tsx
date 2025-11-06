@@ -3,6 +3,9 @@ import { lazy, Suspense } from 'react';
 import Layout from '@/components/layout/Layout/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/common/Card/Card';
 
+// Lazy load dashboard
+const Dashboard = lazy(() => import('@/features/dashboard/pages/Dashboard'));
+
 // Lazy load auth pages
 const EmailVerification = lazy(() => import('@/features/auth/pages/EmailVerification'));
 const ForgotPassword = lazy(() => import('@/features/auth/pages/ForgotPassword'));
@@ -58,6 +61,14 @@ const AnalyticsDashboardPage = lazy(() => import('@/features/jobs/pages/Analytic
 const CompanyProfilePage = lazy(() => import('@/features/companies/pages/CompanyProfilePage'));
 const CompanySettingsPage = lazy(() => import('@/features/companies/pages/CompanySettingsPage'));
 const BulkMessagesPage = lazy(() => import('@/features/companies/pages').then(m => ({ default: m.BulkMessagesPage })));
+
+// Lazy load follow pages
+const FollowingFeedPage = lazy(() => import('@/features/follows/pages/FollowingFeedPage'));
+const FollowersPage = lazy(() => import('@/features/follows/pages/FollowersPage'));
+const FollowingPage = lazy(() => import('@/features/follows/pages/FollowingPage'));
+
+// Lazy load search pages
+const SearchResultsPage = lazy(() => import('@/features/search/pages/SearchResultsPage'));
 
 // Loading fallback
 const PageLoader = () => (
@@ -186,7 +197,11 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <HomePage />,
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <Dashboard />
+          </Suspense>
+        ),
       },
       {
         path: 'news',
@@ -241,6 +256,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <ModelDetailPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'search',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <SearchResultsPage />
           </Suspense>
         ),
       },
@@ -457,10 +480,34 @@ const router = createBrowserRouter([
         element: <ComingSoonPage title="LLM Guide" />,
       },
       {
+        path: 'following',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <FollowingFeedPage />
+          </Suspense>
+        ),
+      },
+      {
         path: 'profile/:username',
         element: (
           <Suspense fallback={<PageLoader />}>
             <ProfilePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'profile/:username/followers',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <FollowersPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'profile/:username/following',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <FollowingPage />
           </Suspense>
         ),
       },

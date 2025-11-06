@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -25,6 +25,7 @@ import { useAuthStore } from '@/store/authStore';
 import { formatDistanceToNow, format } from 'date-fns';
 import type { JobSkill } from '../types';
 import { cn } from '@/lib/utils';
+import { RecommendationsSection } from '@/features/recommendations';
 
 const experienceLevelLabels = {
   junior: 'Junior',
@@ -571,6 +572,19 @@ export const JobDetailPage: React.FC = () => {
             </Card>
           </div>
         </div>
+
+        {/* Recommended Jobs */}
+        {isAuthenticated && (
+          <Suspense fallback={null}>
+            <RecommendationsSection
+              type="job"
+              excludeIds={[job.id]}
+              limit={6}
+              title="Recommended Jobs for You"
+              className="mt-12"
+            />
+          </Suspense>
+        )}
 
         {/* Related Jobs */}
         {relatedJobs && relatedJobs.length > 0 && (

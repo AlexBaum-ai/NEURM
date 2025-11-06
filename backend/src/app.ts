@@ -32,6 +32,16 @@ import applicationRoutes from '@/modules/jobs/application.routes';
 import atsRoutes from '@/modules/jobs/ats.routes';
 import candidateSearchRoutes from '@/modules/jobs/candidateSearch.routes';
 import profilesRoutes from '@/modules/profiles/profiles.routes';
+import searchRoutes from '@/modules/search/search.routes';
+import dashboardRoutes from '@/modules/dashboard/dashboard.routes';
+import recommendationsRoutes from '@/modules/recommendations/recommendations.routes';
+import {
+  createFollowsRoutes,
+  createUserFollowsRoutes,
+  createEntityFollowsRoutes,
+} from '@/modules/follows/follows.routes';
+import prisma from '@/config/database';
+import { redis } from '@/config/redis';
 
 const app: Application = express();
 
@@ -89,6 +99,7 @@ app.get('/health', (_req: Request, res: Response) => {
 
 // API routes
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/users', createUserFollowsRoutes(prisma, redis)); // User following/followers routes
 app.use('/api/v1/profiles', profilesRoutes); // Candidate profile routes
 app.use('/api/v1/news', newsRoutes);
 app.use('/api/v1/news/articles', articleRoutes);
@@ -107,6 +118,12 @@ app.use('/api/v1/companies', companyRoutes); // Company profile routes
 app.use('/api/v1/companies/applications', atsRoutes); // ATS (company-side application management) routes
 app.use('/api/v1/applications', applicationRoutes); // Job application routes (candidate-side)
 app.use('/api/v1/candidates', candidateSearchRoutes); // Candidate search routes (premium feature for recruiters)
+app.use('/api/v1/search', searchRoutes); // Universal search routes
+app.use('/api/v1/dashboard', dashboardRoutes); // Personalized dashboard routes
+app.use('/api/v1/recommendations', recommendationsRoutes); // AI recommendation engine routes
+app.use('/api/v1/follows', createFollowsRoutes(prisma, redis)); // Follow/unfollow and feed routes
+app.use('/api/v1/following', createFollowsRoutes(prisma, redis)); // Alternative path for following feed
+app.use('/api/v1', createEntityFollowsRoutes(prisma, redis)); // Entity followers routes
 
 // RSS Feed routes (no version prefix for feed URLs)
 app.use('/api/feed', rssRoutes);
