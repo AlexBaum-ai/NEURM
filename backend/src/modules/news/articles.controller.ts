@@ -475,6 +475,152 @@ export class ArticleController {
       throw error;
     }
   };
+
+  /**
+   * POST /api/v1/news/articles/:slug/bookmark
+   * Toggle bookmark for an article
+   */
+  toggleBookmark = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('User ID not found in request');
+      }
+
+      // Validate slug parameter
+      const validationResult = articleSlugParamSchema.safeParse(req.params);
+
+      if (!validationResult.success) {
+        const error = validationResult.error as ZodError;
+        throw new ValidationError(error.issues[0].message);
+      }
+
+      const { slug } = validationResult.data;
+
+      logger.info(`User ${userId} toggling bookmark for article ${slug}`);
+
+      const result = await this.service.toggleBookmark(userId, slug);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          bookmarked: result.bookmarked,
+          bookmarkId: result.bookmarkId,
+        },
+        message: result.bookmarked
+          ? 'Article bookmarked successfully'
+          : 'Bookmark removed successfully',
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'ArticleController', method: 'toggleBookmark' },
+        extra: {
+          slug: req.params.slug,
+          userId: req.user?.id,
+        },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * DELETE /api/v1/news/articles/:slug/bookmark
+   * Remove bookmark for an article
+   */
+  removeBookmark = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new BadRequestError('User ID not found in request');
+      }
+
+      // Validate slug parameter
+      const validationResult = articleSlugParamSchema.safeParse(req.params);
+
+      if (!validationResult.success) {
+        const error = validationResult.error as ZodError;
+        throw new ValidationError(error.issues[0].message);
+      }
+
+      const { slug } = validationResult.data;
+
+      logger.info(`User ${userId} removing bookmark for article ${slug}`);
+
+      await this.service.removeBookmark(userId, slug);
+
+      res.status(200).json({
+        success: true,
+        message: 'Bookmark removed successfully',
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'ArticleController', method: 'removeBookmark' },
+        extra: {
+          slug: req.params.slug,
+          userId: req.user?.id,
+        },
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * POST /api/v1/news/articles/:slug/view
+   * Track article view
+   */
+  trackView = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id; // Optional - can be null for anonymous views
+
+      // Validate slug parameter
+      const validationResult = articleSlugParamSchema.safeParse(req.params);
+
+      if (!validationResult.success) {
+        const error = validationResult.error as ZodError;
+        throw new ValidationError(error.issues[0].message);
+      }
+
+      const { slug } = validationResult.data;
+
+      // Get IP address and user agent
+      const ipAddress = (req.ip || req.connection.remoteAddress || '').replace(
+        /^::ffff:/,
+        ''
+      );
+      const userAgent = req.headers['user-agent'] || '';
+
+      logger.debug(
+        `Tracking view for article ${slug} from ${ipAddress} (user: ${userId || 'anonymous'})`
+      );
+
+      const result = await this.service.trackView(
+        slug,
+        userId,
+        ipAddress,
+        userAgent
+      );
+
+      res.status(200).json({
+        success: true,
+        data: {
+          viewCount: result.viewCount,
+          tracked: result.tracked,
+        },
+        message: result.tracked ? 'View tracked' : 'View already tracked recently',
+      });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { controller: 'ArticleController', method: 'trackView' },
+        extra: {
+          slug: req.params.slug,
+          userId: req.user?.id,
+        },
+      });
+      throw error;
+    }
+  };
 }
 
 export default ArticleController;

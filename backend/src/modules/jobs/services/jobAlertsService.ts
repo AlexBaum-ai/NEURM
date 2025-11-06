@@ -417,6 +417,109 @@ export class JobAlertsService {
       throw error;
     }
   }
+
+  /**
+   * Send test alert email to user
+   */
+  async sendTestAlert(
+    userId: string,
+    alertId: string
+  ): Promise<{ jobsMatched: number; message: string }> {
+    try {
+      // Verify alert exists and belongs to user
+      const alert = await prisma.jobAlert.findUnique({
+        where: { id: alertId },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              username: true,
+            },
+          },
+        },
+      });
+
+      if (!alert) {
+        throw new NotFoundError('Job alert not found');
+      }
+
+      if (alert.userId !== userId) {
+        throw new BadRequestError('You do not have permission to test this alert');
+      }
+
+      // Find matching jobs (up to 3 for test)
+      const criteria = alert.criteriaJson as AlertCriteria;
+      const matchingJobs = await this.findMatchingJobs(criteria);
+      const testJobs = matchingJobs.slice(0, 3);
+
+      if (testJobs.length === 0) {
+        return {
+          jobsMatched: 0,
+          message: 'No matching jobs found for your alert criteria',
+        };
+      }
+
+      // Import email utility
+      const { sendEmail } = await import('@/utils/email');
+
+      // Build email HTML
+      const jobsHtml = testJobs
+        .map(
+          (job) => `
+        <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+          <h3 style="margin: 0 0 10px 0;">${job.title}</h3>
+          <p style="margin: 5px 0;"><strong>Company:</strong> ${job.company.name}</p>
+          <p style="margin: 5px 0;"><strong>Location:</strong> ${job.location || 'Remote'}</p>
+          ${job.salaryMin && job.salaryMax ? `<p style="margin: 5px 0;"><strong>Salary:</strong> $${job.salaryMin.toLocaleString()} - $${job.salaryMax.toLocaleString()}</p>` : ''}
+          <p style="margin: 10px 0 0 0;">
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/jobs/${job.slug}" style="color: #0066cc; text-decoration: none;">View Job →</a>
+          </p>
+        </div>
+      `
+        )
+        .join('');
+
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Test Alert: ${alert.name}</h2>
+          <p style="color: #666;">This is a test of your job alert. Here are ${testJobs.length} matching jobs:</p>
+          ${jobsHtml}
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;" />
+          <p style="color: #999; font-size: 12px;">
+            This is a test email. Your actual job alerts will be sent when new matching jobs are posted.
+            <br />
+            To manage your alerts, visit your <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/alerts">dashboard</a>.
+          </p>
+        </div>
+      `;
+
+      // Send test email
+      await sendEmail({
+        to: alert.user.email,
+        subject: `Test Alert: ${alert.name}`,
+        html: emailHtml,
+        text: `Test Alert: ${alert.name}\n\nFound ${testJobs.length} matching jobs.`,
+      });
+
+      logger.info(`Test alert sent for alert ${alertId} to user ${userId}`);
+
+      return {
+        jobsMatched: testJobs.length,
+        message: `Test email sent successfully with ${testJobs.length} matching job(s)`,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundError || error instanceof BadRequestError) {
+        throw error;
+      }
+
+      Sentry.captureException(error, {
+        tags: { service: 'JobAlertsService', method: 'sendTestAlert' },
+        extra: { userId, alertId },
+      });
+      throw error;
+    }
+  }
 }
 
 export default JobAlertsService;

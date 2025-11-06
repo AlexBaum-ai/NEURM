@@ -19,6 +19,7 @@ import { apiLimiter } from '@/middleware/rateLimiter.middleware';
 import performanceMonitoringMiddleware from '@/middleware/performance-monitoring.middleware';
 
 // Router imports
+import authRoutes from '@/modules/auth/auth.routes';
 import userRoutes from '@/modules/users/users.routes';
 import articleRoutes from '@/modules/news/articles.routes';
 import newsRoutes from '@/modules/news/news.routes';
@@ -130,6 +131,9 @@ app.use('/admin/queues', authenticate, authorize(['admin']), bullBoardAdapter.ge
 
 // CSRF token endpoint (requires authentication)
 app.get('/api/v1/csrf-token', getCsrfToken);
+
+// Auth routes (NO CSRF - public endpoints like login/register)
+app.use('/api/v1/auth', authRoutes);
 
 // API routes (CSRF protection applied to state-changing methods)
 app.use('/api/v1/users', verifyCsrfToken, userRoutes);

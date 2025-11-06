@@ -80,6 +80,49 @@ router.get(
 );
 
 // ============================================================================
+// AUTHENTICATED USER ROUTES
+// ============================================================================
+
+/**
+ * @route   POST /api/v1/news/articles/:slug/bookmark
+ * @desc    Toggle bookmark for an article
+ * @access  Private (requires authentication)
+ * @param   slug - Article slug
+ */
+router.post(
+  '/:slug/bookmark',
+  publicReadLimiter,
+  authenticate,
+  controller.toggleBookmark
+);
+
+/**
+ * @route   DELETE /api/v1/news/articles/:slug/bookmark
+ * @desc    Remove bookmark from an article
+ * @access  Private (requires authentication)
+ * @param   slug - Article slug
+ */
+router.delete(
+  '/:slug/bookmark',
+  publicReadLimiter,
+  authenticate,
+  controller.removeBookmark
+);
+
+/**
+ * @route   POST /api/v1/news/articles/:slug/view
+ * @desc    Track article view (deduplicated by user/IP within 1 hour)
+ * @access  Public (optional authentication)
+ * @param   slug - Article slug
+ */
+router.post(
+  '/:slug/view',
+  publicReadLimiter,
+  optionalAuth,
+  controller.trackView
+);
+
+// ============================================================================
 // ADMIN ROUTES
 // ============================================================================
 

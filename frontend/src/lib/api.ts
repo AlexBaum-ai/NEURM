@@ -11,6 +11,8 @@ export interface APIError {
 
 class APIClient {
   private client: AxiosInstance;
+  private csrfToken: string | null = null;
+  private csrfTokenPromise: Promise<string> | null = null;
 
   constructor(baseURL: string) {
     this.client = axios.create({
@@ -25,14 +27,78 @@ class APIClient {
     this.setupInterceptors();
   }
 
+  /**
+   * Fetch CSRF token from backend
+   * Uses promise caching to prevent concurrent requests
+   */
+  private async fetchCsrfToken(): Promise<string> {
+    // If already fetching, return existing promise
+    if (this.csrfTokenPromise) {
+      return this.csrfTokenPromise;
+    }
+
+    // Create new fetch promise
+    this.csrfTokenPromise = (async () => {
+      try {
+        const response = await this.client.get<{ csrfToken: string }>('/csrf-token');
+        this.csrfToken = response.data.csrfToken;
+        return this.csrfToken;
+      } catch (error) {
+        console.error('Failed to fetch CSRF token:', error);
+        throw error;
+      } finally {
+        // Clear promise cache after completion
+        this.csrfTokenPromise = null;
+      }
+    })();
+
+    return this.csrfTokenPromise;
+  }
+
+  /**
+   * Clear stored CSRF token (call on logout)
+   */
+  public clearCsrfToken(): void {
+    this.csrfToken = null;
+    this.csrfTokenPromise = null;
+  }
+
+  /**
+   * Initialize CSRF token (call after login)
+   */
+  public async initializeCsrfToken(): Promise<void> {
+    try {
+      await this.fetchCsrfToken();
+    } catch (error) {
+      console.error('Failed to initialize CSRF token:', error);
+    }
+  }
+
   private setupInterceptors() {
-    // Request interceptor
+    // Request interceptor - add auth token and CSRF token
     this.client.interceptors.request.use(
-      (config) => {
+      async (config) => {
+        // Add JWT access token
         const token = localStorage.getItem('accessToken');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Add CSRF token for state-changing requests
+        const method = config.method?.toLowerCase();
+        if (method && ['post', 'put', 'patch', 'delete'].includes(method)) {
+          try {
+            // Fetch token if not cached
+            if (!this.csrfToken) {
+              await this.fetchCsrfToken();
+            }
+            config.headers['X-CSRF-Token'] = this.csrfToken;
+          } catch (error) {
+            console.error('Failed to add CSRF token to request:', error);
+            // Continue with request even if CSRF token fetch fails
+          }
+        }
+
         return config;
       },
       (error) => Promise.reject(error)
@@ -42,7 +108,31 @@ class APIClient {
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError<APIError>) => {
-        const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+        const originalRequest = error.config as AxiosRequestConfig & {
+          _retry?: boolean;
+          _csrfRetry?: boolean;
+        };
+
+        // Handle 403 Forbidden - might be expired CSRF token
+        if (error.response?.status === 403 && !originalRequest._csrfRetry) {
+          originalRequest._csrfRetry = true;
+
+          try {
+            // Fetch new CSRF token
+            this.csrfToken = null; // Clear old token
+            const newCsrfToken = await this.fetchCsrfToken();
+
+            // Retry original request with new CSRF token
+            if (originalRequest.headers) {
+              originalRequest.headers['X-CSRF-Token'] = newCsrfToken;
+            }
+
+            return this.client(originalRequest);
+          } catch (csrfError) {
+            console.error('Failed to refresh CSRF token:', csrfError);
+            return Promise.reject(error);
+          }
+        }
 
         // Handle 401 Unauthorized - try to refresh token
         if (error.response?.status === 401 && !originalRequest._retry) {
@@ -61,6 +151,7 @@ class APIClient {
           } catch (refreshError) {
             // Refresh failed, logout user
             localStorage.removeItem('accessToken');
+            this.clearCsrfToken();
             window.location.href = '/login';
             return Promise.reject(refreshError);
           }
