@@ -134,7 +134,15 @@ const FollowingFeedPage: React.FC = () => {
             </div>
 
             {/* Feed Items */}
-            {isEmpty ? (
+            {isLoading ? (
+              <Card>
+                <CardContent className="p-8">
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : isEmpty ? (
               <Card>
                 <CardContent className="p-12 text-center">
                   <div className="max-w-md mx-auto space-y-4">
@@ -157,8 +165,8 @@ const FollowingFeedPage: React.FC = () => {
                       No activity yet
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400">
-                      Follow topics, users, or companies you're interested in to see their latest
-                      activity here.
+                      Follow users to see their latest activity here. Start by exploring content
+                      and following interesting people in the community.
                     </p>
                     <div className="pt-4">
                       <Button
@@ -173,14 +181,16 @@ const FollowingFeedPage: React.FC = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
-                {allItems.map((item) => (
-                  <ActivityFeedItem key={item.id} item={item} />
-                ))}
+              <div className="space-y-6">
+                <Card>
+                  <CardContent className="p-6">
+                    <ActivityTimeline groups={mergedGroups} showUser={true} />
+                  </CardContent>
+                </Card>
 
                 {/* Load More Button */}
                 {hasNextPage && (
-                  <div className="flex justify-center pt-4">
+                  <div className="flex justify-center">
                     <Button
                       onClick={() => fetchNextPage()}
                       disabled={isFetchingNextPage}
