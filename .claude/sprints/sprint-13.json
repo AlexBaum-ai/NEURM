@@ -62,7 +62,7 @@
         "Each notification: icon, title, message, timestamp, read/unread indicator",
         "Click notification marks as read and navigates to relevant page",
         "Mark all as read button",
-        "See all link → notifications page",
+        "See all link \u2192 notifications page",
         "Notifications page at /notifications",
         "Full notification list with infinite scroll",
         "Filter by: all, unread, type (news, forum, jobs, social)",
@@ -208,12 +208,44 @@
         "Rate limiting: max 1 digest per day per user"
       ],
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "cron": "Bull queue with cron expression, process per-user digest generation",
         "template": "MJML for responsive email templates",
         "personalization": "Query followed categories, tags, models for relevant content",
         "tracking": "Use SendGrid tracking or custom pixel/link tracking"
+      },
+      "completedAt": "2025-11-06",
+      "implementation": {
+        "files": [
+          "backend/src/modules/notifications/digest/digestTemplate.ts",
+          "backend/src/modules/notifications/digest/digest.repository.ts",
+          "backend/src/modules/notifications/digest/digest.service.ts",
+          "backend/src/modules/notifications/digest/digest.controller.ts",
+          "backend/src/modules/notifications/digest/digest.routes.ts",
+          "backend/src/modules/notifications/digest/digest.validation.ts",
+          "backend/src/queues/digestQueue.ts",
+          "backend/src/utils/email.ts",
+          "backend/src/prisma/migrations/20251106_add_email_digest_system.sql",
+          "backend/src/prisma/schema.prisma"
+        ],
+        "tests": [
+          "backend/src/modules/notifications/digest/__tests__/digest.service.test.ts"
+        ],
+        "endpoints": [
+          "GET /api/v1/notifications/digest/preferences",
+          "PUT /api/v1/notifications/digest/preferences",
+          "GET /api/v1/notifications/digest/preview",
+          "GET /api/v1/notifications/digest/track/open/:trackingToken",
+          "GET /api/v1/notifications/digest/track/click/:trackingToken",
+          "GET /api/v1/notifications/digest/unsubscribe"
+        ],
+        "queueJobs": [
+          "batch-daily-digest (cron: hourly for each digest time)",
+          "batch-weekly-digest (cron: Monday 9am)",
+          "send-digest (individual user digest)"
+        ],
+        "documentation": "backend/src/modules/notifications/digest/DIGEST_README.md"
       }
     },
     {
