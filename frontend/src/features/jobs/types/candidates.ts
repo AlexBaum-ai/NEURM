@@ -7,9 +7,12 @@
 import type { ExperienceLevel } from './index';
 
 export interface CandidateSkill {
+  id?: string; // Skill ID for endorsements
   name: string;
   level: number; // 1-5 stars
   yearsOfExperience?: number;
+  endorsementCount?: number; // Number of endorsements
+  hasEndorsed?: boolean; // Whether current user has endorsed this skill
 }
 
 export interface CandidateProfile {
@@ -111,4 +114,22 @@ export interface CandidateMessage {
 export interface TrackViewRequest {
   candidateId: string;
   source: 'search' | 'profile' | 'list';
+}
+
+export interface Endorser {
+  id: string;
+  userId: string;
+  username: string;
+  firstName: string | null;
+  lastName: string | null;
+  photoUrl: string | null;
+  headline: string | null;
+  createdAt: string;
+}
+
+export interface EndorsementsListResponse {
+  endorsements: Endorser[];
+  total: number;
+  limit: number;
+  offset: number;
 }

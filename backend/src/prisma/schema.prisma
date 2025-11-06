@@ -235,6 +235,20 @@ enum NotificationFrequency {
   off
 }
 
+enum DigestType {
+  daily
+  weekly
+}
+
+enum EmailTrackingEventType {
+  sent
+  delivered
+  opened
+  clicked
+  bounced
+  unsubscribed
+}
+
 enum MessageStatus {
   sent
   delivered
@@ -434,6 +448,8 @@ model User {
   notificationPreferences   NotificationPreference[] @relation("UserNotificationPreferences")
   doNotDisturbSchedule      DoNotDisturbSchedule?    @relation("UserDoNotDisturb")
   pushSubscriptions         PushSubscription[]       @relation("UserPushSubscriptions")
+  digestPreference          DigestPreference?        @relation("UserDigestPreferences")
+  emailDigests              EmailDigest[]            @relation("UserEmailDigests")
   followers                 Follow[]                 @relation("UserFollowers")
   following                 Follow[]                 @relation("UserFollowing")
   sentMessages            Message[]              @relation("MessageSender")
@@ -1962,6 +1978,80 @@ model PushSubscription {
 
   @@index([userId])
   @@map("push_subscriptions")
+}
+
+model DigestPreference {
+  id                String     @id @default(uuid())
+  userId            String     @unique @map("user_id")
+  dailyEnabled      Boolean    @default(true) @map("daily_enabled")
+  dailyTime         String     @default("09:00") @map("daily_time") @db.VarChar(5) // Format: "09:00"
+  weeklyEnabled     Boolean    @default(true) @map("weekly_enabled")
+  weeklyDay         Int        @default(1) @map("weekly_day") // 0=Sunday, 1=Monday, etc.
+  weeklyTime        String     @default("09:00") @map("weekly_time") @db.VarChar(5) // Format: "09:00"
+  timezone          String     @default("UTC") @db.VarChar(50)
+  includeNews       Boolean    @default(true) @map("include_news")
+  includeForum      Boolean    @default(true) @map("include_forum")
+  includeJobs       Boolean    @default(true) @map("include_jobs")
+  includeActivity   Boolean    @default(true) @map("include_activity")
+  minContentItems   Int        @default(3) @map("min_content_items") // Skip digest if less than this many items
+  vacationMode      Boolean    @default(false) @map("vacation_mode")
+  vacationUntil     DateTime?  @map("vacation_until") @db.Timestamptz(3)
+  lastDailyDigest   DateTime?  @map("last_daily_digest") @db.Timestamptz(3)
+  lastWeeklyDigest  DateTime?  @map("last_weekly_digest") @db.Timestamptz(3)
+  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation("UserDigestPreferences", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([dailyEnabled])
+  @@index([weeklyEnabled])
+  @@index([vacationMode])
+  @@map("digest_preferences")
+}
+
+model EmailDigest {
+  id              String     @id @default(uuid())
+  userId          String     @map("user_id")
+  type            DigestType
+  sentAt          DateTime   @map("sent_at") @db.Timestamptz(3)
+  emailTo         String     @map("email_to") @db.VarChar(255)
+  subject         String     @db.VarChar(255)
+  contentSummary  Json       @map("content_summary") // Store what was included for reference
+  itemCount       Int        @map("item_count")
+  trackingToken   String     @unique @map("tracking_token") @db.VarChar(100)
+  openedAt        DateTime?  @map("opened_at") @db.Timestamptz(3)
+  clickCount      Int        @default(0) @map("click_count")
+  unsubscribedAt  DateTime?  @map("unsubscribed_at") @db.Timestamptz(3)
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user     User                 @relation("UserEmailDigests", fields: [userId], references: [id], onDelete: Cascade)
+  tracking EmailTrackingEvent[]
+
+  @@index([userId])
+  @@index([type])
+  @@index([sentAt(sort: Desc)])
+  @@index([trackingToken])
+  @@index([userId, type, sentAt(sort: Desc)])
+  @@map("email_digests")
+}
+
+model EmailTrackingEvent {
+  id          String                  @id @default(uuid())
+  digestId    String?                 @map("digest_id")
+  eventType   EmailTrackingEventType  @map("event_type")
+  linkUrl     String?                 @map("link_url") @db.VarChar(500)
+  ipAddress   String?                 @map("ip_address") @db.VarChar(45)
+  userAgent   String?                 @map("user_agent") @db.VarChar(500)
+  metadata    Json?
+  createdAt   DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  digest EmailDigest? @relation(fields: [digestId], references: [id], onDelete: SetNull)
+
+  @@index([digestId])
+  @@index([eventType])
+  @@index([createdAt(sort: Desc)])
+  @@map("email_tracking_events")
 }
 
 model UserActivity {

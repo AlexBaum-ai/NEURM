@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/authStore';
 import { cn } from '@/lib/utils';
 import { AuthModal } from '@/features/auth';
 import { GlobalSearchBar } from '@/features/search';
+import { NotificationBell } from '@/features/notifications';
 
 const Header: React.FC = () => {
   const { t } = useTranslation('common');
@@ -113,6 +114,8 @@ const Header: React.FC = () => {
           <div className="flex items-center gap-4 flex-shrink-0">
             <ThemeToggle />
             <LanguageSwitcher className="hidden sm:block" />
+
+            {isAuthenticated && <NotificationBell enableSound={false} />}
 
             {isAuthenticated ? (
               <div className="relative user-menu-container">

@@ -13,6 +13,7 @@ const ResetPassword = lazy(() => import('@/features/auth/pages/ResetPassword'));
 
 // Lazy load user pages
 const ProfilePage = lazy(() => import('@/features/user/pages/ProfilePage'));
+const ProfileViewsPage = lazy(() => import('@/features/profile/pages/ProfileViewsPage'));
 const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage'));
 
 // Lazy load news pages
@@ -52,6 +53,9 @@ const PromptEditor = lazy(() => import('@/features/forum/pages/PromptEditor'));
 
 // Lazy load messaging pages
 const MessagesPage = lazy(() => import('@/features/messages/pages/MessagesPage'));
+
+// Lazy load notification pages
+const NotificationsPage = lazy(() => import('@/features/notifications/pages/NotificationsPage'));
 
 // Lazy load jobs pages
 const JobListingsPage = lazy(() => import('@/features/jobs/pages/JobListingsPage').then(m => ({ default: m.JobListingsPage })));
@@ -635,6 +639,14 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'profile/views',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ProfileViewsPage />
+          </Suspense>
+        ),
+      },
+      {
         path: 'settings',
         element: (
           <Suspense fallback={<PageLoader />}>
@@ -655,6 +667,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <MessagesPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'notifications',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <NotificationsPage />
           </Suspense>
         ),
       },

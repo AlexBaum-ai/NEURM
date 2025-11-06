@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { useProfileSuspense } from '../hooks/useProfile';
 import { ProfileHeader } from './ProfileHeader';
 import { AboutSection } from './AboutSection';
@@ -12,6 +12,10 @@ import { LLMExperienceSection } from './LLMExperienceSection';
 import { CommunityStatsSection } from './CommunityStatsSection';
 import { JobPreferencesSection } from './JobPreferencesSection';
 import { RecommendationsSidebar, RecommendationsSidebarSkeleton } from '@/features/recommendations';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/Tabs';
+
+// Lazy load ActivityFeed for code splitting
+const ActivityFeed = lazy(() => import('@/features/activities/components/ActivityFeed'));
 
 interface ProfileContentProps {
   username: string;
@@ -31,39 +35,62 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({ username, onEdit
       {/* Profile Header */}
       <ProfileHeader profile={profile} onEditClick={onEditClick} />
 
-      {/* Profile Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - About, Skills, LLM Experience, Reputation, and Suggested Users */}
-        <div className="lg:col-span-1 space-y-6">
-          <AboutSection profile={profile} />
-          <SkillsSection profile={profile} />
-          <LLMExperienceSection profile={profile} />
-          <ReputationSection profile={profile} />
+      {/* Tabs */}
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
+        </TabsList>
 
-          {/* Suggested Users to Follow */}
-          {!profile.isOwner && (
-            <Suspense fallback={<RecommendationsSidebarSkeleton />}>
-              <RecommendationsSidebar
-                type="user"
-                excludeIds={[profile.id]}
-                limit={5}
-                title="Suggested Users"
-                emptyMessage="No user recommendations available"
-              />
-            </Suspense>
-          )}
-        </div>
+        {/* Overview Tab */}
+        <TabsContent value="overview">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - About, Skills, LLM Experience, Reputation, and Suggested Users */}
+            <div className="lg:col-span-1 space-y-6">
+              <AboutSection profile={profile} />
+              <SkillsSection profile={profile} />
+              <LLMExperienceSection profile={profile} />
+              <ReputationSection profile={profile} />
 
-        {/* Right Column - Experience, Education, Portfolio, Community Stats, Job Preferences, and Reputation History */}
-        <div className="lg:col-span-2 space-y-6">
-          <ExperienceSection profile={profile} />
-          <EducationSection profile={profile} />
-          <PortfolioSection profile={profile} />
-          <CommunityStatsSection profile={profile} />
-          <JobPreferencesSection profile={profile} viewerRole={profile.isOwner ? 'owner' : 'public'} />
-          <ReputationHistorySection profile={profile} />
-        </div>
-      </div>
+              {/* Suggested Users to Follow */}
+              {!profile.isOwner && (
+                <Suspense fallback={<RecommendationsSidebarSkeleton />}>
+                  <RecommendationsSidebar
+                    type="user"
+                    excludeIds={[profile.id]}
+                    limit={5}
+                    title="Suggested Users"
+                    emptyMessage="No user recommendations available"
+                  />
+                </Suspense>
+              )}
+            </div>
+
+            {/* Right Column - Experience, Education, Portfolio, Community Stats, Job Preferences, and Reputation History */}
+            <div className="lg:col-span-2 space-y-6">
+              <ExperienceSection profile={profile} />
+              <EducationSection profile={profile} />
+              <PortfolioSection profile={profile} />
+              <CommunityStatsSection profile={profile} />
+              <JobPreferencesSection profile={profile} viewerRole={profile.isOwner ? 'owner' : 'public'} />
+              <ReputationHistorySection profile={profile} />
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Activity Tab */}
+        <TabsContent value="activity">
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              </div>
+            }
+          >
+            <ActivityFeed username={username} />
+          </Suspense>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
