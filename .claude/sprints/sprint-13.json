@@ -156,7 +156,7 @@
         "Endorsers visible (public list)"
       ],
       "priority": "low",
-      "status": "pending",
+      "status": "completed",
       "technicalNotes": {
         "table": "skill_endorsements (user_id, profile_id, skill_id, created_at), UNIQUE(user_id, profile_id, skill_id)",
         "count": "Update candidate_skills.endorsement_count on insert/delete"
