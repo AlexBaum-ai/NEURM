@@ -247,6 +247,22 @@ enum UseCaseCategory {
   content_creation
   research
   automation
+}
+
+enum SettingType {
+  string
+  number
+  boolean
+  json
+  encrypted
+}
+
+enum SettingCategory {
+  general
+  features
+  integrations
+  security
+  email
   translation
   summarization
   classification
@@ -388,6 +404,8 @@ model User {
   polymorphicFollows      PolymorphicFollow[]    @relation("UserPolymorphicFollows")
   recommendationFeedback  RecommendationFeedback[] @relation("UserRecommendationFeedback")
   useCases                UseCase[]              @relation("UseCaseAuthor")
+  settingAuditLogs        PlatformSettingAuditLog[] @relation("AdminSettingAuditLogs")
+  adminAuditLogs          AdminAuditLog[]          @relation("AdminAuditLogs")
 
   // Follow counts
   followerCount  Int @default(0) @map("follower_count")
@@ -2382,4 +2400,120 @@ model RecommendationFeedback {
   @@index([itemType, itemId])
   @@index([createdAt(sort: Desc)])
   @@map("recommendation_feedback")
+}
+
+// ============================================================================
+// PLATFORM SETTINGS
+// ============================================================================
+
+model PlatformSetting {
+  id          String          @id @default(uuid())
+  key         String          @unique @db.VarChar(100)
+  value       String          @db.Text
+  category    SettingCategory
+  type        SettingType
+  description String?         @db.VarChar(500)
+  isPublic    Boolean         @default(false) @map("is_public") // Whether setting can be read by non-admins
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  auditLogs PlatformSettingAuditLog[] @relation("SettingAuditLogs")
+
+  @@index([category])
+  @@index([key])
+  @@map("platform_settings")
+}
+
+model PlatformSettingAuditLog {
+  id         String   @id @default(uuid())
+  settingId  String   @map("setting_id")
+  adminId    String   @map("admin_id")
+  action     String   @db.VarChar(50) // 'created', 'updated', 'deleted'
+  oldValue   String?  @map("old_value") @db.Text
+  newValue   String?  @map("new_value") @db.Text
+  reason     String?  @db.VarChar(500)
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  userAgent  String?  @map("user_agent") @db.VarChar(500)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  setting PlatformSetting @relation("SettingAuditLogs", fields: [settingId], references: [id], onDelete: Cascade)
+  admin   User            @relation("AdminSettingAuditLogs", fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([settingId])
+  @@index([adminId])
+  @@index([createdAt(sort: Desc)])
+  @@map("platform_settings_audit_log")
+}
+
+// ============================================================================
+// ADMIN & PLATFORM METRICS
+// ============================================================================
+
+model PlatformMetrics {
+  id             String   @id @default(uuid())
+  date           DateTime @unique @db.Date
+  // User Metrics
+  totalUsers     Int      @default(0) @map("total_users")
+  newUsers       Int      @default(0) @map("new_users")
+  activeUsers    Int      @default(0) @map("active_users") // DAU
+  weeklyActive   Int      @default(0) @map("weekly_active") // WAU
+  monthlyActive  Int      @default(0) @map("monthly_active") // MAU
+  // Content Metrics
+  totalArticles  Int      @default(0) @map("total_articles")
+  newArticles    Int      @default(0) @map("new_articles")
+  totalTopics    Int      @default(0) @map("total_topics")
+  newTopics      Int      @default(0) @map("new_topics")
+  totalReplies   Int      @default(0) @map("total_replies")
+  newReplies     Int      @default(0) @map("new_replies")
+  // Job Metrics
+  totalJobs      Int      @default(0) @map("total_jobs")
+  activeJobs     Int      @default(0) @map("active_jobs")
+  newJobs        Int      @default(0) @map("new_jobs")
+  applications   Int      @default(0) @map("applications")
+  // Engagement Metrics
+  pageViews      Int      @default(0) @map("page_views")
+  uniqueVisitors Int      @default(0) @map("unique_visitors")
+  avgSessionTime Float?   @map("avg_session_time") // in seconds
+  bounceRate     Float?   @map("bounce_rate") // percentage
+  // Revenue Metrics (for future)
+  mrr            Float?   @default(0) // Monthly Recurring Revenue
+  arpu           Float?   @default(0) // Average Revenue Per User
+  churn          Float?   @default(0) // Churn rate percentage
+  // System Health
+  errorCount     Int      @default(0) @map("error_count")
+  avgApiLatency  Float?   @map("avg_api_latency") // in milliseconds
+  // Moderation
+  spamReports    Int      @default(0) @map("spam_reports")
+  abuseReports   Int      @default(0) @map("abuse_reports")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([date(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+  @@map("platform_metrics")
+}
+
+// ============================================================================
+// ADMIN AUDIT LOG
+// ============================================================================
+
+model AdminAuditLog {
+  id          String   @id @default(uuid())
+  adminId     String   @map("admin_id")
+  action      String   @db.VarChar(100) // e.g., 'user_updated', 'user_suspended', 'user_banned', 'user_deleted', 'role_changed'
+  targetType  String   @map("target_type") @db.VarChar(50) // e.g., 'user', 'article', 'topic', 'job'
+  targetId    String   @map("target_id")
+  changes     Json?    // Store the actual changes made (before/after)
+  reason      String?  @db.Text
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  userAgent   String?  @map("user_agent") @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  admin User @relation("AdminAuditLogs", fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([targetType, targetId])
+  @@index([action])
+  @@index([createdAt(sort: Desc)])
+  @@map("admin_audit_log")
 }

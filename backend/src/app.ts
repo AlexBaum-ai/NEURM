@@ -42,6 +42,9 @@ import {
   createUserFollowsRoutes,
   createEntityFollowsRoutes,
 } from '@/modules/follows/follows.routes';
+import adminUsersRoutes from '@/modules/admin/users/adminUsers.routes';
+import adminRoutes from '@/modules/admin/routes';
+import settingsRoutes from '@/modules/admin/settings.routes';
 import prisma from '@/config/database';
 import { redis } from '@/config/redis';
 
@@ -103,6 +106,9 @@ app.get('/health', (_req: Request, res: Response) => {
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/users', createUserFollowsRoutes(prisma, redis)); // User following/followers routes
 app.use('/api/v1/profiles', profilesRoutes); // Candidate profile routes
+app.use('/api/v1/admin/users', adminUsersRoutes); // Admin user management routes
+app.use('/api/v1/admin', adminRoutes); // Admin content moderation routes
+app.use('/api/v1', settingsRoutes); // Platform settings routes (includes /api/v1/admin/settings and /api/v1/settings/public)
 app.use('/api/v1/news', newsRoutes);
 app.use('/api/v1/news/articles', articleRoutes);
 app.use('/api/v1/admin/articles', articleRoutes);
