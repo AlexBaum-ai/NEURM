@@ -219,6 +219,239 @@ export class ModelService {
       throw new Error('Failed to fetch popular models');
     }
   }
+
+  /**
+   * Get model versions
+   */
+  async getModelVersions(slug: string) {
+    try {
+      const model = await modelRepository.findBySlug(slug);
+
+      if (!model) {
+        return null;
+      }
+
+      const versions = await modelRepository.getModelVersions(model.id);
+
+      return {
+        model: {
+          id: model.id,
+          name: model.name,
+          slug: model.slug,
+          provider: model.provider,
+        },
+        versions,
+        total: versions.length,
+      };
+    } catch (error) {
+      logger.error(`Failed to get model versions: ${slug}`, error);
+      Sentry.captureException(error, {
+        tags: { service: 'ModelService', method: 'getModelVersions' },
+        extra: { slug },
+      });
+      throw new Error('Failed to fetch model versions');
+    }
+  }
+
+  /**
+   * Get model benchmarks
+   */
+  async getModelBenchmarks(slug: string) {
+    try {
+      const model = await modelRepository.findBySlug(slug);
+
+      if (!model) {
+        return null;
+      }
+
+      const benchmarks = await modelRepository.getModelBenchmarks(model.id);
+
+      // Group benchmarks by category for better organization
+      const benchmarksByCategory = benchmarks.reduce((acc: any, benchmark) => {
+        const category = this.getBenchmarkCategory(benchmark.benchmarkName);
+        if (!acc[category]) {
+          acc[category] = [];
+        }
+        acc[category].push({
+          name: benchmark.benchmarkName,
+          score: benchmark.score,
+          maxScore: benchmark.maxScore,
+          metric: benchmark.metric,
+          testDate: benchmark.testDate,
+          sourceUrl: benchmark.sourceUrl,
+        });
+        return acc;
+      }, {});
+
+      return {
+        model: {
+          id: model.id,
+          name: model.name,
+          slug: model.slug,
+          provider: model.provider,
+        },
+        benchmarks: benchmarksByCategory,
+        total: benchmarks.length,
+      };
+    } catch (error) {
+      logger.error(`Failed to get model benchmarks: ${slug}`, error);
+      Sentry.captureException(error, {
+        tags: { service: 'ModelService', method: 'getModelBenchmarks' },
+        extra: { slug },
+      });
+      throw new Error('Failed to fetch model benchmarks');
+    }
+  }
+
+  /**
+   * Compare multiple models
+   */
+  async compareModels(ids: string[]) {
+    try {
+      const models = await modelRepository.compareModels(ids);
+
+      if (models.length === 0) {
+        return { models: [], total: 0 };
+      }
+
+      // Format the comparison data
+      const comparison = models.map((model: any) => ({
+        id: model.id,
+        name: model.name,
+        slug: model.slug,
+        provider: model.provider,
+        category: model.category,
+        description: model.description,
+        contextWindow: model.contextWindow,
+        modelSize: model.modelSize,
+        modalities: model.modalities,
+        releaseDate: model.releaseDate,
+        latestVersion:
+          model.modelVersions && model.modelVersions.length > 0
+            ? model.modelVersions[0].version
+            : model.latestVersion,
+        status: model.status,
+        pricingInput: model.pricingInput,
+        pricingOutput: model.pricingOutput,
+        officialUrl: model.officialUrl,
+        apiDocsUrl: model.apiDocsUrl,
+        bestFor: model.bestFor,
+        notIdealFor: model.notIdealFor,
+        apiQuickstart: model.apiQuickstart,
+        benchmarks: this.formatBenchmarksForComparison(model.modelBenchmarks),
+        followCount: model.followCount,
+        viewCount: model.viewCount,
+      }));
+
+      return {
+        models: comparison,
+        total: comparison.length,
+      };
+    } catch (error) {
+      logger.error('Failed to compare models:', error);
+      Sentry.captureException(error, {
+        tags: { service: 'ModelService', method: 'compareModels' },
+        extra: { ids },
+      });
+      throw new Error('Failed to compare models');
+    }
+  }
+
+  /**
+   * Create model version (admin only)
+   */
+  async createModelVersion(slug: string, versionData: any) {
+    try {
+      const model = await modelRepository.findBySlug(slug);
+
+      if (!model) {
+        return { success: false, error: 'Model not found' };
+      }
+
+      const version = await modelRepository.createModelVersion(model.id, versionData);
+
+      // Update model's latestVersion field if this is the latest
+      if (versionData.isLatest) {
+        await modelRepository.updateModel(model.id, {
+          latestVersion: versionData.version,
+        });
+      }
+
+      return {
+        success: true,
+        version,
+      };
+    } catch (error) {
+      logger.error(`Failed to create model version: ${slug}`, error);
+      Sentry.captureException(error, {
+        tags: { service: 'ModelService', method: 'createModelVersion' },
+        extra: { slug, versionData },
+      });
+      throw new Error('Failed to create model version');
+    }
+  }
+
+  /**
+   * Update model (admin only)
+   */
+  async updateModel(slug: string, updateData: any) {
+    try {
+      const model = await modelRepository.findBySlug(slug);
+
+      if (!model) {
+        return { success: false, error: 'Model not found' };
+      }
+
+      const updatedModel = await modelRepository.updateModel(model.id, updateData);
+
+      return {
+        success: true,
+        model: updatedModel,
+      };
+    } catch (error) {
+      logger.error(`Failed to update model: ${slug}`, error);
+      Sentry.captureException(error, {
+        tags: { service: 'ModelService', method: 'updateModel' },
+        extra: { slug, updateData },
+      });
+      throw new Error('Failed to update model');
+    }
+  }
+
+  /**
+   * Helper: Get benchmark category
+   */
+  private getBenchmarkCategory(benchmarkName: string): string {
+    const categories: { [key: string]: string[] } = {
+      'General Knowledge': ['MMLU', 'HellaSwag', 'ARC', 'TruthfulQA'],
+      'Coding': ['HumanEval', 'MBPP', 'CodeXGLUE'],
+      'Math': ['GSM8K', 'MATH', 'SVAMP'],
+      'Reasoning': ['BBH', 'AGIEval', 'WinoGrande'],
+      'Language Understanding': ['GLUE', 'SuperGLUE', 'SQuAD'],
+    };
+
+    for (const [category, benchmarks] of Object.entries(categories)) {
+      if (benchmarks.some((b) => benchmarkName.includes(b))) {
+        return category;
+      }
+    }
+
+    return 'Other';
+  }
+
+  /**
+   * Helper: Format benchmarks for comparison
+   */
+  private formatBenchmarksForComparison(benchmarks: any[]) {
+    return benchmarks.reduce((acc: any, benchmark) => {
+      acc[benchmark.benchmarkName] = {
+        score: benchmark.score,
+        maxScore: benchmark.maxScore,
+        metric: benchmark.metric,
+      };
+      return acc;
+    }, {});
+  }
 }
 
 export default new ModelService();

@@ -233,6 +233,61 @@ enum FollowableType {
   model
 }
 
+enum UseCaseStatus {
+  pending
+  approved
+  published
+  rejected
+}
+
+enum UseCaseCategory {
+  customer_support
+  code_generation
+  data_analysis
+  content_creation
+  research
+  automation
+  translation
+  summarization
+  classification
+  extraction
+  other
+}
+
+enum UseCaseIndustry {
+  saas
+  healthcare
+  finance
+  ecommerce
+  education
+  marketing
+  legal
+  hr
+  consulting
+  manufacturing
+  media
+  other
+}
+
+enum UseCaseImplementationType {
+  rag
+  fine_tuning
+  agent
+  prompt_engineering
+  embeddings
+  function_calling
+  multimodal
+  other
+}
+
+enum CompanySize {
+  startup
+  small
+  medium
+  large
+  enterprise
+}
+
 // ============================================================================
 // USERS & AUTHENTICATION DOMAIN
 // ============================================================================
@@ -332,6 +387,7 @@ model User {
   companyBlocks           CompanyBlock[]         @relation("CandidateCompanyBlocks")
   polymorphicFollows      PolymorphicFollow[]    @relation("UserPolymorphicFollows")
   recommendationFeedback  RecommendationFeedback[] @relation("UserRecommendationFeedback")
+  useCases                UseCase[]              @relation("UseCaseAuthor")
 
   // Follow counts
   followerCount  Int @default(0) @map("follower_count")
@@ -761,6 +817,7 @@ model LLMModel {
   jobs            JobModel[]
   modelBenchmarks ModelBenchmark[]
   modelFollows    ModelFollow[]
+  modelVersions   ModelVersion[]
 
   @@index([slug])
   @@index([provider])
@@ -788,6 +845,29 @@ model ModelBenchmark {
   @@index([modelId])
   @@index([benchmarkName])
   @@map("model_benchmarks")
+}
+
+model ModelVersion {
+  id          String    @id @default(uuid())
+  modelId     String    @map("model_id")
+  version     String    @db.VarChar(100)
+  releasedAt  DateTime  @map("released_at") @db.Timestamptz(3)
+  changelog   String?   @db.Text
+  isLatest    Boolean   @default(false) @map("is_latest")
+  status      String?   @db.VarChar(50)
+  features    Json?
+  improvements Json?
+  deprecated  Boolean   @default(false)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  model LLMModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@unique([modelId, version])
+  @@index([modelId])
+  @@index([releasedAt(sort: Desc)])
+  @@index([isLatest])
+  @@map("model_versions")
 }
 
 model ModelFollow {
@@ -1475,6 +1555,7 @@ model Company {
   bulkMessages     BulkMessage[]     @relation("CompanyBulkMessages")
   blockedBy        CompanyBlock[]    @relation("CompanyBlocks")
   profileViews     ProfileView[]
+  useCases         UseCase[]         @relation("CompanyUseCases")
 
   @@index([slug])
   @@index([ownerUserId])
@@ -1890,30 +1971,63 @@ model AnalyticsEvent {
 // ============================================================================
 
 model UseCase {
-  id          String   @id @default(uuid())
-  title       String   @db.VarChar(200)
-  slug        String   @unique @db.VarChar(200)
-  description String   @db.Text
-  category    String   @db.VarChar(100)
-  examples    Json?
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  id                   String                      @id @default(uuid())
+  slug                 String                      @unique @db.VarChar(255)
+  title                String                      @db.VarChar(255)
+  summary              String                      @db.Text
+  contentJson          Json                        @map("content_json")
+  techStack            String[]                    @default([]) @map("tech_stack")
+  category             UseCaseCategory
+  industry             UseCaseIndustry
+  implementationType   UseCaseImplementationType   @map("implementation_type")
+  companySize          CompanySize?                @map("company_size")
+  status               UseCaseStatus               @default(pending)
+  featured             Boolean                     @default(false)
+  hasCode              Boolean                     @default(false) @map("has_code")
+  hasRoiData           Boolean                     @default(false) @map("has_roi_data")
+  viewCount            Int                         @default(0) @map("view_count")
+  commentCount         Int                         @default(0) @map("comment_count")
+  authorId             String                      @map("author_id")
+  companyId            String?                     @map("company_id")
+  modelIds             String[]                    @default([]) @map("model_ids")
+  publishedAt          DateTime?                   @map("published_at") @db.Timestamptz(3)
+  rejectedAt           DateTime?                   @map("rejected_at") @db.Timestamptz(3)
+  rejectionReason      String?                     @map("rejection_reason") @db.Text
+  createdAt            DateTime                    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime                    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  author  User     @relation("UseCaseAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  company Company? @relation("CompanyUseCases", fields: [companyId], references: [id], onDelete: SetNull)
 
   @@index([slug])
+  @@index([status])
   @@index([category])
+  @@index([industry])
+  @@index([implementationType])
+  @@index([authorId])
+  @@index([companyId])
+  @@index([featured])
+  @@index([publishedAt(sort: Desc)])
+  @@index([viewCount(sort: Desc)])
   @@map("use_cases")
 }
 
 model GlossaryTerm {
   id           String   @id @default(uuid())
+  slug         String   @unique @db.VarChar(150)
   term         String   @unique @db.VarChar(100)
   definition   String   @db.Text
+  examples     String?  @db.Text
   category     String   @db.VarChar(100)
   relatedTerms String[] @map("related_terms")
+  viewCount    Int      @default(0) @map("view_count")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
+  @@index([slug])
   @@index([term])
   @@index([category])
+  @@index([viewCount(sort: Desc)])
   @@map("glossary_terms")
 }
 
