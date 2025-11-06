@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import ProfilesController from './profiles.controller';
 import ProfileViewsController from './profileViews.controller';
+import endorsementsRoutes from '@/modules/users/endorsements/endorsements.routes';
 import { authenticate, optionalAuth } from '@/middleware/auth.middleware';
 import { profileUpdateLimiter, apiLimiter } from '@/middleware/rateLimiter.middleware';
 import { asyncHandler } from '@/utils/asyncHandler';
@@ -88,5 +89,11 @@ router.get(
   apiLimiter,
   asyncHandler(profilesController.getPortfolio)
 );
+
+/**
+ * Skill endorsements routes
+ * Mounted at /api/v1/profiles/:username/skills/:skillId
+ */
+router.use('/:username/skills/:skillId', endorsementsRoutes);
 
 export default router;
