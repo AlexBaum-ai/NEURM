@@ -9,6 +9,7 @@ import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
 import { cn } from '@/lib/utils';
 import { AuthModal } from '@/features/auth';
+import { GlobalSearchBar } from '@/features/search';
 
 const Header: React.FC = () => {
   const { t } = useTranslation('common');
@@ -67,20 +68,20 @@ const Header: React.FC = () => {
       )}
     >
       <div className="container-custom">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-16 items-center justify-between gap-4">
           {/* Logo */}
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-8 flex-shrink-0">
             <Link to="/" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white font-bold">
                 N
               </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">
+              <span className="hidden sm:inline text-xl font-bold text-gray-900 dark:text-white">
                 {t('appName')}
               </span>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-6">
+            <nav className="hidden lg:flex items-center gap-6">
               {navLinks.map((link) => (
                 <NavLink
                   key={link.to}
@@ -100,8 +101,16 @@ const Header: React.FC = () => {
             </nav>
           </div>
 
+          {/* Search Bar - Desktop/Tablet */}
+          <div className="hidden md:flex flex-1 max-w-xl mx-4">
+            <GlobalSearchBar
+              placeholder="Search..."
+              showVoiceSearch={false}
+            />
+          </div>
+
           {/* Right side actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-shrink-0">
             <ThemeToggle />
             <LanguageSwitcher className="hidden sm:block" />
 

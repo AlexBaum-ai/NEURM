@@ -9,6 +9,7 @@ import { ArticleMeta } from '../components/ArticleMeta';
 import { TableOfContents } from '../components/TableOfContents';
 import { RelatedArticles } from '../components/RelatedArticles';
 import { ReadingProgress } from '../components/ReadingProgress';
+import { RecommendationsSidebar, RecommendationsSidebarSkeleton } from '@/features/recommendations';
 import type { TableOfContentsItem } from '../types';
 
 const ArticleDetailContent: React.FC<{ slug: string }> = ({ slug }) => {
@@ -95,6 +96,17 @@ const ArticleDetailContent: React.FC<{ slug: string }> = ({ slug }) => {
                   title={article.title}
                 />
                 {tocItems.length > 0 && <TableOfContents items={tocItems} />}
+
+                {/* Recommended Articles */}
+                <Suspense fallback={<RecommendationsSidebarSkeleton />}>
+                  <RecommendationsSidebar
+                    type="article"
+                    excludeIds={[article.id]}
+                    limit={5}
+                    title="Recommended for You"
+                    emptyMessage="No article recommendations available"
+                  />
+                </Suspense>
               </div>
             </div>
           </div>
